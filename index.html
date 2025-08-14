@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wolf Hohl – KI‑Manager &amp; Visionär</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <!-- Import a modern sans serif and a monospace for glitch effect -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;700&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- Menu button triggers overlay navigation -->
+    <button id="menu-button" aria-label="Menü öffnen">
+      <span class="menu-icon">≡</span>
+    </button>
+    <!-- Navigation overlay -->
+    <nav id="nav-overlay" class="nav-overlay">
+      <button id="close-nav" aria-label="Menü schließen">×</button>
+      <ul class="nav-menu">
+        <li><a href="#" data-target="aboutContent">Über mich</a></li>
+        <li><a href="#" data-target="projectsContent">Projekte</a></li>
+        <li><a href="#" data-target="contactContent">Kontakt</a></li>
+        <li><a href="#" data-target="chatContent">Chatbot</a></li>
+        <li><a href="#" data-target="riskContent">Risiko‑Check</a></li>
+        <li><a href="#" data-target="factsContent">KI‑Facts</a></li>
+      </ul>
+    </nav>
+    <section class="hero" id="hero">
+      <!-- Background video -->
+      <video class="hero-video" autoplay muted loop playsinline>
+        <source src="videos/desert_drive.mp4" type="video/mp4" />
+        Ihr Browser unterstützt das Videoformat nicht.
+      </video>
+      <!-- Dark overlay to improve contrast -->
+      <div class="hero-overlay"></div>
+      <!-- Floating organic shapes -->
+      <div id="shape-container">
+        <div class="shape" id="shape1"></div>
+        <div class="shape" id="shape2"></div>
+        <div class="shape" id="shape3"></div>
+      </div>
+      <!-- Floating chat widget: always visible and gently drifting. When clicked it stops moving -->
+      <div id="floating-chat" class="floating-chat">
+        <div id="floating-chat-messages" class="floating-chat-messages"></div>
+        <form id="floating-chat-form" class="floating-chat-form">
+          <input type="text" id="floating-chat-input" placeholder="Frage stellen…" autocomplete="off" />
+          <button type="submit" aria-label="Senden">→</button>
+        </form>
+      </div>
+      <!-- No text here: hero focuses solely on video and shapes -->
+    </section>
+    <!-- Hidden contents for dynamic overlay -->
+    <div id="hidden-contents" style="display:none;">
+      <div id="aboutContent">
+        <h3>Über mich</h3>
+        <p>
+          Ich bin Wolf Hohl, zertifizierter KI‑Manager, Texter und Berater mit über
+          30 Jahren Marketing‑ und Kommunikationserfahrung. Nach vielen Jahren als
+          Geschäftsführer im Bereich Kino‑Trailer setze ich mein Wissen nun dafür
+          ein, Unternehmen fit für die KI‑Zukunft zu machen – transparent,
+          nachvollziehbar und compliant.
+        </p>
+      </div>
+      <div id="projectsContent">
+        <h3>Projekte</h3>
+        <div class="projects-grid">
+          <div class="project-card">
+            <h4>ki‑sicherheit.jetzt</h4>
+            <p>
+              Sicherheit und Compliance für den AI Act: Wie Sie Risiken
+              identifizieren, einstufen und kontrollieren können.
+            </p>
+            <a href="https://ki-sicherheit.jetzt" target="_blank" rel="noopener" class="btn ghost-btn">Website besuchen</a>
+          </div>
+          <div class="project-card">
+            <h4>achtung‑live.jetzt</h4>
+            <p>
+              Der Airbag für digitale Kommunikation: Echtzeit‑Monitoring ohne
+              Tracking und voll DSGVO‑konform.
+            </p>
+            <a href="https://achtung.live" target="_blank" rel="noopener" class="btn ghost-btn">Mehr erfahren</a>
+          </div>
+          <div class="project-card">
+            <h4>Nah</h4>
+            <p>
+              Eine Plattform, die Nahbarkeit und Austausch durch KI ermöglicht.
+            </p>
+            <a href="#" class="btn ghost-btn">In Kürze</a>
+          </div>
+        </div>
+      </div>
+      <div id="contactContent">
+        <h3>Kontakt</h3>
+        <p>Sie möchten Ihr Unternehmen fit für die KI‑Zukunft machen? Schreiben Sie mir!</p>
+        <form id="contact-form">
+          <input type="text" name="name" placeholder="Ihr Name" required />
+          <input type="email" name="email" placeholder="Ihre E‑Mail" required />
+          <textarea name="message" placeholder="Ihre Nachricht" rows="4" required></textarea>
+          <button type="submit" class="btn primary-btn">Absenden</button>
+        </form>
+      </div>
+
+      <div id="chatContent">
+        <h3>Chatbot</h3>
+        <div id="chat-window" class="chat-window"></div>
+        <form id="chat-form">
+          <input type="text" id="chat-input" placeholder="Stellen Sie mir eine Frage zur KI…" autocomplete="off" required />
+          <button type="submit" class="btn primary-btn">Senden</button>
+        </form>
+        <p class="chat-note">Die Antworten werden von einer KI generiert. Sie benötigen einen API‑Key in <code>script.js</code>.</p>
+      </div>
+
+      <div id="riskContent">
+        <h3>Risiko‑Check</h3>
+        <p>Wählen Sie eine typische KI‑Anwendung und erfahren Sie, in welche Risikokategorie sie laut EU AI Act fällt und welche Verstöße drohen.</p>
+        <form id="risk-form">
+          <label><input type="radio" name="usecase" value="chatbot" required /> Kundenservice‑Chatbot</label><br />
+          <label><input type="radio" name="usecase" value="recruiting" /> Automatisierte Bewerbungsfilter</label><br />
+          <label><input type="radio" name="usecase" value="recommendation" /> Empfehlungssystem für Online‑Shops</label><br />
+          <label><input type="radio" name="usecase" value="surveillance" /> Gesichtserkennung in öffentlichen Räumen</label><br />
+          <button type="submit" class="btn primary-btn">Bewerten</button>
+        </form>
+        <div id="risk-result" class="risk-result"></div>
+        <p class="chat-note">Dieser interaktive Check ist ein Beispiel. Er ersetzt keine rechtsverbindliche Beratung.</p>
+      </div>
+
+      <div id="factsContent">
+        <h3>KI‑Facts</h3>
+        <div id="fact-display" class="fact-display"></div>
+        <p class="chat-note">Atemberaubende, witzige und verblüffende Fakten und Prompts über KI.</p>
+      </div>
+    </div>
+
+    <!-- Info overlay displayed when a shape or nav link is clicked -->
+    <div id="info-overlay" class="info-overlay">
+      <div class="info-container">
+        <!-- Animated neon ring surrounding the content -->
+        <svg class="ring-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <ellipse cx="50" cy="50" rx="48" ry="47" fill="none" stroke="currentColor" stroke-width="2"></ellipse>
+        </svg>
+        <button id="close-info" aria-label="Schließen">×</button>
+        <div id="info-content" class="info-content"></div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>&copy; 2025 Wolf Hohl. Alle Rechte vorbehalten.</p>
+    </footer>
+    <script src="script.js"></script>
+  </body>
+</html>
