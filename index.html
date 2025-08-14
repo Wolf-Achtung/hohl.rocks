@@ -22,8 +22,6 @@
         <li><a href="#" data-target="projectsContent">Projekte</a></li>
         <li><a href="#" data-target="contactContent">Kontakt</a></li>
         <li><a href="#" data-target="chatContent">Chatbot</a></li>
-        <li><a href="#" data-target="riskContent">Risiko‑Check</a></li>
-        <li><a href="#" data-target="factsContent">KI‑Facts</a></li>
       </ul>
     </nav>
     <section class="hero" id="hero">
@@ -111,25 +109,6 @@
         <p class="chat-note">Die Antworten werden von einer KI generiert. Sie benötigen einen API‑Key in <code>script.js</code>.</p>
       </div>
 
-      <div id="riskContent">
-        <h3>Risiko‑Check</h3>
-        <p>Wählen Sie eine typische KI‑Anwendung und erfahren Sie, in welche Risikokategorie sie laut EU AI Act fällt und welche Verstöße drohen.</p>
-        <form id="risk-form">
-          <label><input type="radio" name="usecase" value="chatbot" required /> Kundenservice‑Chatbot</label><br />
-          <label><input type="radio" name="usecase" value="recruiting" /> Automatisierte Bewerbungsfilter</label><br />
-          <label><input type="radio" name="usecase" value="recommendation" /> Empfehlungssystem für Online‑Shops</label><br />
-          <label><input type="radio" name="usecase" value="surveillance" /> Gesichtserkennung in öffentlichen Räumen</label><br />
-          <button type="submit" class="btn primary-btn">Bewerten</button>
-        </form>
-        <div id="risk-result" class="risk-result"></div>
-        <p class="chat-note">Dieser interaktive Check ist ein Beispiel. Er ersetzt keine rechtsverbindliche Beratung.</p>
-      </div>
-
-      <div id="factsContent">
-        <h3>KI‑Facts</h3>
-        <div id="fact-display" class="fact-display"></div>
-        <p class="chat-note">Atemberaubende, witzige und verblüffende Fakten und Prompts über KI.</p>
-      </div>
     </div>
 
     <!-- Info overlay displayed when a shape or nav link is clicked -->
@@ -147,6 +126,11 @@
     <footer class="footer">
       <p>&copy; 2025 Wolf Hohl. Alle Rechte vorbehalten.</p>
     </footer>
+    <!-- Provide a global variable for the OpenAI API key. You can set this via server configuration or .env injection. -->
+    <script>
+      // Set this value from your hosting environment (e.g., Railway) or replace it manually.
+      window.OPENAI_API_KEY = '';
+    </script>
     <script src="script.js"></script>
   </body>
 </html>

@@ -66,12 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (contentId === 'chatContent') {
         setupChatbot();
       }
-      if (contentId === 'riskContent') {
-        setupRisk();
-      }
-      if (contentId === 'factsContent') {
-        setupFacts();
-      }
     }
   }
 
@@ -114,8 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
       addMessage('user', question);
       conversation.push({ role: 'user', content: question });
       chatInput.value = '';
-      // Replace with your actual OpenAI API key
-      const API_KEY = 'YOUR_OPENAI_API_KEY';
+      // Use API key from global variable if provided; fallback to placeholder
+      const API_KEY = window.OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY';
       const payload = {
         model: 'gpt-3.5-turbo',
         messages: conversation,
@@ -152,81 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /**
-   * Setup the risk evaluation form. Provides basic example risk categories and violations.
-   */
-  function setupRisk() {
-    const riskForm = document.getElementById('risk-form');
-    const result = document.getElementById('risk-result');
-    if (!riskForm || !result) return;
-    riskForm.onsubmit = (e) => {
-      e.preventDefault();
-      const value = riskForm.usecase.value;
-      let message = '';
-      switch (value) {
-        case 'chatbot':
-          message =
-            'Kundenservice‑Chatbots gelten häufig als niedriges Risiko, weil sie nur Standardantworten geben.\n\n' +
-            'Potenzielle Verstöße: Chatbots dürfen keine sensiblen Daten (z. B. Gesundheitsdaten) abfragen oder speichern, ohne dass Nutzer ausdrücklich zustimmen. Sie müssen außerdem transparent machen, dass kein Mensch antwortet.';
-          break;
-        case 'recruiting':
-          message =
-            'Automatisierte Bewerbungsfilter sind eine typische „High‑Risk‑KI“.\n\n' +
-            'Risiko: Eine scheinbar harmlose CV‑Analyse kann diskriminierende Muster verstärken (z. B. nach Geschlecht, Alter, Herkunft). Hier verlangt der EU AI Act Transparenz, regelmäßige Audits und die Möglichkeit zum menschlichen Eingriff.';
-          break;
-        case 'recommendation':
-          message =
-            'Empfehlungssysteme im E‑Commerce sind oft Standard.\n\n' +
-            'Achtung: Wenn sie Preisdiskriminierung oder manipulative „Dark Patterns“ einsetzen, verstoßen sie gegen Verbraucherschutz und können als unethisch eingestuft werden. Es gilt, Fairness und Transparenz sicherzustellen.';
-          break;
-        case 'surveillance':
-          message =
-            'Überwachung durch KI umfasst Gesichtserkennung und Verhaltensanalyse.\n\n' +
-            'Laut EU AI Act ist biometrische Identifikation im öffentlichen Raum ohne strenge Bedingungen grundsätzlich verboten. Der Einsatz darf nicht unverhältnismäßig in Grundrechte eingreifen – sonst drohen Bußgelder und Reputationsschäden.';
-          break;
-        default:
-          message = 'Bitte wählen Sie einen der Anwendungsfälle.';
-      }
-      result.textContent = message;
-    };
-  }
 
-  /**
-   * Setup the fact ticker: rotates through a list of interesting facts about KI.
-   */
-  function setupFacts() {
-    const factDisplay = document.getElementById('fact-display');
-    if (!factDisplay) return;
-    // Eine Mischung aus spannenden Fakten und Inspirationen/Prompts. Der Fact‑Ticker
-    // unterhält nicht nur, sondern zeigt auch Möglichkeiten auf, KI sinnvoll zu nutzen.
-    const facts = [
-      // Fakten
-      '2016 besiegte AlphaGo den Go‑Weltmeister Lee Sedol – ein Meilenstein für selbstlernende Systeme.',
-      'GPT‑3.5 enthält 175 Milliarden Parameter und wurde mit Hunderten Milliarden Wörtern trainiert.',
-      'Ein KI‑System entwickelte 2020 ein Rezept für „chemische Pizza“ – ein Wissenschaftler fand es überraschend lecker.',
-      'Die NASA setzt KI ein, um Jahrzehnte alte Voyager‑Daten neu zu interpretieren und bislang unentdeckte Signale zu finden.',
-      'Eine KI gewann 2017 bei einem Pokerturnier mit Profispielern und nahm 1,7 Millionen Dollar Preisgeld mit nach Hause.',
-      'Forscher ließen eine KI Beethovens unvollendete 10. Symphonie vollenden – das Ergebnis ist 2021 uraufgeführt worden.',
-      'Ein neuronales Netz designte einen „Avocado‑Stuhl“ – das Bild wurde viral und inspirierte reale Möbelstücke.',
-      'KI‑Modelle komponieren inzwischen Heavy‑Metal‑Songs, die überraschend headbang‑tauglich sind.',
-      'Der Schauspieler David Tennant lieh 2020 einer KI seine Stimme, damit sie Shakespeare‑Sonette vortragen konnte.',
-      // Prompts und Inspiration
-      'Prompt‑Idee: "Schreibe einen überzeugenden LinkedIn‑Beitrag über die Chancen des EU AI Act für Start‑ups."',
-      'Prompt‑Idee: "Erstelle in drei Sätzen eine Risikoanalyse für einen Chatbot in einer Arztpraxis."',
-      'Prompt‑Idee: "Formuliere einen AI‑nutzungsfreundlichen Hinweistext für eine Unternehmenswebseite, der Transparenz vermittelt."',
-      'Prompt‑Idee: "Generiere fünf kreative Ideen für den Einsatz generativer KI im Marketing eines Buchverlags."',
-      'Prompt‑Idee: "Liste die wichtigsten Prüfmaßnahmen eines KI‑Managers vor der Einführung eines Empfehlungssystems auf."',
-      'Prompt‑Idee: "Finde eine humorvolle Analogie, um das Konzept der Trainingsdaten einem Laien zu erklären."'
-    ];
-    // Zeige beim Öffnen einen zufälligen Fact/Prompt. Keine Schaltfläche zum Weiterblättern
-    const index = Math.floor(Math.random() * facts.length);
-    factDisplay.textContent = facts[index];
-  }
 
   // Interaktive, organische Formen konfigurieren
   const shapes = document.querySelectorAll('.shape');
   // Assign roles to shapes: one for chat, one for showing facts, one for playful interaction
-  const roles = ['chat', 'fact', 'playful'];
+  // We use only a chat bubble and two playful bubbles. The roles for
+  // "risk" and "facts" have been removed.
+  const roles = ['chat', 'playful', 'playful'];
   const palette = [
     'var(--color-blue)',
     'var(--color-petrol)',
@@ -299,11 +226,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (role === 'chat') {
       playSound();
       expandShape(shape);
-    } else if (role === 'fact') {
-      playSound();
-      expandFactBubble(shape);
-    } else if (role === 'playful') {
-      // Play a tone to provide sensory feedback when interacting with a bubble
+    } else {
+      // Playful bubbles simply change colour/shape and play a sound
       playSound();
       playfulInteraction(shape);
     }
@@ -343,10 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
       // After injecting content, initialise any dynamic behaviour
       if (targetId === 'chatContent') {
         setupChatbot();
-      } else if (targetId === 'riskContent') {
-        setupRisk();
-      } else if (targetId === 'factsContent') {
-        setupFacts();
       }
     }
   }
@@ -355,29 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * Expands a bubble to display a single fact. The bubble can cycle facts via a button.
    * @param {HTMLElement} shape
    */
-  function expandFactBubble(shape) {
-    shape.dataset.expanded = 'true';
-    expandedShape = shape;
-    // Bring shape to front and fix its position
-    shape.style.zIndex = '10';
-    shape.style.width = '60vmin';
-    shape.style.height = '60vmin';
-    shape.style.top = '50vh';
-    shape.style.left = '50vw';
-    shape.style.transform = 'translate(-50%, -50%)';
-    shape.style.backgroundColor = 'rgba(10, 20, 40, 0.95)';
-    shape.style.mixBlendMode = 'normal';
-    shape.classList.add('expanded');
-    // Provide initial fact
-    const fact = getRandomFact();
-    shape.innerHTML = `<button class="close-bubble">×</button><div class="bubble-content"><h3>KI‑Insight</h3><p class="fact-text">${fact}</p><p class="chat-note">Diese Bubble zeigt jedes Mal einen anderen Einblick: mal einen Fakt, mal einen spannenden Prompt.</p></div>`;
-    // Set up close handler
-    const closeBtn = shape.querySelector('.close-bubble');
-    closeBtn.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      collapseShape(shape);
-    });
-  }
+  // removed expandFactBubble; fact bubbles no longer used
 
   /**
    * Handles playful interactions for bubbles: random colour change, shape change or temporary vanish.
@@ -409,28 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /**
    * Returns a random fact from the fact list.
    */
-  function getRandomFact() {
-    // Facts und inspirierende Prompts, die dich als KI‑Manager hervorheben.
-    const facts = [
-      // Fakten
-      '2016 besiegte AlphaGo den Go‑Weltmeister Lee Sedol – ein Meilenstein für selbstlernende Systeme.',
-      'GPT‑3.5 enthält 175 Milliarden Parameter und wurde mit Hunderten Milliarden Wörtern trainiert.',
-      'Die NASA setzt KI ein, um Jahrzehnte alte Voyager‑Daten neu zu interpretieren und bislang unentdeckte Signale zu finden.',
-      'Eine KI gewann 2017 bei einem Pokerturnier mit Profispielern und nahm 1,7 Millionen Dollar Preisgeld mit nach Hause.',
-      'Forscher ließen eine KI Beethovens unvollendete 10. Symphonie vollenden – das Ergebnis ist 2021 uraufgeführt worden.',
-      'Ein neuronales Netz designte einen „Avocado‑Stuhl“ – das Bild wurde viral und inspirierte reale Möbelstücke.',
-      'KI‑Modelle komponieren inzwischen Heavy‑Metal‑Songs, die überraschend headbang‑tauglich sind.',
-      'Der Schauspieler David Tennant lieh 2020 einer KI seine Stimme, damit sie Shakespeare‑Sonette vortragen konnte.',
-      // Prompts/Inspiration
-      'Prompt‑Idee: "Schreibe einen überzeugenden LinkedIn‑Beitrag über die Chancen des EU AI Act für Start‑ups."',
-      'Prompt‑Idee: "Erstelle in drei Sätzen eine Risikoanalyse für einen Chatbot in einer Arztpraxis."',
-      'Prompt‑Idee: "Formuliere einen AI‑nutzungsfreundlichen Hinweistext für eine Unternehmenswebseite, der Transparenz vermittelt."',
-      'Prompt‑Idee: "Generiere fünf kreative Ideen für den Einsatz generativer KI im Marketing eines Buchverlags."',
-      'Prompt‑Idee: "Liste die wichtigsten Prüfmaßnahmen eines KI‑Managers vor der Einführung eines Empfehlungssystems auf."',
-      'Prompt‑Idee: "Finde eine humorvolle Analogie, um das Konzept der Trainingsdaten einem Laien zu erklären."'
-    ];
-    return facts[Math.floor(Math.random() * facts.length)];
-  }
+  // getRandomFact removed – facts/prompts feature deprecated
 
   /**
    * Collapses an expanded bubble: remove inserted content and resume animation.
@@ -595,8 +472,8 @@ document.addEventListener('DOMContentLoaded', () => {
       addFloatingMessage('user', question);
       chatConversation.push({ role: 'user', content: question });
       floatingChatInput.value = '';
-      // Replace with your actual OpenAI API key
-      const API_KEY = 'YOUR_OPENAI_API_KEY';
+      // Use API key from global variable if provided; fallback to placeholder
+      const API_KEY = window.OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY';
       const payload = {
         model: 'gpt-3.5-turbo',
         messages: chatConversation,
