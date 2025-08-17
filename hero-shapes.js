@@ -1,7 +1,7 @@
 /*
  * hero-shapes.js — Ultra‑Slow Jellyfish (Rotation fast eingefroren, individueller Tempo‑Faktor je Bubble)
  *  - Rotation: nahezu statisch (±0.15–0.25°), sehr lange Perioden (180–300 s)
- *  - Jeder Bubble hat einen eigenen Tempo‑Faktor (0.75–1.25), damit Bewegungen individuell sind – trotzdem ruhig
+ *  - Jeder Bubble hat einen eigenen Tempo‑Faktor (0.9–1.1), damit Bewegungen individuell sind – trotzdem ruhig
  *  - Morph/Drift sehr langsam; Breathing ca. 10–16 s; Lebensdauer 25–45 s
  */
 (function(){
@@ -67,7 +67,7 @@
     const life = lerp(25000, 45000, r()); // 25–45 s
 
     // Individueller Tempo‑Faktor je Bubble (1.0 = Basisgeschwindigkeit)
-    const TEMPO = lerp(0.75, 1.25, r());
+    const TEMPO = lerp(0.9, 1.1, r());
 
     const el = document.createElement('div');
     el.className = 'shape';
@@ -102,12 +102,12 @@
     const parallaxAmp = (reduceMotion? 0 : lerp(0.6, 1.5, 1 - z)); // 0.6–1.5 px
 
     // Rotation fast eingefroren
-    const ROT_MAX_X = 0.22; // Grad
-    const ROT_MAX_Y = 0.22;
-    const ROT_MAX_Z = 0.15;
-    const ROT_TX = lerp(180, 300, r()); // sehr lange Perioden
-    const ROT_TY = lerp(200, 300, r());
-    const ROT_TZ = lerp(240, 320, r());
+    const ROT_MAX_X = 0.10; // Grad
+    const ROT_MAX_Y = 0.10;
+    const ROT_MAX_Z = 0.10;
+    const ROT_TX = lerp(240, 360, r()); // sehr lange Perioden
+    const ROT_TY = lerp(260, 340, r());
+    const ROT_TZ = lerp(220, 320, r());
 
     // Morph/Drift & Breathing
     const DRIFT_TX = lerp(90, 120, r());
