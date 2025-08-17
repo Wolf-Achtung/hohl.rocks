@@ -1,4 +1,4 @@
-// server/index.js — Railway mini-patch with SSE + Vision JSON
+// server/index.js — hardened CORS + graceful SIGTERM
 import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
@@ -8,13 +8,21 @@ config();
 const app = express();
 app.use(express.json({limit:'12mb'}));
 
-// CORS
-const allowed = (process.env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean);
+// Parse ALLOWED_ORIGINS robustly: split on comma/semicolon + trim
+function parseAllowed(originsStr){
+  return (originsStr||'')
+   .split(/[;,]/)
+   .map(s=>s.trim().replace(/;+$/,''))
+   .filter(Boolean);
+}
+const allowed = parseAllowed(process.env.ALLOWED_ORIGINS);
+console.log('Allowed origins:', allowed);
+
 app.use(cors({
   origin: (origin, cb)=>{
-    if(!origin) return cb(null, true);
+    if(!origin) return cb(null, true); // allow curl / health etc.
     if(allowed.length===0 || allowed.includes(origin)) return cb(null,true);
-    return cb(new Error('Not allowed by CORS'), false);
+    return cb(new Error('Not allowed by CORS: '+origin), false);
   }
 }));
 
@@ -100,5 +108,8 @@ app.get('/chat-sse', async (req,res)=>{
 });
 
 app.get('/', (req,res)=> res.send('ok'));
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, ()=> console.log('server up on', PORT));
+
+// Graceful shutdown
+const server = app.listen(process.env.PORT || 8080, ()=> console.log('server up on', server.address().port));
+process.on('SIGTERM', ()=>{ console.log('SIGTERM received — shutting down gracefully'); server.close(()=> process.exit(0)); });
+process.on('SIGINT', ()=>{ console.log('SIGINT received — exiting'); server.close(()=> process.exit(0)); });
