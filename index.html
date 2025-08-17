@@ -169,67 +169,84 @@
   window.addEventListener('pointerdown', _hideCTA, {once:true});
   window.addEventListener('keydown', _hideCTA, {once:true});
 </script>
-<!-- Audio-Dock -->
-<div class="engine-dock" role="region" aria-label="Engine Controls">
-  <!-- Falls schon vorhanden: dieser Button wird einfach weiterbenutzt -->
-  <button id="sound-toggle" class="sound-toggle" type="button" aria-pressed="false">Sound: Off</button>
-
-  <div class="engine-ui" id="engineUI">
-    <div class="seg" role="radiogroup" aria-label="Engine Mode">
-      <label class="seg-item">
-        <input type="radio" name="mode" value="v12" checked>
-        <span>V12</span>
-      </label>
-      <label class="seg-item">
-        <input type="radio" name="mode" value="motorcycle">
-        <span>Bike</span>
-      </label>
-    </div>
-
-    <label class="rpm" for="rpmRange">RPM</label>
-    <input id="rpmRange" type="range" min="600" max="6000" step="50" value="1800" />
-    <output id="rpmOut" for="rpmRange">1800</output>
-  </div>
-</div>
+<!-- Engine nur initialisieren; kein Toggle, kein Autostart -->
+<script defer src="/engine-sim.js?v=fix2"></script>
 <script>
-  // Ambient Preset pro Seite (optional)
-  (function(){
-    const map = {
-      '/':             'motorcycle',   // Start: entspannt, hell
-      '/ueber-mich.html': 'highway-dawn', // arktisch, klar
-      '/projekte.html':   'blue-noon',    // neutral, ruhig
-      '/kontakt.html':    'highway-dawn', // warm-hell (Portrait-Seite)
-l
-    };
-    window.DESERT_AUDIO_PRESET = map[location.pathname] || 'blue-noon';
-  })();
-
-  // EngineSim initialisieren (nutzt denselben Sound-Toggle)
   window.addEventListener('DOMContentLoaded', () => {
     EngineSim.init({
       mode: 'v12',
-      rpm: 1800,
-      volume: 0.32,
-      attachToggle: true,      // erstellt #sound-toggle falls nicht vorhanden
-      autoStartOnGesture: true // startet beim ersten Klick/Key
+      rpm: 1500,
+      volume: 0.28,
+      attachToggle: false,   // kein #sound-toggle, wir steuern programmatic
+      autoStartOnGesture: false
     });
-
-    const rpm = document.getElementById('rpmRange');
-    const out = document.getElementById('rpmOut');
-    const modes = document.querySelectorAll('input[name="mode"]');
-
-    rpm.addEventListener('input', e => {
-      out.textContent = e.target.value;
-      EngineSim.setRPM(+e.target.value);
-    });
-    modes.forEach(r => r.addEventListener('change', e => {
-      EngineSim.setMode(e.target.value);
-    }));
-
-    // Falls schon aktiviert, UI sofort synchronisieren
-    out.textContent = rpm.value;
   });
 </script>
+// ----- Bubble→Sound Binding ---------------------------------
+(function () {
+  const shapes = Array.from(document.querySelectorAll('.shape'));
+  let activeShape = null;
+
+  // pro Bubble ein Sound-Setup (kannst du frei mappen)
+  const profileFor = el => {
+    switch (el.id) {
+      case 'shape1': return { mode: 'v12',        rpm: 1800, vol: 0.30 };
+      case 'shape2': return { mode: 'motorcycle', rpm: 1100, vol: 0.36 };
+      case 'shape3': return { mode: 'v12',        rpm: 2400, vol: 0.32 };
+      default:       return { mode: 'v12',        rpm: 1500, vol: 0.28 };
+    }
+  };
+
+  async function startFor(el){
+    const p = profileFor(el);
+    EngineSim.setMode(p.mode);
+    EngineSim.setRPM(p.rpm);
+    EngineSim.setVolume(p.vol);
+    await EngineSim.start();                // Nutzerklick → erlaubt Start
+  }
+
+  async function stopAll(){
+    await EngineSim.stop();
+    if (activeShape) activeShape.classList.remove('playing');
+    activeShape = null;
+  }
+
+  shapes.forEach(el => {
+    el.addEventListener('click', async ev => {
+      ev.stopPropagation();
+
+      if (activeShape === el) {
+        // gleicher Bubble → aus
+        await stopAll();
+        return;
+      }
+      // anderer Bubble → alten aus, neuen an
+      if (activeShape) activeShape.classList.remove('playing');
+      activeShape = el;
+      el.classList.add('playing');
+
+      await EngineSim.start();              // resume falls nötig
+      await startFor(el);
+    });
+  });
+
+  // Klick auf „Hintergrund“ → Sound aus
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.shape')) stopAll();
+  });
+
+  // Touch-Support
+  document.addEventListener('touchstart', ()=>{}, {passive:true});
+})();
+
+/* Dock vollständig killen, falls im Build noch vorhanden */
+.engine-dock, .sound-toggle, .engine-ui { display:none !important; }
+
+/* Optional: aktiver Bubble-State (dezente Neon-Kante) */
+.shape.playing {
+  box-shadow: 0 0 38px 8px rgba(57,255,20,.20), inset 0 0 24px rgba(0,200,255,.18);
+  outline: 2px solid rgba(57,255,20,.35);
+}
 
   </body>
 </html>
