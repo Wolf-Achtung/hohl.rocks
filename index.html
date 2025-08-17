@@ -135,13 +135,15 @@
 <script>
   window.addEventListener('DOMContentLoaded', () => {
     EngineSim.init({
-      mode: 'v12',       // 'v12' | 'motorcycle'
-      rpm: 1800,         // 600–6000 sinnvoll
+      mode: 'v12',            // 'v12' | 'motorcycle'
+      rpm: 1800,
       volume: 0.35,
-      attachToggle: true // folgt deinem #sound-toggle
+      attachToggle: true,     // erzeugt #sound-toggle, wenn keiner existiert
+      autoStartOnGesture: false // true = startet beim ersten Klick/Key
     });
   });
 </script>
+
 
   </body>
 </html>
