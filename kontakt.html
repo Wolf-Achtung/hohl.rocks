@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hohl Rocks – Start</title>
+  <title>Kontakt – Hohl Rocks</title>
   <link rel="stylesheet" href="/site-frame.css?v=1">
   <link rel="stylesheet" href="/chatbox.css?v=1">
   <link rel="stylesheet" href="/projects-modern.css?v=1">
   <link rel="stylesheet" href="/hero-shapes.css?v=1">
   <link rel="stylesheet" href="/hide-sound-ui.css?v=1">
 </head>
-<body class="">
+<body class="page-contact">
   <nav class="top-nav">
     <a href="/ueber-mich.html" data-soft>Über mich</a>
     <a href="/projekte.html" data-soft>Projekte</a>
@@ -18,8 +18,16 @@
   </nav>
 
   
-<!-- Startseite: bewusst ohne Content-Shell – nur Shapes über Video -->
-<div class="content-shell" style="opacity:.0;pointer-events:none;height:0;margin:0;padding:0;border:0;"></div>
+<main class="content-shell">
+  <h1 class="h1-gradient">Kontakt</h1>
+  <p>Lass uns gemeinsam die KI‑Zukunft gestalten. Schreibe mir eine Nachricht – ich melde mich!</p>
+  <form onsubmit="alert('Demo: Nachricht gesendet');return false" style="display:grid;gap:12px;max-width:620px">
+    <input placeholder="Ihr Name" style="padding:.85rem 1rem;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.35);color:#e9fbff">
+    <input placeholder="Ihre E‑Mail" style="padding:.85rem 1rem;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.35);color:#e9fbff">
+    <textarea rows="5" placeholder="Ihre Nachricht" style="padding:.85rem 1rem;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.35);color:#e9fbff"></textarea>
+    <button class="btn" type="submit">Absenden</button>
+  </form>
+</main>
 
 
   <script>window.BG_VIDEO_SRC='/videos/desert_drive.mp4';</script>

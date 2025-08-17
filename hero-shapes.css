@@ -1,0 +1,21 @@
+
+/* Organic hero shapes */
+.shapes{position:fixed;inset:0;pointer-events:auto;z-index:1;}
+.shape{
+  position:absolute; width:24vmin; height:24vmin;
+  background: radial-gradient(100% 100% at 30% 30%, rgba(122,92,255,.85), rgba(5,179,255,.85));
+  mix-blend-mode:screen; opacity:.85; border-radius:50% 40% 60% 50% / 50% 60% 40% 50%;
+  filter:saturate(110%); transition:transform .8s ease, border-radius 1.8s ease, background 1.2s ease, opacity .8s ease;
+  animation: drift 18s ease-in-out infinite, spin 60s linear infinite;
+}
+.shape.neon{ background: radial-gradient(100% 100% at 30% 30%, rgba(57,255,20,.9), rgba(0,255,170,.7)); }
+.shape.variant{ border-radius: 60% 35% 65% 40% / 40% 65% 35% 60%; }
+.shape.large{ width:38vmin; height:38vmin }
+.shape.small{ width:16vmin; height:16vmin }
+.shape.playing{ box-shadow:0 0 38px 8px rgba(57,255,20,.20), inset 0 0 24px rgba(0,200,255,.18); outline:2px solid rgba(57,255,20,.35); }
+
+@keyframes drift {
+  0%,100% { transform: translate(var(--x1,10vw), var(--y1,10vh)) scale(1); }
+  50%     { transform: translate(var(--x2,70vw), var(--y2,65vh)) scale(1.05); }
+}
+@keyframes spin { 0%{ rotate:0deg } 100%{ rotate:360deg } }

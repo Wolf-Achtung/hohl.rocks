@@ -1,9 +1,10 @@
+
 (function(){
   const ENDPOINT = window.CHAT_ENDPOINT || null;
   function mount(){
     if (document.querySelector('.chat-dock')) return;
     const form = document.createElement('form'); form.className='chat-dock'; form.setAttribute('aria-label','Chatbot');
-    form.innerHTML = '<input type="text" placeholder="Frage stellen… (EU AI Act, KI-Sicherheit, Projekte)" aria-label="Frage stellen">'+
+    form.innerHTML = '<input type="text" placeholder="Frage stellen… (EU AI Act, KI‑Sicherheit, Projekte)" aria-label="Frage stellen">'+
                      '<button type="submit">Senden</button>';
     document.body.appendChild(form);
     const input=form.querySelector('input');

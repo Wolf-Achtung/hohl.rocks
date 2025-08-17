@@ -1,3 +1,4 @@
+
 .chat-dock{position:fixed;left:50%;transform:translateX(-50%);bottom:1.25rem;z-index:9999;display:flex;gap:.5rem;align-items:center;
   padding:.5rem;border-radius:999px;background:linear-gradient(135deg, rgba(0,255,170,.16), rgba(5,179,255,.16));
   border:1px solid rgba(57,255,20,.35);backdrop-filter:blur(8px) saturate(120%);

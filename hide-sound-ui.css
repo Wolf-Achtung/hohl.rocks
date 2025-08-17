@@ -1,2 +1,1 @@
-#sound-toggle, .sound-toggle, .engine-ui, .engine-dock { display:none !important; }
-.shape.playing { box-shadow: 0 0 38px 8px rgba(57,255,20,.20), inset 0 0 24px rgba(0,200,255,.18); outline: 2px solid rgba(57,255,20,.35); }
+#sound-toggle,.sound-toggle,.engine-ui,.engine-dock{display:none!important}
