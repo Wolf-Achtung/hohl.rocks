@@ -150,7 +150,6 @@
       mode: 'motorcycle',             // 'v12' | 'motorcycle'
       rpm: 1100,
       volume: 0.12,
-      attachToggle: true,      // erzeugt #sound-toggle, wenn keiner existiert
       autoStartOnGesture: true // startet beim ersten Pointerdown/Key
     });
   });
@@ -247,6 +246,11 @@
   box-shadow: 0 0 38px 8px rgba(57,255,20,.20), inset 0 0 24px rgba(0,200,255,.18);
   outline: 2px solid rgba(57,255,20,.35);
 }
-
+<link rel="stylesheet" href="/audio-generative.css?v=3">
+<script defer src="/audio-generative.js?v=3"></script>
+<script>window.DESERT_AUDIO_PRESET = window.DESERT_AUDIO_PRESET || 'blue-noon';</script>
+<script defer src="/engine-sim.js?v=fix2"></script>
+<link rel="stylesheet" href="/hide-sound-ui.css?v=1">
+<script defer src="/bubble-random-nav.js?v=1"></script>
   </body>
 </html>
