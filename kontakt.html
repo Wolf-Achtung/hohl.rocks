@@ -1,34 +1,57 @@
-<!doctype html><html lang="de"><head><title>hohl.rocks – Kontakt</title>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAA"/>
-<link rel="preload" as="video" href="/videos/desert_drive.mp4">
-<link rel="stylesheet" href="/site-frame.css?v=1">
-<link rel="stylesheet" href="/hero-shapes.css?v=1">
-<link rel="stylesheet" href="/projects-modern.css?v=1">
-</head><body>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>hohl.rocks – Kontakt</title>
+  <link rel="preload" as="video" href="/videos/desert_drive.mp4">
+  <link rel="stylesheet" href="/site-frame.css?v=3"/>
+  <link rel="stylesheet" href="/projects-modern.css?v=3"/>
+  
+</head>
+<body>
+  <video class="bgvideo" id="bg" src="/videos/desert_drive.mp4" autoplay muted loop playsinline></video>
+  <div class="bg-vignette"></div>
 
-<div class="video-wrap"><video id="bg-video" autoplay loop muted playsinline src="/videos/desert_drive.mp4"></video></div>
-<div class="overlay-gradient"></div><div class="shapes-layer" aria-hidden="true"></div>
-<nav class="top-chips"><a href="/ueber-mich.html">Über mich</a><a href="/projekte.html">Projekte</a><a href="/kontakt.html">Kontakt</a></nav>
-<main class="main-wrap"><div class="panel">
-<h1>Kontakt</h1><p>Schreibe mir – ich melde mich.</p>
-<form onsubmit="event.preventDefault(); alert('Demo: Formular wird noch angebunden.');">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;">
-    <input placeholder="Ihr Name" required style="padding:12px;border-radius:12px;border:1px solid #ccd;"/>
-    <input type="email" placeholder="Ihre E‑Mail" required style="padding:12px;border-radius:12px;border:1px solid #ccd;"/>
+  <nav class="nav-chips">
+    <a href="/ueber-mich.html">Über mich</a>
+    <a href="/projekte.html">Projekte</a>
+    <a href="/kontakt.html">Kontakt</a>
+  </nav>
+
+  
+
+  <main class="panel">
+    
+<h1>Kontakt</h1>
+<p>Schreibe mir – ich melde mich.</p>
+<form onsubmit="event.preventDefault(); alert('Demo: Formular noch nicht angebunden.');">
+  <div style="display:flex; gap:12px; margin:12px 0; flex-wrap:wrap">
+    <input style="flex:1; min-width:220px; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,.08)"
+           placeholder="Ihr Name"/>
+    <input style="flex:1; min-width:220px; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,.08)"
+           placeholder="Ihre E‑Mail"/>
   </div>
-  <textarea placeholder="Ihre Nachricht" rows="5" style="margin-top:12px;width:100%;padding:12px;border-radius:12px;border:1px solid #ccd;"></textarea>
-  <div style="margin-top:12px;"><button style="background:#0b84ff;color:#fff;border:0;border-radius:12px;padding:10px 16px;font-weight:700;">Absenden</button></div>
+  <textarea style="width:100%; min-height:140px; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,.08)"
+            placeholder="Ihre Nachricht"></textarea>
+  <div style="margin-top:12px">
+    <button type="submit" style="background:linear-gradient(180deg,#6c8cff,#4a5cff); color:#fff; border:0; padding:12px 18px; border-radius:12px; font-weight:700">Absenden</button>
+  </div>
 </form>
-</div></main>
-<div class="footer-note">© 2025 hohl.rocks</div>
 
-<script>
-window.CHAT_ENDPOINT="https://hohlrocks-production.up.railway.app/chat";
-window.CHAT_ENDPOINT_SSE="https://hohlrocks-production.up.railway.app/chat-sse";
-</script>
+  </main>
 
-<script defer src="/engine-sim-lite-v2.js?v=1"></script>
-<script defer src="/bubble-sound-lite.js?v=1"></script>
-<script defer src="/hero-shapes.js?v=1"></script>
-<script defer src="/chatbox-stream.js?v=1"></script>
-</body></html>
+  <div id="chat-output" class="chat-output"></div>
+  <div class="chat-dock">
+    <input id="chat-input" placeholder="Frage stellen… (EU AI Act, KI-Sicherheit, Projekte)"/>
+    <button id="chat-send">Senden</button>
+  </div>
+
+  <div class="footer">© 2025 hohl.rocks</div>
+
+  <script defer src="/engine-sim-lite-v2.js?v=2"></script>
+  <script defer src="/bubble-sound-lite.js?v=2"></script>
+  
+  <script defer src="/chatbox-stream.js?v=2"></script>
+</body>
+</html>

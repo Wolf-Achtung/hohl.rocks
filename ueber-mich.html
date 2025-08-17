@@ -1,27 +1,46 @@
-<!doctype html><html lang="de"><head><title>hohl.rocks – Über mich</title>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAA"/>
-<link rel="preload" as="video" href="/videos/desert_drive.mp4">
-<link rel="stylesheet" href="/site-frame.css?v=1">
-<link rel="stylesheet" href="/hero-shapes.css?v=1">
-<link rel="stylesheet" href="/projects-modern.css?v=1">
-</head><body>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>hohl.rocks – Über mich</title>
+  <link rel="preload" as="video" href="/videos/desert_drive.mp4">
+  <link rel="stylesheet" href="/site-frame.css?v=3"/>
+  <link rel="stylesheet" href="/projects-modern.css?v=3"/>
+  
+</head>
+<body>
+  <video class="bgvideo" id="bg" src="/videos/desert_drive.mp4" autoplay muted loop playsinline></video>
+  <div class="bg-vignette"></div>
 
-<div class="video-wrap"><video id="bg-video" autoplay loop muted playsinline src="/videos/desert_drive.mp4"></video></div>
-<div class="overlay-gradient"></div><div class="shapes-layer" aria-hidden="true"></div>
-<nav class="top-chips"><a href="/ueber-mich.html">Über mich</a><a href="/projekte.html">Projekte</a><a href="/kontakt.html">Kontakt</a></nav>
-<main class="main-wrap"><div class="panel">
-<h1>Über mich (Demo)</h1><p>Blindtext… TÜV‑zertifizierter KI‑Manager, Marketing‑Pragmatiker, Winterliebhaber.</p>
-<h2>Timeline</h2><p>1990–2005: Aufbau Agentur. 2006–2020: internationale Kampagnen. 2021–heute: TÜV‑zertifizierter KI‑Manager.</p>
-</div></main>
-<div class="footer-note">© 2025 hohl.rocks</div>
+  <nav class="nav-chips">
+    <a href="/ueber-mich.html">Über mich</a>
+    <a href="/projekte.html">Projekte</a>
+    <a href="/kontakt.html">Kontakt</a>
+  </nav>
 
-<script>
-window.CHAT_ENDPOINT="https://hohlrocks-production.up.railway.app/chat";
-window.CHAT_ENDPOINT_SSE="https://hohlrocks-production.up.railway.app/chat-sse";
-</script>
+  
 
-<script defer src="/engine-sim-lite-v2.js?v=1"></script>
-<script defer src="/bubble-sound-lite.js?v=1"></script>
-<script defer src="/hero-shapes.js?v=1"></script>
-<script defer src="/chatbox-stream.js?v=1"></script>
-</body></html>
+  <main class="panel">
+    
+<h1>Über mich (Demo)</h1>
+<p>Blindtext… TÜV‑zertifizierter KI‑Manager, Marketing‑Pragmatiker, Winterliebhaber.</p>
+<h2>Timeline</h2>
+<p>1990–2005: Aufbau Agentur. 2006–2020: internationale Kampagnen. 2021–heute: TÜV‑zertifizierter KI‑Manager.</p>
+
+  </main>
+
+  <div id="chat-output" class="chat-output"></div>
+  <div class="chat-dock">
+    <input id="chat-input" placeholder="Frage stellen… (EU AI Act, KI-Sicherheit, Projekte)"/>
+    <button id="chat-send">Senden</button>
+  </div>
+
+  <div class="footer">© 2025 hohl.rocks</div>
+
+  <script defer src="/engine-sim-lite-v2.js?v=2"></script>
+  <script defer src="/bubble-sound-lite.js?v=2"></script>
+  
+  <script defer src="/chatbox-stream.js?v=2"></script>
+</body>
+</html>

@@ -1,9 +1,25 @@
+/*
+ * Bindet Sound-Start/Stop an Shapes und respektiert Autoplay-Policy
+ * - Klick auf Shape: Engine an (leichte Zufalls-RPM), optional Navigation
+ * - Klick ins Leere: Engine aus
+ */
 (function(){
-  const AC = window.AudioContext||window.webkitAudioContext; let ctx, engine, current=null;
-  function ensure(){ if(ctx) return true; if(!AC) return false; ctx=new AC(); engine=new (window.EngineSimLite||function(){}) (ctx); return !!engine; }
-  function resumeArm(){ const doc=document; const kick=()=>{ if(ctx?.state==='suspended') ctx.resume(); doc.removeEventListener('pointerdown',kick); doc.removeEventListener('keydown',kick); }; doc.addEventListener('pointerdown',kick); doc.addEventListener('keydown',kick); }
-  function startFor(el){ if(!ensure()) return; resumeArm(); if(current===el && engine.running){ engine.stop(); current=null; return; } engine.setRPM(800+Math.random()*500); engine.start(); current=el; }
-  function stop(){ if(engine) engine.stop(); current=null; }
-  function bind(){ const shapes=[...document.querySelectorAll('.shape')]; shapes.forEach(s=> s.addEventListener('click',(e)=>{e.stopPropagation(); startFor(s);},{passive:true})); document.addEventListener('click',e=>{ if(!e.target.closest('.shape')) stop(); }); }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else bind();
+  function bind(){
+    // arm Audio on first interaction
+    const arm = ()=>{ try{ EngineLite.arm(); }catch(e){} window.removeEventListener('pointerdown', arm); window.removeEventListener('keydown', arm); };
+    window.addEventListener('pointerdown', arm, {once:false});
+    window.addEventListener('keydown', arm, {once:false});
+
+    document.addEventListener('click', (ev)=>{
+      const el = ev.target.closest('.shape');
+      if(el){
+        const rpm = 1100 + Math.random()*1200;
+        EngineLite.start(rpm);
+      } else {
+        EngineLite.stop();
+      }
+    });
+  }
+  if(document.readyState!=="loading") bind();
+  else document.addEventListener('DOMContentLoaded', bind);
 })();

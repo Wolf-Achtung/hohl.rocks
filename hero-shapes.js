@@ -1,17 +1,81 @@
+/*
+ * Generiert weiche Neon-Shapes, die langsam morphen.
+ * Auf der Startseite verlinken Shapes zufällig auf die Unterseiten.
+ */
 (function(){
-  const LINKS=['ueber-mich.html','projekte.html','kontakt.html'];
-  const COLORS=[
-    {fill:'rgba(55,190,255,.18)',stroke:'rgba(0,255,160,.85)'},
-    {fill:'rgba(80,120,255,.18)',stroke:'rgba(0,255,200,.85)'},
-    {fill:'rgba(20,240,140,.18)',stroke:'rgba(0,255,120,.85)'},
-    {fill:'rgba(150,80,255,.18)',stroke:'rgba(0,240,200,.85)'}
+  const isHome = location.pathname.endsWith('/') || location.pathname.endsWith('/index.html') || location.pathname==='/';
+  const targets = ['/ueber-mich.html','/projekte.html','/kontakt.html'];
+
+  const palette = [
+    '#38bdf8', // sky
+    '#a78bfa', // violet
+    '#22d3ee', // cyan
+    '#10b981', // emerald
+    '#f472b6', // pink
+    '#84cc16'  // acid green
   ];
-  function rand(a,b){return Math.random()*(b-a)+a}
-  function p2(x,y){return `${x.toFixed(1)},${y.toFixed(1)}`}
-  function shapePath(cx,cy,r,sp){const pts=[];const ang=(Math.PI*2)/sp;for(let i=0;i<sp;i++){const rr=r*(0.7+Math.random()*0.6);const x=cx+Math.cos(i*ang)*rr*(0.8+Math.random()*0.4);const y=cy+Math.sin(i*ang)*rr*(0.8+Math.random()*0.4);pts.push([x,y]);}
-    let d=`M ${p2(pts[0][0],pts[0][1])}`;for(let i=1;i<pts.length;i++){const a=pts[(i-1+pts.length)%pts.length],b=pts[i];const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;d+=` Q ${p2(a[0],a[1])} ${p2(mx,my)}`;}const a=pts[pts.length-1],b=pts[0];const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;d+=` Q ${p2(a[0],a[1])} ${p2(mx,my)} Z`;return d;}
-  function spawn(layer){const el=document.createElement('div');el.className='shape hidden';el.style.left=`${rand(6,72)}vw`;el.style.top=`${rand(10,70)}vh`;el.style.width=`${rand(22,36)}vmin`;el.style.height=el.style.width;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');const path=document.createElementNS('http://www.w3.org/2000/svg','path');svg.setAttribute('viewBox','0 0 100 100');svg.appendChild(path);el.appendChild(svg);const c=COLORS[(Math.random()*COLORS.length)|0];path.setAttribute('fill',c.fill);path.setAttribute('stroke',c.stroke);path.setAttribute('d',shapePath(50,50,40,7+(Math.random()*4|0)));el.addEventListener('click',()=>{const url=LINKS[(Math.random()*LINKS.length)|0];window.location.href=url;});layer.appendChild(el);requestAnimationFrame(()=>el.classList.remove('hidden'));
-    const morph=()=>{path.setAttribute('d',shapePath(50,50,40,7+(Math.random()*4|0)));const c2=COLORS[(Math.random()*COLORS.length)|0];path.setAttribute('fill',c2.fill);path.setAttribute('stroke',c2.stroke)};const id=setInterval(morph,2600+Math.random()*1200);setTimeout(()=>{el.classList.add('hidden');setTimeout(()=>{el.remove();clearInterval(id)},600)},14000+Math.random()*6000);}
-  function run(){const layer=document.querySelector('.shapes-layer');if(!layer) return;setTimeout(()=>spawn(layer),1200);setInterval(()=>{if(document.hidden) return;const alive=layer.querySelectorAll('.shape').length;if(alive<5) spawn(layer)},2000);}
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
+
+  function randomBetween(a,b){return a + Math.random()*(b-a)}
+
+  function spawn(container){
+    const el = document.createElement('div');
+    el.className='shape';
+    el.style.color = palette[(Math.random()*palette.length)|0];
+    el.dataset.variant = Math.random()>.5 ? 'blob' : 'comet';
+    // random size & position
+    const size = randomBetween(16, 34);
+    el.style.width = size+'vmin'; el.style.height=size+'vmin';
+    el.style.left = randomBetween(4, 70)+'vw';
+    el.style.top = randomBetween(10, 68)+'vh';
+
+    // pointer
+    el.addEventListener('pointerenter', ()=>{
+      el.style.filter = 'drop-shadow(0 12px 34px rgba(0,0,0,.45)) drop-shadow(0 0 30px currentColor)';
+    });
+    el.addEventListener('pointerleave', ()=>{
+      el.style.filter = '';
+    });
+
+    // random linking on home only
+    if(isHome){
+      el.addEventListener('click', ()=>{
+        // kleiner Delay damit Sound hörbar "anspringt"
+        const target = targets[(Math.random()*targets.length)|0];
+        setTimeout(()=>{ location.href = target; }, 140);
+      });
+    }
+
+    container.appendChild(el);
+    // morph loop
+    const morph = ()=>{
+      const v = Math.random();
+      el.dataset.variant = v>.66 ? 'blob' : (v>.33 ? 'comet' : '');
+      // wander a little
+      el.style.left = randomBetween(2, 78)+'vw';
+      el.style.top  = randomBetween(8, 72)+'vh';
+      el.style.color = palette[(Math.random()*palette.length)|0];
+    };
+    const iv = setInterval(morph, randomBetween(3800, 6200));
+    // gentle appear
+    el.style.opacity = .0;
+    requestAnimationFrame(()=>{
+      el.style.transition = 'opacity 1.2s ease, transform 2.8s ease';
+      el.style.opacity = .95;
+    });
+    // remove occasionally and respawn to keep variety
+    setTimeout(()=>{
+      el.style.opacity = 0;
+      setTimeout(()=>{ el.remove(); spawn(container); }, 1400);
+      clearInterval(iv);
+    }, randomBetween(12000, 18000));
+  }
+
+  function init(){
+    const holder = document.getElementById('shapes');
+    if(!holder) return;
+    for(let i=0;i<5;i++) setTimeout(()=>spawn(holder), 600 + i*650);
+  }
+
+  if(document.readyState!=="loading") init();
+  else document.addEventListener('DOMContentLoaded', init);
 })();

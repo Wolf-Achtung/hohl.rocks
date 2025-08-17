@@ -1,32 +1,91 @@
+/*
+ * engine-sim-lite-v2.js
+ * Superleichter WebAudio-"Motor" mit sanfter Loudness-Kurve
+ * API: window.EngineLite.start(), .stop(), .isRunning()
+ */
 (function(){
-  class EngineSimLite {
-    constructor(ctx){
-      this.ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
-      this.master = this.ctx.createGain(); this.master.gain.value = 0.0001;
-      this.hp=this.ctx.createBiquadFilter(); this.hp.type='highpass'; this.hp.frequency.value=40;
-      this.lp=this.ctx.createBiquadFilter(); this.lp.type='lowpass'; this.lp.frequency.value=180;
-      this.comp=this.ctx.createDynamicsCompressor(); this.comp.threshold.value=-24; this.comp.knee.value=24; this.comp.ratio.value=6; this.comp.attack.value=0.003; this.comp.release.value=0.25;
-      this.master.connect(this.hp).connect(this.lp).connect(this.comp);
-      this.panner=this.ctx.createStereoPanner(); this.comp.connect(this.panner).connect(this.ctx.destination);
-      this.autoPan=this.ctx.createOscillator(); this.autoPan.frequency.value=0.05; this.autoPanGain=this.ctx.createGain(); this.autoPanGain.gain.value=0.6; this.autoPan.connect(this.autoPanGain).connect(this.panner.pan); this.autoPan.start();
-      this.lfo=this.ctx.createOscillator(); this.lfo.frequency.value=0.7; this.lfoGain=this.ctx.createGain(); this.lfoGain.gain.value=0.05; this.lfo.connect(this.lfoGain).connect(this.master.gain); this.lfo.start();
-      const buf=this.ctx.createBuffer(1,this.ctx.sampleRate*2,this.ctx.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*0.5;
-      this.noise=this.ctx.createBufferSource(); this.noise.buffer=buf; this.noise.loop=true; this.noiseGain=this.ctx.createGain(); this.noiseGain.gain.value=0.0001; this.noise.connect(this.noiseGain).connect(this.master); this.noise.start();
-      this.rpm=900; this.targetRPM=900; this.running=false; this.schedulerId=null; this.smootherId=null;
-    }
-    _thump(t){ const g=this.noiseGain.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value,t); g.linearRampToValueAtTime(0.8,t+0.002); g.exponentialRampToValueAtTime(0.05,t+0.12); }
-    _schedule(){ if(this.schedulerId) return; const ctx=this.ctx; let next=ctx.currentTime; const look=0.025,ahead=0.12;
-      const step=()=>{ if(!this.running){ this.schedulerId=null; return; }
-        while(next<ctx.currentTime+ahead){ const period=60/(this.rpm/2), close=period*0.35; this._thump(next); this._thump(next+close); next+=period*1.6; }
-        this.schedulerId=setTimeout(step,look*1000);
-      }; step();
-    }
-    _smoothRPM(){ const ease=()=>{ if(!this.running){ this.smootherId=null; return; } this.rpm += (this.targetRPM - this.rpm) * 0.08; this.smootherId=setTimeout(ease,60); }; ease(); }
-    setRPM(r){ this.targetRPM=Math.max(600, Math.min(2200, (r|0))); }
-    start(){ if(this.running) return; this.running=true; const now=this.ctx.currentTime; this.master.gain.cancelScheduledValues(now); this.master.gain.setValueAtTime(0.0001, now); this.master.gain.setTargetAtTime(0.28, now, 0.45); this._schedule(); this._smoothRPM(); }
-    stop(){ if(!this.running) return; const now=this.ctx.currentTime; this.master.gain.cancelScheduledValues(now); this.master.gain.setTargetAtTime(0.0001, now, 0.35); }
-    connect(node){ this.panner.disconnect(); this.panner.connect(node||this.ctx.destination); }
-    get output(){ return this.master; }
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  let ctx, master, osc, sub, noise, bp, shaper, running=false;
+
+  function ensure(){
+    if(ctx) return;
+    ctx = new Ctx();
+    master = ctx.createGain(); master.gain.value = 0.0; master.connect(ctx.destination);
+
+    // Sägezahn-Grundton
+    osc = ctx.createOscillator(); osc.type="sawtooth";
+    const oscGain = ctx.createGain(); oscGain.gain.value = 0.22;
+    osc.connect(oscGain);
+
+    // Sub-Oszillator (Herz des "Wummerns")
+    sub = ctx.createOscillator(); sub.type="square";
+    const subGain = ctx.createGain(); subGain.gain.value = 0.12;
+    sub.connect(subGain);
+
+    // Rauschanteil → Bandpass
+    const buffer = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<data.length;i++) data[i] = (Math.random()*2-1)*0.35;
+    noise = ctx.createBufferSource(); noise.buffer = buffer; noise.loop=true;
+    bp = ctx.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value = 140; bp.Q.value = 0.8;
+    const noiseGain = ctx.createGain(); noiseGain.gain.value = 0.18;
+    noise.connect(bp).connect(noiseGain);
+
+    // leichtes Saturation-Shaping
+    shaper = ctx.createWaveShaper();
+    shaper.curve = (function makeCurve(amount=30){
+      const n_samples = 44100; const curve = new Float32Array(n_samples);
+      const deg = Math.PI / 180;
+      for (let i = 0; i < n_samples; ++i) {
+        const x = i * 2 / n_samples - 1;
+        curve[i] = (3+amount)*x*20*deg / (Math.PI + amount*Math.abs(x));
+      }
+      return curve;
+    })(18);
+
+    // Routing
+    oscGain.connect(shaper);
+    subGain.connect(shaper);
+    noiseGain.connect(shaper);
+    shaper.connect(master);
+
+    osc.start(); sub.start(); noise.start();
   }
-  window.EngineSimLite=EngineSimLite;
+
+  function setRPM(rpm){
+    if(!ctx) return;
+    // Frequenzschätzung: 12-Zylinder-Feeling (rein synthetisch)
+    const fBase = 30 + (rpm-700)/75; // ~30–90 Hz
+    osc.frequency.setTargetAtTime(Math.max(28, fBase), ctx.currentTime, .06);
+    sub.frequency.setTargetAtTime(Math.max(14, fBase*0.5), ctx.currentTime, .08);
+    bp.frequency.setTargetAtTime(110 + (rpm-700)/10, ctx.currentTime, .09);
+  }
+
+  let rampTimer;
+  function start(rpm = 1400){
+    ensure();
+    if(running) { setRPM(rpm); return; }
+    running = true;
+    const now = ctx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(master.gain.value, now);
+    master.gain.linearRampToValueAtTime(.0, now+.01);
+    // sanfte Attack
+    master.gain.linearRampToValueAtTime(.18, now+.35);
+    master.gain.linearRampToValueAtTime(.24, now+.9);
+    setRPM(rpm);
+  }
+
+  function stop(){
+    if(!ctx || !running) return;
+    const now = ctx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    // sanfte Release
+    master.gain.setTargetAtTime(0.0, now, .28);
+    running = false;
+  }
+
+  function arm(){ if(!ctx) ensure(); if(ctx.state==="suspended") ctx.resume(); }
+
+  window.EngineLite = { start, stop, arm, isRunning: ()=>running };
 })();

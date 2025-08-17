@@ -1,31 +1,61 @@
-<!doctype html><html lang="de"><head><title>hohl.rocks – Projekte</title>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAA"/>
-<link rel="preload" as="video" href="/videos/desert_drive.mp4">
-<link rel="stylesheet" href="/site-frame.css?v=1">
-<link rel="stylesheet" href="/hero-shapes.css?v=1">
-<link rel="stylesheet" href="/projects-modern.css?v=1">
-</head><body>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>hohl.rocks – Projekte</title>
+  <link rel="preload" as="video" href="/videos/desert_drive.mp4">
+  <link rel="stylesheet" href="/site-frame.css?v=3"/>
+  <link rel="stylesheet" href="/projects-modern.css?v=3"/>
+  
+</head>
+<body>
+  <video class="bgvideo" id="bg" src="/videos/desert_drive.mp4" autoplay muted loop playsinline></video>
+  <div class="bg-vignette"></div>
 
-<div class="video-wrap"><video id="bg-video" autoplay loop muted playsinline src="/videos/desert_drive.mp4"></video></div>
-<div class="overlay-gradient"></div><div class="shapes-layer" aria-hidden="true"></div>
-<nav class="top-chips"><a href="/ueber-mich.html">Über mich</a><a href="/projekte.html">Projekte</a><a href="/kontakt.html">Kontakt</a></nav>
-<main class="main-wrap"><div class="panel">
-<h1>Projekte</h1><p>Leichtes Design, helle Karten, Neon‑Akzente.</p>
-<div class="projects-grid">
-<article class="card"><h3>ki-sicherheit.jetzt</h3><p>EU‑AI‑Act‑Compliance für den Mittelstand.</p><a href="#" target="_blank" rel="noopener">Website besuchen</a></article>
-<article class="card"><h3>achtung-live.jetzt</h3><p>Echtzeit‑Monitoring ohne Tracking.</p><a href="#" target="_blank" rel="noopener">Details</a></article>
-<article class="card"><h3>Nah</h3><p>KI‑gestützte Begegnungen & Community.</p><a href="#" target="_blank" rel="noopener">Coming soon</a></article>
-<article class="card"><h3>Weitere Idee</h3><p>Kurze Beschreibung mit Neon‑Highlights.</p><a href="#" target="_blank" rel="noopener">Mehr</a></article>
-</div></div></main>
-<div class="footer-note">© 2025 hohl.rocks</div>
+  <nav class="nav-chips">
+    <a href="/ueber-mich.html">Über mich</a>
+    <a href="/projekte.html">Projekte</a>
+    <a href="/kontakt.html">Kontakt</a>
+  </nav>
 
-<script>
-window.CHAT_ENDPOINT="https://hohlrocks-production.up.railway.app/chat";
-window.CHAT_ENDPOINT_SSE="https://hohlrocks-production.up.railway.app/chat-sse";
-</script>
+  
 
-<script defer src="/engine-sim-lite-v2.js?v=1"></script>
-<script defer src="/bubble-sound-lite.js?v=1"></script>
-<script defer src="/hero-shapes.js?v=1"></script>
-<script defer src="/chatbox-stream.js?v=1"></script>
-</body></html>
+  <main class="panel">
+    
+<h1>Projekte</h1>
+<p>Leichtes Design, helle Karten, Neon‑Akzente.</p>
+<section class="cards">
+  <article class="card">
+    <h3>ki-sicherheit.jetzt</h3>
+    <p>EU‑AI‑Act‑Compliance für den Mittelstand.</p>
+    <a class="button" href="https://ki-sicherheit.jetzt" target="_blank" rel="noopener">Website besuchen</a>
+  </article>
+  <article class="card">
+    <h3>achtung-live.jetzt</h3>
+    <p>Echtzeit‑Monitoring ohne Tracking.</p>
+    <a class="button" href="https://achtung.live" target="_blank" rel="noopener">Details</a>
+  </article>
+  <article class="card">
+    <h3>Nah</h3>
+    <p>KI‑gestützte Begegnungen & Community.</p>
+    <a class="button" href="#" target="_blank" rel="noopener">Bald</a>
+  </article>
+</section>
+
+  </main>
+
+  <div id="chat-output" class="chat-output"></div>
+  <div class="chat-dock">
+    <input id="chat-input" placeholder="Frage stellen… (EU AI Act, KI-Sicherheit, Projekte)"/>
+    <button id="chat-send">Senden</button>
+  </div>
+
+  <div class="footer">© 2025 hohl.rocks</div>
+
+  <script defer src="/engine-sim-lite-v2.js?v=2"></script>
+  <script defer src="/bubble-sound-lite.js?v=2"></script>
+  
+  <script defer src="/chatbox-stream.js?v=2"></script>
+</body>
+</html>
