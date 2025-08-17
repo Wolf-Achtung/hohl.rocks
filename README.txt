@@ -1,1 +1,0 @@
-Kopiere Dateien ins Webroot. Video unter /videos/desert_drive.mp4 bereitstellen. Entferne alte bubble-sound-bind.js-Referenzen.
