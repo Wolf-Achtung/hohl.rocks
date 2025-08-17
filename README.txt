@@ -1,1 +1,1 @@
-Alle Seiten nutzen das Wüsten-Video (/videos/desert_drive.mp4) als globalen Background. Die Inhalte liegen in .content-shell (Glass-Schicht). Startseite: nur Bubbles. Long-Press auf eine Bubble navigiert weich zu einer Unterseite; Klick bleibt für Sound reserviert. Das Chatfeld bleibt unten fix (setze optional window.CHAT_ENDPOINT).
+Kopiere Dateien ins Webroot. Video unter /videos/desert_drive.mp4 bereitstellen. Entferne alte bubble-sound-bind.js-Referenzen.
