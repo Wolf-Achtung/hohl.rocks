@@ -1,9 +1,11 @@
-/*! harley-lite.js — tiny V‑Twin ambience (WebAudio)
+/*! harley-lite.js — tiny V‑Twin ambience (WebAudio) — v2
  *  - Start: HarleyLite.startAmbient(rpm=900)
  *  - Blip:  HarleyLite.blip()  // kurzer RPM‑Anstieg
  *  - Stop:  HarleyLite.stop()
  *  - isRunning(): boolean
- *  Hinweis: startet nur nach User‑Gesture (Browser‑Policy).
+ *  - Autostart nach Navigation: Wenn sessionStorage.harley_wants==='1', wartet die Lib auf
+ *    die erste User‑Geste (pointerdown/keydown) und startet dann wieder (Autoboot).
+ *  Hinweis: WebAudio erfordert User-Geste pro Page-Load; Autoboot löst das nutzerfreundlich.
  */
 (function(){
   const ctxState = { ctx:null, master:null, timer:null, nextTime:0, running:false, rpm:900, noiseBuf:null };
@@ -56,29 +58,37 @@
 
   function thump(t){
     const ctx = ctxState.ctx;
-    // noise burst
+    // noise burst (exhaust character)
     const n = ctx.createBufferSource(); n.buffer = ctxState.noiseBuf;
-    const nf = ctx.createBiquadFilter(); nf.type='lowpass'; nf.frequency.value = 160; nf.Q.value=0.7;
-    const g = ctx.createGain(); g.gain.value = 0.0;
-    n.connect(nf); nf.connect(g); g.connect(ctxState.master);
+    const nf_lp = ctx.createBiquadFilter(); nf_lp.type='lowpass'; nf_lp.frequency.value = 200; nf_lp.Q.value=0.7;
+    const nf_bp = ctx.createBiquadFilter(); nf_bp.type='bandpass'; nf_bp.frequency.value = 190; nf_bp.Q.value=1.1; // Midrange for mobile audibility
+    const gN = ctx.createGain(); gN.gain.value = 0.0;
+    n.connect(nf_lp); nf_lp.connect(nf_bp); nf_bp.connect(gN); gN.connect(ctxState.master);
 
-    // add low sine for body
-    const o = ctx.createOscillator(); o.type='sine'; o.frequency.value = 55 + Math.random()*6; // 55–61 Hz
-    const og = ctx.createGain(); og.gain.value = 0.0;
-    o.connect(og); og.connect(ctxState.master);
+    // low + 2nd harmonic for body on small speakers
+    const o1 = ctx.createOscillator(); o1.type='sine'; o1.frequency.value = 58; // ~A1
+    const o2 = ctx.createOscillator(); o2.type='sine'; o2.frequency.value = 116; // 2nd harmonic
+    const g1 = ctx.createGain(); g1.gain.value = 0.0;
+    const g2 = ctx.createGain(); g2.gain.value = 0.0;
+    o1.connect(g1); g1.connect(ctxState.master);
+    o2.connect(g2); g2.connect(ctxState.master);
 
-    // envelope
-    const a = 0.008, d = 0.14;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.9, t + a);
-    g.gain.exponentialRampToValueAtTime(0.0008, t + d);
+    // envelopes
+    const a = 0.010, d = 0.18; // slightly longer on mobile
+    gN.gain.setValueAtTime(0, t);
+    gN.gain.linearRampToValueAtTime(0.9, t + a);
+    gN.gain.exponentialRampToValueAtTime(0.001, t + d);
 
-    og.gain.setValueAtTime(0, t);
-    og.gain.linearRampToValueAtTime(0.35, t + a*1.2);
-    og.gain.exponentialRampToValueAtTime(0.0008, t + d*1.1);
+    g1.gain.setValueAtTime(0, t);
+    g1.gain.linearRampToValueAtTime(0.30, t + a*1.1);
+    g1.gain.exponentialRampToValueAtTime(0.001, t + d*1.0);
 
-    n.start(t); o.start(t);
-    n.stop(t + d + 0.02); o.stop(t + d + 0.04);
+    g2.gain.setValueAtTime(0, t);
+    g2.gain.linearRampToValueAtTime(0.18, t + a*1.1);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + d*0.9);
+
+    n.start(t); o1.start(t); o2.start(t);
+    n.stop(t + d + 0.03); o1.stop(t + d + 0.05); o2.stop(t + d + 0.05);
   }
 
   function startAmbient(rpm){
@@ -89,10 +99,10 @@
     ctxState.rpm = rpm || 900;
     ctxState.running = true;
     ctxState.nextTime = ctx.currentTime + 0.05;
-    // fade in
+    // fade in (etwas höher für Mobilgeräte)
     ctxState.master.gain.cancelScheduledValues(ctx.currentTime);
     ctxState.master.gain.setValueAtTime(ctxState.master.gain.value, ctx.currentTime);
-    ctxState.master.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 1.2);
+    ctxState.master.gain.linearRampToValueAtTime(0.24, ctx.currentTime + 1.0);
 
     // scheduler
     ctxState.timer = setInterval(schedule, 25);
@@ -100,7 +110,6 @@
 
   function setRpm(rpm){ ctxState.rpm = Math.max(500, Math.min(2500, rpm|0)); }
   function blip(){
-    // short rpm rise
     const r0 = ctxState.rpm;
     setRpm(Math.min(1700, r0 + 500));
     setTimeout(()=> setRpm(r0), 1200);
@@ -109,14 +118,25 @@
     if(!ctxState.ctx) return;
     const ctx = ctxState.ctx;
     if(ctxState.timer){ clearInterval(ctxState.timer); ctxState.timer=null; }
-    // fade out
     const t = ctx.currentTime;
     ctxState.master.gain.cancelScheduledValues(t);
     ctxState.master.gain.setValueAtTime(ctxState.master.gain.value, t);
-    ctxState.master.gain.linearRampToValueAtTime(0.0001, t + 1.2);
+    ctxState.master.gain.linearRampToValueAtTime(0.0001, t + 1.0);
     ctxState.running = false;
   }
   function isRunning(){ return !!ctxState.running; }
 
+  // Expose
   window.HarleyLite = { startAmbient, setRpm, blip, stop, isRunning };
+
+  // Autoboot on first gesture if user opted-in previously
+  document.addEventListener('DOMContentLoaded', ()=>{
+    try{
+      if(sessionStorage.getItem('harley_wants')==='1'){
+        const boot = ()=>{ try{ startAmbient(900); }catch{}; window.removeEventListener('pointerdown', boot); window.removeEventListener('keydown', boot); };
+        window.addEventListener('pointerdown', boot, {once:true});
+        window.addEventListener('keydown', boot, {once:true});
+      }
+    }catch{}
+  });
 })();

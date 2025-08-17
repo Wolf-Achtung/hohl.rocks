@@ -123,14 +123,16 @@
     // Click-Navigation + Sound (nur Home)
     if(isHome){
       const href = (Math.random() < 0.34) ? '/ueber-mich.html' : (Math.random() < 0.6 ? '/projekte.html' : '/kontakt.html');
+      
       el.addEventListener('click', ()=>{
         try{
+          sessionStorage.setItem('harley_wants','1');
           if(window.HarleyLite && !window.HarleyLite.isRunning()){ window.HarleyLite.startAmbient(900); }
-          else if(window.HarleyLite){ window.HarleyLite.blip && window.HarleyLite.blip(); }
+          else if(window.HarleyLite && window.HarleyLite.isRunning()){ window.HarleyLite.blip && window.HarleyLite.blip(); }
         }catch{}
-        setTimeout(()=>location.href=href, 180);
+        setTimeout(()=>location.href=href, 650);
       });
-      el.setAttribute('role','link'); el.setAttribute('tabindex','0'); el.setAttribute('aria-label','Navigation');
+el.setAttribute('role','link'); el.setAttribute('tabindex','0'); el.setAttribute('aria-label','Navigation');
       el.addEventListener('keydown', ev=>{ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); el.click(); } });
     }
 
