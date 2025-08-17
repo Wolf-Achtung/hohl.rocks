@@ -148,7 +148,7 @@
   window.addEventListener('DOMContentLoaded', () => {
     EngineSim.init({
       mode: 'motorcycle',             // 'v12' | 'motorcycle'
-      rpm: 1800,
+      rpm: 1000,
       volume: 0.32,
       attachToggle: true,      // erzeugt #sound-toggle, wenn keiner existiert
       autoStartOnGesture: true // startet beim ersten Pointerdown/Key
@@ -195,12 +195,11 @@
   // Ambient Preset pro Seite (optional)
   (function(){
     const map = {
-      '/':             'blue-noon',   // Start: entspannt, hell
-      '/index.html':   'blue-noon',
+      '/':             'motorcycle',   // Start: entspannt, hell
       '/ueber-mich.html': 'highway-dawn', // arktisch, klar
       '/projekte.html':   'blue-noon',    // neutral, ruhig
       '/kontakt.html':    'highway-dawn', // warm-hell (Portrait-Seite)
-      '/prompts.html':    'night-cruise'  // etwas satter fürs Prompt-Spiel
+l
     };
     window.DESERT_AUDIO_PRESET = map[location.pathname] || 'blue-noon';
   })();
