@@ -17,16 +17,16 @@
     <a href="/kontakt.html" data-soft>Kontakt</a>
   </nav>
 
-  
-<!-- Startseite: bewusst ohne Content-Shell – nur Shapes über Video -->
-<div class="content-shell" style="opacity:.0;pointer-events:none;height:0;margin:0;padding:0;border:0;"></div>
-
+  <div class="content-shell" style="opacity:.0;pointer-events:none;height:0;margin:0;padding:0;border:0;"></div>
 
   <script>window.BG_VIDEO_SRC='/videos/desert_drive.mp4';</script>
   <script defer src="/video-bg.js?v=1"></script>
   <script defer src="/soft-router.js?v=1"></script>
-  <script>window.CHAT_ENDPOINT=null;</script>
-  <script defer src="/chatbox.js?v=1"></script>
+
+  <!-- Variant A: endpoint is set BEFORE chatbox.js -->
+  <script>window.CHAT_ENDPOINT="https://hohlrocks-production.up.railway.app/chat";</script>
+  <script defer src="/chatbox.js?v=2"></script>
+
   <script defer src="/hero-shapes.js?v=1"></script>
   <script defer src="/bubble-random-nav.js?v=1"></script>
   <script defer src="/bubble-sound-bind.js?v=1"></script>

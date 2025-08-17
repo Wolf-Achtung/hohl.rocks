@@ -17,24 +17,16 @@
     <a href="/kontakt.html" data-soft>Kontakt</a>
   </nav>
 
-  
-<main class="content-shell">
-  <h1 class="h1-gradient">Kontakt</h1>
-  <p>Lass uns gemeinsam die KI‑Zukunft gestalten. Schreibe mir eine Nachricht – ich melde mich!</p>
-  <form onsubmit="alert('Demo: Nachricht gesendet');return false" style="display:grid;gap:12px;max-width:620px">
-    <input placeholder="Ihr Name" style="padding:.85rem 1rem;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.35);color:#e9fbff">
-    <input placeholder="Ihre E‑Mail" style="padding:.85rem 1rem;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.35);color:#e9fbff">
-    <textarea rows="5" placeholder="Ihre Nachricht" style="padding:.85rem 1rem;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.35);color:#e9fbff"></textarea>
-    <button class="btn" type="submit">Absenden</button>
-  </form>
-</main>
-
+  <main class="content-shell"><h1 class="h1-gradient">Kontakt (Demo)</h1><p>Blindtext…</p></main>
 
   <script>window.BG_VIDEO_SRC='/videos/desert_drive.mp4';</script>
   <script defer src="/video-bg.js?v=1"></script>
   <script defer src="/soft-router.js?v=1"></script>
-  <script>window.CHAT_ENDPOINT=null;</script>
-  <script defer src="/chatbox.js?v=1"></script>
+
+  <!-- Variant A: endpoint is set BEFORE chatbox.js -->
+  <script>window.CHAT_ENDPOINT="https://hohlrocks-production.up.railway.app/chat";</script>
+  <script defer src="/chatbox.js?v=2"></script>
+
   <script defer src="/hero-shapes.js?v=1"></script>
   <script defer src="/bubble-random-nav.js?v=1"></script>
   <script defer src="/bubble-sound-bind.js?v=1"></script>
