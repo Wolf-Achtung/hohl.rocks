@@ -131,8 +131,17 @@
       window.OPENAI_API_KEY = '';
     </script>
     <script src="script.js"></script>
-<script>window.DESERT_AUDIO_PRESET = 'night-cruise';</script>
-<link rel="stylesheet" href="audio-generative.css" />
-<script defer src="audio-generative.js"></script>
+<script defer src="engine-sim.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    EngineSim.init({
+      mode: 'v12',       // 'v12' | 'motorcycle'
+      rpm: 1800,         // 600–6000 sinnvoll
+      volume: 0.35,
+      attachToggle: true // folgt deinem #sound-toggle
+    });
+  });
+</script>
+
   </body>
 </html>
