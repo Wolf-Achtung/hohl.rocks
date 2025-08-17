@@ -1,27 +1,10 @@
-Desert Audio Pack – Generative WebAudio
-========================================
-
-Inhalt
-------
-- audio-generative.js   → Ambient Pad + Wind + Doppler Whoosh, komplett generativ (keine Dateien)
-- audio-generative.css  → Stil für den Sound-Toggle
-- README.txt            → diese Datei
-
-Einbindung
-----------
-1) Dateien in dein Webroot legen (z. B. neben index.html).
-2) In deinem HTML (am Ende von <body>):
-   <link rel="stylesheet" href="audio-generative.css">
-   <script defer src="audio-generative.js"></script>
-
-Funktion
---------
-- Der Button „Sound: Off/On“ wird automatisch unten links eingefügt.
-- Beim ersten User-Interaktions-Event wird das Audio initialisiert (Autoplay-Policy).
-- Ein harmonischer, distanzierter, aber präsenter Ambient-Pad-Sound + leises Windrauschen laufen in Loop.
-- Beim Klick auf Elemente mit der Klasse .shape wird ein kurzer Doppler-Whoosh getriggert.
-
-Feintuning
-----------
-- In audio-generative.js kannst du CFG.pad / CFG.wind / CFG.whoosh anpassen (Lautstärken, Filter, Zeiten).
-- Für andere Seiten-Stimmungen kannst du rootHz, intervals oder Filter-Cutoffs variieren.
+Gold-Standard Patch
+1) Dateien ins Web-Root.
+2) In jede Seite (HEAD):
+   <link rel="stylesheet" href="/site-frame.css?v=1">
+   <link rel="stylesheet" href="/chatbox.css?v=1">
+3) Vor </body>:
+   <script>window.BG_VIDEO_SRC='/media/desert-drive.mp4';</script>
+   <script defer src="/video-bg.js?v=1"></script>
+   <script>window.CHAT_ENDPOINT='https://<dein-railway-endpoint>/chat';</script>
+   <script defer src="/chatbox.js?v=1"></script>

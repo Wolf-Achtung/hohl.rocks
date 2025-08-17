@@ -1,0 +1,10 @@
+.chat-dock{position:fixed;left:50%;transform:translateX(-50%);bottom:1.25rem;z-index:9999;display:flex;gap:.5rem;align-items:center;
+  padding:.5rem;border-radius:999px;background:linear-gradient(135deg, rgba(0,255,170,.16), rgba(5,179,255,.16));
+  border:1px solid rgba(57,255,20,.35);backdrop-filter:blur(8px) saturate(120%);
+  box-shadow:0 8px 26px rgba(0,0,0,.25), inset 0 0 22px rgba(5,179,255,.12);}
+.chat-dock input{width:min(62vw,540px);background:rgba(0,0,0,.35);color:#e9fbff;border:1px solid rgba(255,255,255,.18);
+  border-radius:999px;padding:.7rem 1rem;outline:none;font:500 14px/1 Inter,system-ui;}
+.chat-dock button{padding:.7rem .95rem;border-radius:999px;border:1px solid rgba(57,255,20,.35);background:#0f172a;color:#e9fbff;
+  font:700 13px/1 Inter,system-ui;cursor:pointer;}
+.chat-dock button:hover{box-shadow:0 0 0 3px rgba(57,255,20,.18) inset}
+@media (max-width:540px){.chat-dock input{width:64vw}}
