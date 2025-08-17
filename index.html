@@ -38,6 +38,11 @@
     /* singlepage-hide-nav */
     header nav, .top-nav, .site-nav, .header-links, .nav, .top-links { display:none !important; }
   </style>
+
+  <style>
+    /* hide chips nav */
+    nav.chips, .chips{ display:none !important; visibility:hidden !important; }
+  </style>
 </head>
 <body>
 
@@ -60,7 +65,7 @@
   <script src="/bubble-sound-lite.js"></script>
   <script src="/harley-lite.js?v=1"></script>
   <script src="/hero-shapes.js?v=sp1"></script>
-  <script src="/ticker.js?v=1"></script>
+  <script src="/ticker.js?v=2"></script>
 
   <!-- Chat Dock -->
   <div class="chat-dock">
@@ -72,6 +77,13 @@
   <!-- Chat client -->
   <script src="/js/chatbox-stream.js"></script>
   <script>ChatDock.initChatDock({inputSel:'#chat-input',buttonSel:'#chat-send',outputSel:'#chat-output',systemPrompt:'Antworte präzise, deutsch, knapp, Fokus: KI-Management & EU AI Act.'});</script>
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      try{ document.querySelectorAll('nav.chips, .chips').forEach(el=>el.remove()); }catch{}
+    });
+  </script>
 
 </body>
 </html>
