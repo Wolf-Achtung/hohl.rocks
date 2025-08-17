@@ -3,44 +3,68 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>hohl.rocks – Über mich</title>
+  <title>hohl.rocks</title>
+  <!-- Core styles (optional if bereits vorhanden) -->
+  <link rel="stylesheet" href="/site-frame.css">
+  <link rel="stylesheet" href="/projects-modern.css">
+  <!-- Chat styles -->
+  <link rel="stylesheet" href="/css/chatbox.css">
+  <!-- Video Preload -->
   <link rel="preload" as="video" href="/videos/desert_drive.mp4">
-  <link rel="stylesheet" href="/site-frame.css?v=3"/>
-  <link rel="stylesheet" href="/projects-modern.css?v=3"/>
-  
+  <!-- Local overrides: Chat rechts unten, Panels heller falls nötig -->
+  <style>
+    /* Ensure video layer is always visible */
+    .bg-video, #bg-video { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; }
+    .overlay-gradient { position:fixed; inset:0; z-index:-1; pointer-events:none; }
+    /* Chips-Navigation top-right */
+    .chips { position:fixed; top:14px; right:16px; display:flex; gap:10px; z-index:10; }
+    .chips a { text-decoration:none; font-weight:700; padding:10px 14px; border-radius:999px; backdrop-filter: blur(8px);
+               color:#eaf7ff; background:rgba(10,16,22,.55); border:1px solid rgba(255,255,255,.18); }
+    /* Light glass panel baseline, if your CSS is missing */
+    .panel { background: rgba(255,255,255,.42); border:1px solid rgba(255,255,255,.18); border-radius:22px;
+              backdrop-filter: blur(10px); box-shadow: 0 10px 40px rgba(0,0,0,.32); padding:24px; width:min(1080px,92vw); margin:120px auto; }
+    /* Chat dock bottom-right override */
+    .chat-dock { left:auto !important; right:24px !important; width:auto; }
+    /* Prevent vertical scroll on home only (will be added inline there) */
+  </style>
+  <script>
+    // Railway-Backend für den Chat
+    window.HOHLROCKS_CHAT_BASE = "https://hohlrocks-production.up.railway.app";
+  </script>
 </head>
 <body>
-  <video class="bgvideo" id="bg" src="/videos/desert_drive.mp4" autoplay muted loop playsinline></video>
-  <div class="bg-vignette"></div>
 
-  <nav class="nav-chips">
-    <a href="/ueber-mich.html">Über mich</a>
+  <div class="video-wrap">
+    <video id="bg-video" class="bg-video" src="/videos/desert_drive.mp4" autoplay muted loop playsinline></video>
+  </div>
+  <div class="overlay-gradient"></div>
+
+  <nav class="chips">
+    <a href="/index.html">Start</a>
     <a href="/projekte.html">Projekte</a>
     <a href="/kontakt.html">Kontakt</a>
   </nav>
 
-  
-
-  <main class="panel">
-    
-<h1>Über mich (Demo)</h1>
-<p>Blindtext… TÜV‑zertifizierter KI‑Manager, Marketing‑Pragmatiker, Winterliebhaber.</p>
-<h2>Timeline</h2>
-<p>1990–2005: Aufbau Agentur. 2006–2020: internationale Kampagnen. 2021–heute: TÜV‑zertifizierter KI‑Manager.</p>
-
+  <main class="panel" role="main" aria-label="Über mich">
+    <h1>Über mich</h1>
+    <p>Blindtext… TÜV‑zertifizierter KI‑Manager, Marketing‑Pragmatiker, Winterliebhaber.</p>
+    <h2>Timeline</h2>
+    <p>1990–2005: Aufbau Agentur. 2006–2020: internationale Kampagnen. 2021–heute: TÜV‑zertifizierter KI‑Manager.</p>
   </main>
 
-  <div id="chat-output" class="chat-output"></div>
+  <script src="/engine-sim-lite-v2.js"></script>
+  <script src="/bubble-sound-lite.js"></script>
+
+  <!-- Chat Dock -->
   <div class="chat-dock">
-    <input id="chat-input" placeholder="Frage stellen… (EU AI Act, KI-Sicherheit, Projekte)"/>
+    <input id="chat-input" placeholder="Frage stellen… (KI, EU AI Act, Projekte)" autocomplete="off"/>
     <button id="chat-send">Senden</button>
   </div>
+  <div id="chat-output" class="chat-output"></div>
 
-  <div class="footer">© 2025 hohl.rocks</div>
+  <!-- Chat client -->
+  <script src="/js/chatbox-stream.js"></script>
+  <script>ChatDock.initChatDock({inputSel:'#chat-input',buttonSel:'#chat-send',outputSel:'#chat-output',systemPrompt:'Antworte präzise, deutsch, knapp, Fokus: KI-Management & EU AI Act.'});</script>
 
-  <script defer src="/engine-sim-lite-v2.js?v=2"></script>
-  <script defer src="/bubble-sound-lite.js?v=2"></script>
-  
-  <script defer src="/chatbox-stream.js?v=2"></script>
 </body>
 </html>
