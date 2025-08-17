@@ -169,7 +169,68 @@
   window.addEventListener('pointerdown', _hideCTA, {once:true});
   window.addEventListener('keydown', _hideCTA, {once:true});
 </script>
+<!-- Audio-Dock -->
+<div class="engine-dock" role="region" aria-label="Engine Controls">
+  <!-- Falls schon vorhanden: dieser Button wird einfach weiterbenutzt -->
+  <button id="sound-toggle" class="sound-toggle" type="button" aria-pressed="false">Sound: Off</button>
 
+  <div class="engine-ui" id="engineUI">
+    <div class="seg" role="radiogroup" aria-label="Engine Mode">
+      <label class="seg-item">
+        <input type="radio" name="mode" value="v12" checked>
+        <span>V12</span>
+      </label>
+      <label class="seg-item">
+        <input type="radio" name="mode" value="motorcycle">
+        <span>Bike</span>
+      </label>
+    </div>
+
+    <label class="rpm" for="rpmRange">RPM</label>
+    <input id="rpmRange" type="range" min="600" max="6000" step="50" value="1800" />
+    <output id="rpmOut" for="rpmRange">1800</output>
+  </div>
+</div>
+<script>
+  // Ambient Preset pro Seite (optional)
+  (function(){
+    const map = {
+      '/':             'blue-noon',   // Start: entspannt, hell
+      '/index.html':   'blue-noon',
+      '/ueber-mich.html': 'highway-dawn', // arktisch, klar
+      '/projekte.html':   'blue-noon',    // neutral, ruhig
+      '/kontakt.html':    'highway-dawn', // warm-hell (Portrait-Seite)
+      '/prompts.html':    'night-cruise'  // etwas satter fürs Prompt-Spiel
+    };
+    window.DESERT_AUDIO_PRESET = map[location.pathname] || 'blue-noon';
+  })();
+
+  // EngineSim initialisieren (nutzt denselben Sound-Toggle)
+  window.addEventListener('DOMContentLoaded', () => {
+    EngineSim.init({
+      mode: 'v12',
+      rpm: 1800,
+      volume: 0.32,
+      attachToggle: true,      // erstellt #sound-toggle falls nicht vorhanden
+      autoStartOnGesture: true // startet beim ersten Klick/Key
+    });
+
+    const rpm = document.getElementById('rpmRange');
+    const out = document.getElementById('rpmOut');
+    const modes = document.querySelectorAll('input[name="mode"]');
+
+    rpm.addEventListener('input', e => {
+      out.textContent = e.target.value;
+      EngineSim.setRPM(+e.target.value);
+    });
+    modes.forEach(r => r.addEventListener('change', e => {
+      EngineSim.setMode(e.target.value);
+    }));
+
+    // Falls schon aktiviert, UI sofort synchronisieren
+    out.textContent = rpm.value;
+  });
+</script>
 
   </body>
 </html>
