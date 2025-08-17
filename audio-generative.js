@@ -3,7 +3,7 @@
    Adds a floating Sound toggle and supports *presets* for different moods.
 
    Usage (choose a preset per page before loading the script):
-     <script>window.DESERT_AUDIO_PRESET = 'highway-dawn';</script>
+     <script>window.DESERT_AUDIO_PRESET = 'night-cruise';</script>
      <link rel="stylesheet" href="audio-generative.css">
      <script defer src="audio-generative.js"></script>
 
