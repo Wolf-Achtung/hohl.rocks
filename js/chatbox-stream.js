@@ -90,13 +90,16 @@
     }
 
     async function send(){
+      // Notify listeners that a message is being sent
+      try { window.dispatchEvent(new CustomEvent('chat:send', { detail: { } })); } catch{};
+
       const msg = (input.value||'').trim(); if(!msg) return;
       input.value=''; button.disabled=true;
       bubble('user', msg);
       const abot = bubble('assistant', '');
       let acc='';
-      const onDelta = d => { acc += d; abot.textContent = acc; output.classList.add('show'); output.scrollTop = output.scrollHeight; };
-      const onDone  = () => { button.disabled=false; };
+      const onDelta = d => {  acc += d; abot.textContent = acc; output.classList.add('show'); output.scrollTop = output.scrollHeight;  try { window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: d } })); } catch{}; };
+      const onDone = () => {  button.disabled=false;  try { window.dispatchEvent(new CustomEvent('chat:done', { detail: { } })); } catch{}; };
 
       try{
         await streamSSE({ message: msg, systemPrompt: system, onDelta, onDone });
@@ -117,5 +120,5 @@
     input.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
   }
 
-  window.ChatDock = { initChatDock };
+  window.ChatDock = Object.assign(window.ChatDock||{}, { initChatDock });
 })();
