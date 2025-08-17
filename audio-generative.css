@@ -1,27 +1,17 @@
-/* desert-audio-pack / audio-generative.css
-   Styling for the floating sound toggle. Matches neon/icy aesthetic. */
+/* desert-audio-pack v2 / audio-generative.css */
 .sound-toggle{
-  position: fixed;
-  left: 1rem; bottom: 1rem;
-  z-index: 10000;
-  padding: .48rem .9rem;
-  border-radius: 999px;
+  position: fixed; left: 1rem; bottom: 1rem; z-index: 10000;
+  padding: .48rem .9rem; border-radius: 999px;
   border: 1px solid rgba(57,255,20,.35);
   color: #E9FBFF;
-  background: linear-gradient(135deg, rgba(0,255,170,.18), rgba(0,128,255,.18));
+  background: linear-gradient(135deg, rgba(0,255,170,.16), rgba(0,128,255,.16));
   box-shadow: 0 6px 22px rgba(0,255,170,.10), inset 0 0 24px rgba(0,128,255,.10);
   backdrop-filter: blur(8px) saturate(120%);
   font: 600 13px/1.1 "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  letter-spacing: .2px;
-  transition: .25s ease;
+  letter-spacing: .2px; transition: .25s ease;
 }
-.sound-toggle:hover{
-  transform: translateY(-1px);
-  border-color: rgba(57,255,20,.55);
-  background: linear-gradient(135deg, rgba(0,255,170,.30), rgba(0,128,255,.28));
-  box-shadow: 0 10px 28px rgba(0,255,170,.15), inset 0 0 32px rgba(0,128,255,.14);
-}
+.sound-toggle:hover{ transform: translateY(-1px); border-color: rgba(57,255,20,.55); }
 .sound-toggle[aria-pressed="true"]{
   border-color: rgba(57,255,20,.6);
-  background: linear-gradient(135deg, rgba(0,255,170,.34), rgba(0,128,255,.34));
+  background: linear-gradient(135deg, rgba(0,255,170,.30), rgba(0,128,255,.30));
 }
