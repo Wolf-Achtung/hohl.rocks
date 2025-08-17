@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wolf Hohl – KI‑Manager &amp; Visionär</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <!-- Import a modern sans serif and a monospace for glitch effect -->
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;700&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -131,17 +132,42 @@
       window.OPENAI_API_KEY = '';
     </script>
     <script src="script.js"></script>
-<script defer src="engine-sim.js"></script>
+<!-- 1) Ambient-Preset festlegen (kannst du je Seite ändern) -->
+<script>window.DESERT_AUDIO_PRESET = 'blue-noon';</script>
+
+<!-- 2) Ambient laden -->
+<link rel="stylesheet" href="/audio-generative.css?v=2">
+<script defer src="/audio-generative.js?v=2"></script>
+
+<!-- 3) Engine laden -->
+<script defer src="/engine-sim.js?v=fix"></script>
+
+<!-- 4) Gemeinsamer Start: Engine sim hängt sich an den gleichen Toggle
+       und kann optional automatisch beim 1. Klick/Key starten -->
 <script>
   window.addEventListener('DOMContentLoaded', () => {
     EngineSim.init({
-      mode: 'v12',            // 'v12' | 'motorcycle'
+      mode: 'v12',             // 'v12' | 'motorcycle'
       rpm: 1800,
-      volume: 0.35,
-      attachToggle: true,     // erzeugt #sound-toggle, wenn keiner existiert
-      autoStartOnGesture: false // true = startet beim ersten Klick/Key
+      volume: 0.32,
+      attachToggle: true,      // erzeugt #sound-toggle, wenn keiner existiert
+      autoStartOnGesture: true // startet beim ersten Pointerdown/Key
     });
   });
+</script>
+<style>
+  .audio-cta{position:fixed;inset:auto auto 1rem 1rem;z-index:9999;
+    padding:.6rem .9rem;border-radius:999px;border:1px solid rgba(57,255,20,.35);
+    background:linear-gradient(135deg,rgba(0,255,170,.16),rgba(0,128,255,.16));
+    color:#e9fbff;font:600 13px/1.1 Inter,system-ui;backdrop-filter:blur(8px)}
+  .audio-cta.hide{display:none}
+</style>
+<div id="audioCTA" class="audio-cta">Klick für Sound</div>
+<script>
+  const _cta = document.getElementById('audioCTA');
+  const _hideCTA = ()=> _cta && _cta.classList.add('hide');
+  window.addEventListener('pointerdown', _hideCTA, {once:true});
+  window.addEventListener('keydown', _hideCTA, {once:true});
 </script>
 
 
