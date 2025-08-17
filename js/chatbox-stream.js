@@ -26,7 +26,7 @@
     const res = await fetch(CHAT_BASE + SSE_PATH, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message, systemPrompt, model }),
+      body: JSON.stringify({ message, systemPrompt, model, image }),
       mode:'cors'
     });
     if (!res.ok || !res.body) throw new Error('SSE failed');
@@ -56,11 +56,11 @@
     onDone && onDone();
   }
 
-  async function fetchJSON({ message, systemPrompt, model }) {
+  async function fetchJSON({ message, systemPrompt, model, image }) {
     const res = await fetch(CHAT_BASE + JSON_PATH, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message, systemPrompt, model }),
+      body: JSON.stringify({ message, systemPrompt, model, image }),
       mode:'cors'
     });
     if (!res.ok) throw new Error('JSON failed');
@@ -116,9 +116,45 @@
       }
     }
 
-    button.addEventListener('click', e=>{ e.preventDefault(); send(); });
+    
+    // --- NEW: sendAttachment({dataUrl, prompt}) — prefers JSON route for images ---
+    async function sendAttachment({ dataUrl, prompt }){
+      try { window.dispatchEvent(new CustomEvent('chat:send', { detail: { hasImage:true } })); } catch{};
+      if(!dataUrl) return;
+      const msg = (prompt||'Bitte bewerte dieses Bild seriös und knappe 5 Punkte, inkl. möglicher nächsten Schritte.');
+      button.disabled=true;
+
+      // User bubble with preview
+      const ub = bubble('user', '');
+      const imgWrap = el('div', {class:'upl-img'} , el('img', {src:dataUrl, alt:'Upload'}));
+      const txtNode = el('div', {class:'upl-txt'}, msg);
+      ub.appendChild(imgWrap); ub.appendChild(txtNode);
+
+      // Assistant bubble + streaming or JSON fallback
+      const abot = bubble('assistant', '');
+      let acc='';
+      const onDelta = d => { acc += d; abot.textContent = acc; try { window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: d } })); } catch{}; };
+      const onDone = () => { button.disabled=false; try { window.dispatchEvent(new CustomEvent('chat:done', { detail: { } })); } catch{}; };
+
+      // Prefer JSON for images
+      try{
+        const full = await fetchJSON({ message: msg, systemPrompt: system, image: dataUrl });
+        abot.textContent = (typeof full==='string') ? full : (full.answer || ''); 
+        output.classList.add('show');
+      }catch(err){
+        // Try SSE text-only as fallback (image not supported server-side)
+        try{
+          await streamSSE({ message: msg + "\n(Hinweis: Der Client hat ein Bild hochgeladen.)", systemPrompt: system, onDelta, onDone });
+        }catch(e){
+          abot.textContent = 'Bild-Upload wird vom Server aktuell nicht unterstützt.';
+        }finally{
+          button.disabled=false;
+        }
+      }
+    }
+button.addEventListener('click', e=>{ e.preventDefault(); send(); });
     input.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
   }
 
-  window.ChatDock = Object.assign(window.ChatDock||{}, { initChatDock });
+  window.ChatDock = Object.assign(window.ChatDock||{}, { initChatDock, sendAttachment });
 })();
