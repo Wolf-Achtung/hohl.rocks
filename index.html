@@ -4,45 +4,35 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>hohl.rocks</title>
-  <!-- Core styles (optional if bereits vorhanden) -->
+
+  <!-- Core styles -->
   <link rel="stylesheet" href="/site-frame.css">
   <link rel="stylesheet" href="/projects-modern.css">
   <!-- Chat styles -->
   <link rel="stylesheet" href="/css/chatbox.css">
   <!-- Video Preload -->
   <link rel="preload" as="video" href="/videos/desert_drive.mp4">
-  <!-- Local overrides: Chat rechts unten, Panels heller falls nötig -->
+
+  <!-- Local overrides -->
   <style>
-    /* Ensure video layer is always visible */
     .bg-video, #bg-video { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; }
     .overlay-gradient { position:fixed; inset:0; z-index:-1; pointer-events:none; }
-    /* Chips-Navigation top-right */
-    .chips { position:fixed; top:14px; right:16px; display:flex; gap:10px; z-index:10; }
-    .chips a { text-decoration:none; font-weight:700; padding:10px 14px; border-radius:999px; backdrop-filter: blur(8px);
-               color:#eaf7ff; background:rgba(10,16,22,.55); border:1px solid rgba(255,255,255,.18); }
-    /* Light glass panel baseline, if your CSS is missing */
     .panel { background: rgba(255,255,255,.42); border:1px solid rgba(255,255,255,.18); border-radius:22px;
-              backdrop-filter: blur(10px); box-shadow: 0 10px 40px rgba(0,0,0,.32); padding:24px; width:min(1080px,92vw); margin:120px auto; }
-    /* Chat dock bottom-right override */
+             backdrop-filter: blur(10px); box-shadow: 0 10px 40px rgba(0,0,0,.32); padding:24px; width:min(1080px,92vw); margin:120px auto; }
     .chat-dock { left:auto !important; right:24px !important; width:auto; }
-    /* Prevent vertical scroll on home only (will be added inline there) */
+    html,body{height:100%;overflow:hidden}
+    /* singlepage-hide-nav */
+    header nav, .top-nav, .site-nav, .header-links, .nav, .top-links { display:none !important; }
+    /* hide chips nav (redundant – Markup entfernt) */
+    nav.chips, .chips{ display:none !important; visibility:hidden !important; }
   </style>
+
   <script>
     // Railway-Backend für den Chat
     window.HOHLROCKS_CHAT_BASE = "https://hohlrocks-production.up.railway.app";
   </script>
+
   <link rel="stylesheet" href="/hero-shapes.css">
-  <style>html,body{height:100%;overflow:hidden}</style>
-
-  <style>
-    /* singlepage-hide-nav */
-    header nav, .top-nav, .site-nav, .header-links, .nav, .top-links { display:none !important; }
-  </style>
-
-  <style>
-    /* hide chips nav */
-    nav.chips, .chips{ display:none !important; visibility:hidden !important; }
-  </style>
 </head>
 <body>
 
@@ -51,26 +41,26 @@
   </div>
   <div class="overlay-gradient"></div>
 
-  <nav class="chips">
-    <a href="/ueber-mich.html">Über mich</a>
-    <a href="/projekte.html">Projekte</a>
-    <a href="/kontakt.html">Kontakt</a>
-  </nav>
-
   <!-- Neon Shapes (Navigation per Klick) -->
   <div id="shapes"></div>
 
-  <!-- Scripts: Engine + Shapes + Sound + Chat -->
-  <script src="/engine-sim-lite-v2.js"></script>
-  <script src="/bubble-sound-lite.js"></script>
-  <script src="/harley-lite.js?v=1"></script>
+  <!-- Scripts: Shapes + Harley + Ticker + Antworten -->
   <script src="/hero-shapes.js?v=sp1"></script>
+
+  <!-- Ticker & Items -->
   <script src="/ticker-items.js?v=gc1"></script>
   <script src="/ticker.js?v=gc1"></script>
-  <script src="/answer-marquee.js?v=send3"></script>
+
+  <!-- Antwort-Fließtext (Auto-Tempo) + Daily-Chip -->
+  <script src="/answer-marquee.js?v=2"></script>
+  <script src="/ticker-daily-chip.js?v=1"></script>
+
+  <!-- Antworten: Spotlight als Default + Overlays -->
   <script>window.__ANSWER_MODE="spotlight";</script>
   <script src="/answers-overlay.js?v=2"></script>
   <script src="/answers-spotlight.js?v=1"></script>
+
+  <!-- Foto-Flow + Datenschutz -->
   <script src="/photo-intake.js?v=2"></script>
   <script src="/privacy-panel.js?v=1"></script>
 
@@ -83,19 +73,25 @@
 
   <!-- Chat client -->
   <script src="/js/chatbox-stream.js?v=gc1"></script>
-  <script>ChatDock.initChatDock({inputSel:'#chat-input',buttonSel:'#chat-send',systemPrompt:"Du antwortest im Namen von Wolf Hohl – TÜV-zertifizierter KI-Manager. Ton: seriös, prägnant, deutsch, winter-klar. Binde, wo sinnvoll, kurz ein, wie Wolf Kund:innen konkret hilft (Roadmaps, EU-AI-Act-Einordnung, DSGVO-saubere Datenwege). Vermeide Floskeln. Sei lösungsorientiert. Wenn ein Bild gesendet wurde: bleib respektvoll, keine Diagnosen, keine Gesichtserkennung, keine Identifizierung realer Personen.", model:(window.OPENAI_MODEL||'gpt-4o-mini')});</script>
+  <script>
+    ChatDock.initChatDock({
+      inputSel:'#chat-input',
+      buttonSel:'#chat-send',
+      systemPrompt:"Du antwortest im Namen von Wolf Hohl – TÜV-zertifizierter KI-Manager. Ton: seriös, prägnant, deutsch, winter-klar. Binde, wo sinnvoll, kurz ein, wie Wolf Kund:innen konkret hilft (Roadmaps, EU-AI-Act-Einordnung, DSGVO-saubere Datenwege). Vermeide Floskeln. Sei lösungsorientiert. Wenn ein Bild gesendet wurde: bleib respektvoll, keine Diagnosen, keine Gesichtserkennung, keine Identifizierung realer Personen.",
+      model:(window.OPENAI_MODEL||'gpt-4o-mini')
+    });
+  </script>
 
-
+  <!-- Cleanups: alte Nav rausräumen (falls noch im DOM), Subpage-Klicks killen -->
   <script>
     document.addEventListener('DOMContentLoaded', function(){
       try{ document.querySelectorAll('nav.chips, .chips').forEach(el=>el.remove()); }catch{}
     });
   </script>
 
-  <script src="/kill-nav.js?v=1"></script>
-<script src="/harley-lite.js?v=1"></script>
-<script src="/audio-gesture.js?v=1"></script>
-<script src="/no-subpage-nav.js?v=1"></script>
-
+  <!-- Sound & Gesten (nur Harley – alte Engine-Sims entfernt) -->
+  <script src="/harley-lite.js?v=1"></script>
+  <script src="/audio-gesture.js?v=1"></script>
+  <script src="/no-subpage-nav.js?v=1"></script>
 </body>
 </html>
