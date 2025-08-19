@@ -1,4 +1,4 @@
-/*! answer-marquee.js — GPT-Kurzantwort als ruhiger Lauftext + „Prompt des Tages“ im Idle */
+/*! answer-marquee.js — Auto-Speed + Idle-Prompts (enhanced) */
 (function(){
   const css = `
   .answer-marquee-wrap{ position:fixed; left:24px; right:24px; z-index:40; pointer-events:auto; }
@@ -6,7 +6,7 @@
     -webkit-mask-image: linear-gradient(90deg, transparent 0, black 6%, black 94%, transparent 100%);
             mask-image: linear-gradient(90deg, transparent 0, black 6%, black 94%, transparent 100%);
     font:600 16px/1.2 ui-sans-serif,system-ui; color:#eaf2ff; }
-  .answer-track{ position:absolute; white-space:nowrap; will-change:transform; animation:ans-move 24s linear infinite; }
+  .answer-track{ position:absolute; white-space:nowrap; will-change:transform; animation:ans-move var(--ansDur, 26s) linear infinite; }
   .answer-track.paused{ animation-play-state: paused; }
   .answer-badge{ display:inline-block; margin-right:10px; padding:4px 8px; border-radius:999px;
     background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); font:700 12px/1 ui-sans-serif; letter-spacing:.2px;}
@@ -42,6 +42,17 @@
   document.addEventListener('DOMContentLoaded', updateBottom);
   setTimeout(updateBottom, 300);
 
+  // Auto-Speed: Dauer abhängig von Textbreite (ruhig!)
+  function autoDuration(){
+    const width = span.scrollWidth + 120; // Textbreite + etwas Puffer
+    const vw = Math.max(320, window.innerWidth);
+    // Ziel: ~ 26–30s pro Bildschirmbreite; clamp 22..36s
+    const perScreen = 28; // Basis
+    const screens = Math.max(1, width / vw);
+    const dur = Math.max(22, Math.min(36, screens * perScreen));
+    track.style.setProperty('--ansDur', dur.toFixed(1)+'s');
+  }
+
   function setText(txt){
     const clean = (txt||'').replace(/\s+/g,' ').trim();
     let short = clean;
@@ -49,6 +60,7 @@
     if(dotIx>70 && dotIx<140){ short = clean.slice(0, dotIx+1); }
     if(short.length>120){ short = short.slice(0, 118)+'…'; }
     span.textContent = short || 'Wolf Hohl · TÜV‑zertifizierter KI‑Manager · wolf@hohl.rocks · LinkedIn · Antwort i. d. R. < 24 h';
+    requestAnimationFrame(autoDuration);
   }
 
   // Spotlight öffnen bei Klick
@@ -65,7 +77,7 @@
   }
   setCard();
 
-  // „Prompt des Tages“ – Idle Rotation
+  // „Prompt des Tages“ – Idle Rotation (auch für Ticker-Chip)
   const dailyPrompts = [
     'Formuliere meine KI‑Roadmap in 5 Punkten.',
     'Welche EU‑AI‑Act‑Pflichten treffen auf uns?',
@@ -75,10 +87,14 @@
     'Schätze den ROI eines Marketing‑Pilotprojekts.',
   ];
   let idleTimer=null, idleIx=0, inIdle=false;
+  function nextDaily(){ const p = dailyPrompts[idleIx++ % dailyPrompts.length]; return p; }
   function showDaily(){
     inIdle=true; badge.textContent='Prompt des Tages';
-    const p = dailyPrompts[idleIx++ % dailyPrompts.length];
+    const p = nextDaily();
     span.textContent = p + ' (Klicken = kopieren)';
+    requestAnimationFrame(autoDuration);
+    // zusätzlicher Hinweis an Ticker (Chip hinzufügen)
+    window.dispatchEvent(new CustomEvent('ticker:addDaily', {detail:{prompt:p}}));
   }
   function startIdleTimer(){
     if(idleTimer) clearTimeout(idleTimer);
@@ -86,6 +102,7 @@
   }
   function stopIdle(){
     inIdle=false; if(idleTimer) clearTimeout(idleTimer); idleTimer=null; badge.textContent='Antwort';
+    window.dispatchEvent(new CustomEvent('ticker:removeDaily'));
   }
   startIdleTimer();
 
