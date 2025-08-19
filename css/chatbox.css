@@ -22,3 +22,12 @@
   color:#e8f4ff; padding:12px 14px; border-radius:12px; outline:none; }
 .chat-dock button{ background: linear-gradient(180deg,#6c8cff,#4255ff); color:#fff; border:0; padding:10px 16px;
   border-radius:12px; font-weight:700; cursor:pointer; box-shadow: 0 10px 24px rgba(66,85,255,.35); }
+
+
+/* mobile responsive tweaks */
+@media (max-width: 520px){
+  .chat-dock{ width: 92vw; right: 4vw; left: auto; }
+  .chat-dock .input-row input{ font-size: 14px; }
+  .chat-dock .input-row button{ font-size: 14px; }
+  .chat-dock .history{ max-height: 44vh; }
+}
