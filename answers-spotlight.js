@@ -23,12 +23,28 @@
       card = document.createElement('div'); card.className='spotlight-card';
       const h = document.createElement('div'); h.className='spot-title'; h.textContent='Antwort';
       const b = document.createElement('div'); b.className='spot-body'; b.textContent='…';
+      const cta = document.createElement('div'); cta.className='spot-row'; cta.style.justifyContent='flex-start'; cta.style.gap='8px';
+      const thumb = document.createElement('img'); thumb.style.width='44px'; thumb.style.height='44px'; thumb.style.borderRadius='999px'; thumb.style.display='none'; thumb.style.objectFit='cover'; thumb.style.border='1px solid rgba(255,255,255,.18)';
+      cta.appendChild(thumb);
+
       const row = document.createElement('div'); row.className='spot-row';
       const open = document.createElement('button'); open.className='spot-btn'; open.textContent='Weiter im Chat ⟶';
       open.addEventListener('click', ()=>{ try{ if(window.ChatDock && (ChatDock.open||ChatDock.focus)){ (ChatDock.open||ChatDock.focus).call(ChatDock); } }catch{}; });
       const close = document.createElement('button'); close.className='spot-btn'; close.textContent='Schließen';
       close.addEventListener('click', ()=>{ if(card){ card.classList.remove('show'); setTimeout(()=>card && card.remove(), 300); card=null; } });
       row.appendChild(close); row.appendChild(open);
+      // Zusatz-CTAs bei Foto
+function setPhotoThumb(src){
+  if(!src){ thumb.style.display='none'; return; }
+  thumb.src = src; thumb.style.display='block';
+}
+function quickButton(label, onClick){
+  const btn=document.createElement('button'); btn.className='spot-btn'; btn.textContent=label; btn.addEventListener('click', onClick); return btn;
+}
+cta.appendChild( quickButton('Avatar exportieren', ()=> ChatDock && ChatDock.send && ChatDock.send('Nutze mein Foto für ein Avatar‑Briefing (Hintergrund/Licht/Pose/Kleidung) – bitte präzise, 3 Varianten.')) );
+cta.appendChild( quickButton('Brand‑Farben übernehmen', ()=> ChatDock && ChatDock.send && ChatDock.send('Leite aus meinem Foto 5 Markenfarben ab (HEX + Einsatz) und zeige, wie sie auf hohl.rocks wirken.')) );
+cta.appendChild( quickButton('Storyboard öffnen', ()=> ChatDock && ChatDock.send && ChatDock.send('Erzeuge 4 Hintergrund‑Sets passend zu meinem Gesicht (Bokeh/Industrial/Neo‑Brutalism/Forest) – je 1 Satz „Warum“.')) );
+      card.appendChild(cta);
       card.appendChild(h); card.appendChild(b); card.appendChild(row);
       document.body.appendChild(card);
       requestAnimationFrame(()=> card.classList.add('show'));
@@ -43,9 +59,7 @@
     }, ms);
   }
 
-  window.addEventListener('chat:send', ()=>{
-    acc=''; ensureCard(); scheduleHide(15000);
-  });
+  window.addEventListener('chat:send', ()=>{ acc=''; ensureCard(); scheduleHide(15000); try{ setPhotoThumb(window.__lastPhotoDataURL||''); }catch{} });
   window.addEventListener('chat:delta', (ev)=>{
     const d = (ev.detail && ev.detail.delta) ? ev.detail.delta : '';
     acc += d;

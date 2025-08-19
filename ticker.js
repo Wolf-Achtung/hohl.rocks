@@ -67,7 +67,7 @@
       const centerY = r.top + r.height/2;
       const bottomPx = Math.max(12, window.innerHeight - centerY - th/2);
       wrap.style.bottom = bottomPx.toFixed(0) + 'px';
-      const fadeRight = Math.max(72, (window.innerWidth - r.left) + 16);
+      const fadeRight = Math.max(40, (window.innerWidth - r.left) + 16);
       wrap.style.setProperty('--fade-right', fadeRight.toFixed(0) + 'px');
     }else{
       wrap.style.bottom = '140px';
@@ -102,4 +102,12 @@
     }
     try{ navigator.clipboard && navigator.clipboard.writeText(text); }catch{}
   }
+})();
+// mobile tweaks
+;(function(){
+  const css = `@media (max-width:520px){
+    .ticker-wrap{ left:12px; right:12px; bottom:10px; }
+    .ticker a{ font-size:13px; padding:8px 10px; }
+  }`;
+  const s=document.createElement('style'); s.textContent=css; document.head.appendChild(s);
 })();
