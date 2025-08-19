@@ -24,7 +24,14 @@
   }
   function fade(param, from, to, ms){ const t=ctx.currentTime; param.cancelScheduledValues(t); param.setValueAtTime(from,t); param.linearRampToValueAtTime(to, t+ms/1000); }
   HarleyLite.prewarm = function(){ ensureCtx(); };
-  HarleyLite.startAmbient = async function(fadeMs=900){ ensureCtx(); await ctx.resume(); if(!running){ rumble.start(); subOsc.start(); lfo.start(); running=true; } fade(master.gain, master.gain.value, 0.22, fadeMs); };
+  HarleyLite.startAmbient = async function(fadeMs=900){
+    ensureCtx();
+    await ctx.resume();
+    if(!running){ rumble.start(0); subOsc.start(0); lfo.start(0); running=true; }
+    // Start etwas lauter, dann nach 3.5s auf Basis
+    fade(master.gain, master.gain.value, 0.32, Math.max(600, fadeMs));
+    setTimeout(()=>{ try{ fade(master.gain, master.gain.value, 0.22, 900); }catch{} }, 3500);
+  };
   HarleyLite.stop = function(fadeMs=350){ if(!ctx||!running) return; fade(master.gain, master.gain.value, 0.0, fadeMs); };
   HarleyLite.isRunning = ()=> running && master && master.gain.value>0.001;
   HarleyLite.blip = function(){ if(!ctx) return; const target=Math.min(0.34, master.gain.value+0.12); fade(master.gain, master.gain.value, target, 80); setTimeout(()=>fade(master.gain, master.gain.value, 0.22, 260),160); };

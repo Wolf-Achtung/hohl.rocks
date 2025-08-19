@@ -67,7 +67,7 @@
       const centerY = r.top + r.height/2;
       const bottomPx = Math.max(12, window.innerHeight - centerY - th/2);
       wrap.style.bottom = bottomPx.toFixed(0) + 'px';
-      const fadeRight = Math.max(40, (window.innerWidth - r.left) + 16);
+      const fadeRight = Math.max(72, (window.innerWidth - r.left) + 16);
       wrap.style.setProperty('--fade-right', fadeRight.toFixed(0) + 'px');
     }else{
       wrap.style.bottom = '140px';

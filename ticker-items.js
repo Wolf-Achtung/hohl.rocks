@@ -1,22 +1,25 @@
+
 window.__TICKER_ITEMS = [
-  {"label":"Über mich","prompt":"Kurzer Überblick über Wolf Hohl (TÜV‑zertifizierter KI‑Manager): Profil, Fokus, Angebot in 5 Sätzen."},
-  {"label":"Projekte","prompt":"Gib mir 3 Projekt‑Highlights von Wolf Hohl (Ziel, Umsetzung, Ergebnis) prägnant."},
-  {"label":"Kontakt","prompt":"Wie nehme ich am besten Kontakt zu Wolf Hohl auf (E‑Mail, LinkedIn)? Bitte kurz & präzise."},
-  {"label":"KI‑Roadmap in 30 Tagen","prompt":"Erstelle mir eine 30‑Tage‑Roadmap, wie wir in meinem Unternehmen mit KI starten (Rollen, Quickwins, Risiken, Messgrößen)."},
-  {"label":"EU AI Act – was gilt für uns?","prompt":"Klassifiziere unser (fiktives) Produkt nach EU AI Act, nenne Pflichten & To‑dos kompakt. Frage mich gezielt nach Branche & Risiko."},
-  {"label":"Marketing mit GPT, Gold‑Standard","prompt":"Zeig mir 3 erstklassige GPT‑Workflows für Marketing (Briefing → Varianten → Freigabe), inkl. Prompt‑Beispielen & Guardrails."},
-  {"label":"Daten – DSGVO‑sauber","prompt":"Wie kann ich interne Daten rechtssicher mit GPT nutzen (Pseudonymisierung, Zweckbindung, Logging)? Gib mir eine konkrete Checkliste."},
-  {"label":"Team-Enablement","prompt":"Baue mir ein Schulungskit (90 Minuten) für mein Team: Ziele, 6 Use‑Cases, Risiken, 10 Do’s & 5 Don’ts."},
-  {"label":"Budget & ROI","prompt":"Schätze Nutzen/Kosten eines KI‑Pilotprojekts (Marketing) in meinem KMU. Frag mich nach Umsatz/Teamgröße & gib mir eine ROI‑Spanne."},
-  {"label":"Skurril: Ich in 20 Jahren","prompt":"Ich lade gleich ein aktuelles Foto hoch. Beschreibe seriös, wie ich in 20 Jahren aussehen könnte und welche Lifestyle‑Faktoren es beeinflussen. Nenne außerdem, wie wir optional ein visuelles Aging mit einem Bild‑Modell umsetzen könnten."},
-  {"label":"DAN: 0‑auf‑1‑Prototyp","prompt":"Tu so, als wärest du mein Product Hacker. Schlage 3 waghalsige, aber realistische KI‑Experimente vor, die uns in 2 Wochen sichtbaren Impact bringen. Jeweils: Hypothese, Setup, Messgröße, Risiko."},
-  {"label":"Gamechanger: KI‑Trailers","prompt":"Entwirf ein Konzept, wie wir Kino‑Trailer‑Dramaturgie + GPT kombinieren (Beat‑Sheet → Text‑to‑Video‑Boards). Liefere 1 Beispiel‑Storyboard."},
-  {"label":"LinkedIn‑Refresh","prompt":"Schreibe eine pointierte LinkedIn‑About‑Section für Wolf Hohl (TÜV‑zert. KI‑Manager). Ton: souverän, knapp, winter‑klar. 600–900 Zeichen."},
-  {"label":"Pitch‑Deck‑Mini","prompt":"Baue mir 6 Folien (Outline + Stichworte) für einen KI‑Kickoff bei Geschäftsführung/Beirat."},
-  {"label":"Risiko‑Radar","prompt":"Liste die Top‑Risiken bei GenAI‑Einführung (Bias, Halluzination, IP, Datenabfluss) & konkrete Mitigations in einer Tabelle."},
-  {"label":"Prompt‑Werkbank","prompt":"Gib mir 5 universelle Prompt‑Schablonen (Plan, Diagnose, Decision, Kritik, Synthese) jeweils mit Beispiel und Checkliste."},
-  {"label":"Persönlicher KI‑Coach","prompt":"Übernimm für die nächsten Antworten die Rolle eines ruhigen, seriösen Coaches. Stelle mir Fragen, um meinen Reifegrad zu ermitteln, und gib mir fokussierte To‑dos."},
-  {"label":"DSGVO‑Erste Hilfe","prompt":"Leite mich Schritt für Schritt durch eine Datenschutz‑Folgenabschätzung (DPIA) für einen GPT‑Use‑Case."},
-  {"label":"Technik‑Stack","prompt":"Empfehle mir einen schlanken Stack für GPT in Produktion (Auth, Logging, Eval, Kostenkontrolle) – mit 3 Alternativen je Komponente."},
-  {"label":"Skurril: Punk‑Modus","prompt":"Antworte radikal knapp, punkig, aber fachlich korrekt. Max. 3 Sätze. Nutze harte Verben."}
+  {label:"Über mich", prompt:"Kurzer Überblick über Wolf Hohl (TÜV‑zertifizierter KI‑Manager): Profil, Fokus, Angebot in 5 Sätzen."},
+  {label:"Projekte", prompt:"Gib mir 3 Projekt‑Highlights von Wolf Hohl (Ziel, Umsetzung, Ergebnis) prägnant."},
+  {label:"Kontakt",  prompt:"Wie nehme ich am besten Kontakt zu Wolf Hohl auf (E‑Mail, LinkedIn)? Bitte kurz & präzise."},
+
+  {label:"KI‑Roadmap (30 Tage)", prompt:"Erstelle mir eine 30‑Tage‑Roadmap, wie wir in meinem Unternehmen mit KI starten (Rollen, Quickwins, Risiken, Messgrößen)."},
+  {label:"EU‑AI‑Act Navigator",  prompt:"Ordne unser Produkt im EU AI Act ein. Stelle 5 gezielte Fragen (Branche, Risiko, Daten) und gib Pflichten & To‑dos kompakt."},
+  {label:"Marketing mit GPT",    prompt:"Drei erstklassige GPT‑Workflows für Marketing (Briefing → Varianten → Freigabe), mit Prompts, Guardrails und Qualitätskriterien."},
+  {label:"Daten DSGVO‑sauber",   prompt:"Wie nutze ich interne Daten rechtssicher mit GPT (Pseudonymisierung, Zweckbindung, Logging)? Bitte als Checkliste mit Beispielen."},
+  {label:"Budget & ROI",         prompt:"Schätze den ROI eines KI‑Pilotprojekts (Marketing). Frage Umsatz/Teamgröße ab und gib eine Spanne mit Sensitivität an."},
+  {label:"Risiko‑Radar",         prompt:"Top‑Risiken bei GenAI‑Einführung (Bias, IP, Datenabfluss) & konkrete Mitigations tabellarisch."},
+
+  {label:"Ich in 20 Jahren (Foto)", prompt:"Ich lade gleich ein Foto hoch. Beschreibe seriös, wie ich in 20 Jahren aussehen könnte und nenne eine transparente Bild‑Pipeline fürs optische Aging."},
+  {label:"Avatar‑Briefing (Foto)",  prompt:"Erstelle 3 präzise Avatar‑Briefings für LinkedIn (Hintergrund, Licht, Pose, Kleidung, Farben)."},
+  {label:"Brand‑Farben (Foto)",     prompt:"Extrahiere 5 Markenfarben aus meinem Foto und schlage kurz Einsätze (Buttons, Links, Akzente) vor."},
+  {label:"Storyboard (Foto)",       prompt:"Schlage 4 Hintergrund‑Sets passend zu meinem Gesicht vor (Bokeh/Industrial/Neo‑Brutalism/Forest) – je 1 Satz Warum."},
+
+  {label:"DAN: 0→1 Prototyp",    prompt:"Tu so, als wärest du mein Product Hacker. Drei waghalsige, aber realistische Experimente in 2 Wochen: Hypothese, Setup, Metrik, Risiko."},
+  {label:"Gamechanger: KI‑Trailer", prompt:"Kombiniere Trailer‑Dramaturgie + GPT (Beat‑Sheet → Text‑to‑Video‑Boards). Liefere ein kurzes Beispiel‑Storyboard."},
+  {label:"Prompt‑Werkbank",      prompt:"5 universelle Prompt‑Schablonen (Plan, Diagnose, Decision, Kritik, Synthese) mit Beispiel & Checkliste."},
+  {label:"KI‑Coach",             prompt:"Übernimm für die nächsten Antworten die Rolle eines ruhigen Coaches. Stelle Fragen (Reifegrad) und gib 14‑Tage‑To‑dos."},
+  {label:"Tech‑Stack kompakt",   prompt:"Empfiehl einen schlanken Stack für GPT in Produktion (Auth, Logging, Eval, Kostenkontrolle) – je 3 Alternativen mit Pros/Cons."},
+  {label:"Skurril: Punk‑Modus",  prompt:"Antworte radikal knapp, punkig, aber korrekt. Max. 3 Sätze. Hart und ehrlich."}
 ];
