@@ -1,4 +1,4 @@
-/*! answer-marquee.js — Auto-Speed + Idle-Prompts (enhanced) */
+/*! answer-marquee.js — Auto-Speed + Idle-Prompts (Wolf Picks via JSON) */
 (function(){
   const css = `
   .answer-marquee-wrap{ position:fixed; left:24px; right:24px; z-index:40; pointer-events:auto; }
@@ -6,7 +6,7 @@
     -webkit-mask-image: linear-gradient(90deg, transparent 0, black 6%, black 94%, transparent 100%);
             mask-image: linear-gradient(90deg, transparent 0, black 6%, black 94%, transparent 100%);
     font:600 16px/1.2 ui-sans-serif,system-ui; color:#eaf2ff; }
-  .answer-track{ position:absolute; white-space:nowrap; will-change:transform; animation:ans-move var(--ansDur, 26s) linear infinite; }
+  .answer-track{ position:absolute; white-space:nowrap; will-change:transform; animation:ans-move var(--ansDur, 28s) linear infinite; }
   .answer-track.paused{ animation-play-state: paused; }
   .answer-badge{ display:inline-block; margin-right:10px; padding:4px 8px; border-radius:999px;
     background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); font:700 12px/1 ui-sans-serif; letter-spacing:.2px;}
@@ -30,11 +30,11 @@
 
   function updateBottom(){
     const ticker = document.querySelector('.ticker-wrap');
-    let bottomPx = 168; // default
+    let bottomPx = 168;
     if(ticker){
       const cs = getComputedStyle(ticker);
       const b = parseFloat(cs.bottom||'140') || 140;
-      bottomPx = b + 28; // 24–28px über den Fragechips
+      bottomPx = b + 28;
     }
     wrap.style.bottom = bottomPx+'px';
   }
@@ -42,12 +42,10 @@
   document.addEventListener('DOMContentLoaded', updateBottom);
   setTimeout(updateBottom, 300);
 
-  // Auto-Speed: Dauer abhängig von Textbreite (ruhig!)
   function autoDuration(){
-    const width = span.scrollWidth + 120; // Textbreite + etwas Puffer
+    const width = span.scrollWidth + 120;
     const vw = Math.max(320, window.innerWidth);
-    // Ziel: ~ 26–30s pro Bildschirmbreite; clamp 22..36s
-    const perScreen = 28; // Basis
+    const perScreen = 28;
     const screens = Math.max(1, width / vw);
     const dur = Math.max(22, Math.min(36, screens * perScreen));
     track.style.setProperty('--ansDur', dur.toFixed(1)+'s');
@@ -57,56 +55,56 @@
     const clean = (txt||'').replace(/\s+/g,' ').trim();
     let short = clean;
     const dotIx = clean.indexOf('. ');
-    if(dotIx>70 && dotIx<140){ short = clean.slice(0, dotIx+1); }
-    if(short.length>120){ short = short.slice(0, 118)+'…'; }
-    span.textContent = short || 'Wolf Hohl · TÜV‑zertifizierter KI‑Manager · wolf@hohl.rocks · LinkedIn · Antwort i. d. R. < 24 h';
+    if(dotIx>70 && dotIx<140) short = clean.slice(0, dotIx+1);
+    if(short.length>120) short = short.slice(0,118)+'…';
+    span.textContent = short || 'Wolf Hohl · TÜV-zertifizierter KI-Manager · wolf@hohl.rocks · LinkedIn · Antwort i. d. R. < 24 h';
     requestAnimationFrame(autoDuration);
   }
 
-  // Spotlight öffnen bei Klick
-  inner.addEventListener('click', ()=>{
-    try{ if(window.ChatDock && (ChatDock.open||ChatDock.focus)){ (ChatDock.open||ChatDock.focus).call(ChatDock);} }catch{}
-  });
+  inner.addEventListener('click', ()=>{ try{ if(window.ChatDock){ (ChatDock.open||ChatDock.focus).call(ChatDock); } }catch{} });
   inner.addEventListener('mouseenter', ()=> track.classList.add('paused'));
   inner.addEventListener('mouseleave', ()=> track.classList.remove('paused'));
 
-  // Fallback-Visitenkarte
   function setCard(){
     badge.textContent='Wolf';
-    setText('Wolf Hohl · TÜV‑zertifizierter KI‑Manager · wolf@hohl.rocks · LinkedIn · Antwort i. d. R. < 24 h');
+    setText('Wolf Hohl · TÜV-zertifizierter KI-Manager · wolf@hohl.rocks · LinkedIn · Antwort i. d. R. < 24 h');
   }
   setCard();
 
-  // „Prompt des Tages“ – Idle Rotation (auch für Ticker-Chip)
-  const dailyPrompts = [
-    'Formuliere meine KI‑Roadmap in 5 Punkten.',
-    'Welche EU‑AI‑Act‑Pflichten treffen auf uns?',
-    'Mach aus diesem Text 3 starke LinkedIn‑Hooks.',
-    'Gib mir 5 DSGVO‑Guardrails für GPT‑Prompts.',
-    'Baue ein 14‑Tage‑Pilotprojekt mit klarer Metrik.',
-    'Schätze den ROI eines Marketing‑Pilotprojekts.',
+  // Wolf Picks (optional JSON)
+  let picks = [];
+  const defaults = [
+    'Formuliere meine KI-Roadmap in 5 Punkten.',
+    'Welche EU-AI-Act-Pflichten treffen auf uns?',
+    'Mach aus diesem Text 3 starke LinkedIn-Hooks.',
+    'Gib mir 5 DSGVO-Guardrails für GPT-Prompts.',
+    'Baue ein 14-Tage-Pilotprojekt mit klarer Metrik.'
   ];
+  (async ()=>{
+    try{
+      const r = await fetch('/wolf-picks.json?v='+Date.now(), {cache:'no-store'});
+      if(r.ok){
+        const j = await r.json();
+        if(Array.isArray(j.dailyPrompts) && j.dailyPrompts.length) picks = j.dailyPrompts;
+      }
+    }catch{}
+  })();
+
+  // Idle → „Prompt des Tages“ (+ Ticker-Chip)
   let idleTimer=null, idleIx=0, inIdle=false;
-  function nextDaily(){ const p = dailyPrompts[idleIx++ % dailyPrompts.length]; return p; }
+  function nextDaily(){ const src = (picks && picks.length) ? picks : defaults; return src[idleIx++ % src.length]; }
   function showDaily(){
     inIdle=true; badge.textContent='Prompt des Tages';
     const p = nextDaily();
     span.textContent = p + ' (Klicken = kopieren)';
     requestAnimationFrame(autoDuration);
-    // zusätzlicher Hinweis an Ticker (Chip hinzufügen)
     window.dispatchEvent(new CustomEvent('ticker:addDaily', {detail:{prompt:p}}));
   }
-  function startIdleTimer(){
-    if(idleTimer) clearTimeout(idleTimer);
-    idleTimer = setTimeout(showDaily, 75000); // 75s Stille
-  }
-  function stopIdle(){
-    inIdle=false; if(idleTimer) clearTimeout(idleTimer); idleTimer=null; badge.textContent='Antwort';
-    window.dispatchEvent(new CustomEvent('ticker:removeDaily'));
-  }
+  function startIdleTimer(){ if(idleTimer) clearTimeout(idleTimer); idleTimer = setTimeout(showDaily, 75000); }
+  function stopIdle(){ inIdle=false; if(idleTimer) clearTimeout(idleTimer); idleTimer=null; badge.textContent='Antwort'; window.dispatchEvent(new CustomEvent('ticker:removeDaily')); }
   startIdleTimer();
 
-  // Copy on click im Idle
+  // Copy on click (nur im Idle)
   inner.addEventListener('click', (ev)=>{
     if(!inIdle) return;
     ev.preventDefault();
@@ -117,19 +115,12 @@
     }catch{}
   });
 
-  // Events aus dem Chat
+  // Chat-Events
   let acc='';
   window.addEventListener('chat:send', ()=>{ acc=''; stopIdle(); setText('…'); try{ window.HarleyLite && HarleyLite.blip && HarleyLite.blip(); }catch{} });
   window.addEventListener('chat:delta', (ev)=>{ acc += (ev.detail && ev.detail.delta) ? ev.detail.delta : ''; setText(acc); });
   window.addEventListener('chat:done', ()=>{ if(!acc) setCard(); startIdleTimer(); });
 
-  // Mini-Gasstoß bei Bubble‑Klick (best effort)
-  document.addEventListener('click', (ev)=>{
-    const hit = ev.target.closest && (ev.target.closest('.bubble,.shape,.shp,.hero-shapes,canvas,svg'));
-    if(hit){ try{ window.HarleyLite && HarleyLite.blip && HarleyLite.blip(); }catch{} }
-  }, {capture:true});
-
-  // kleine Toast-Funktion
   function toast(msg){
     const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
     document.body.appendChild(t); requestAnimationFrame(()=> t.classList.add('show'));

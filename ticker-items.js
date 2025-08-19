@@ -1,25 +1,36 @@
-
 window.__TICKER_ITEMS = [
-  {label:"Über mich", prompt:"Kurzer Überblick über Wolf Hohl (TÜV‑zertifizierter KI‑Manager): Profil, Fokus, Angebot in 5 Sätzen."},
-  {label:"Projekte", prompt:"Gib mir 3 Projekt‑Highlights von Wolf Hohl (Ziel, Umsetzung, Ergebnis) prägnant."},
-  {label:"Kontakt",  prompt:"Wie nehme ich am besten Kontakt zu Wolf Hohl auf (E‑Mail, LinkedIn)? Bitte kurz & präzise."},
+  {label:"Überrasch mich 🤯", prompt:"Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit einem kleinen Beispiel."},
 
-  {label:"KI‑Roadmap (30 Tage)", prompt:"Erstelle mir eine 30‑Tage‑Roadmap, wie wir in meinem Unternehmen mit KI starten (Rollen, Quickwins, Risiken, Messgrößen)."},
-  {label:"EU‑AI‑Act Navigator",  prompt:"Ordne unser Produkt im EU AI Act ein. Stelle 5 gezielte Fragen (Branche, Risiko, Daten) und gib Pflichten & To‑dos kompakt."},
-  {label:"Marketing mit GPT",    prompt:"Drei erstklassige GPT‑Workflows für Marketing (Briefing → Varianten → Freigabe), mit Prompts, Guardrails und Qualitätskriterien."},
-  {label:"Daten DSGVO‑sauber",   prompt:"Wie nutze ich interne Daten rechtssicher mit GPT (Pseudonymisierung, Zweckbindung, Logging)? Bitte als Checkliste mit Beispielen."},
-  {label:"Budget & ROI",         prompt:"Schätze den ROI eines KI‑Pilotprojekts (Marketing). Frage Umsatz/Teamgröße ab und gib eine Spanne mit Sensitivität an."},
-  {label:"Risiko‑Radar",         prompt:"Top‑Risiken bei GenAI‑Einführung (Bias, IP, Datenabfluss) & konkrete Mitigations tabellarisch."},
+  // Wow & Play
+  {label:"Aus Text wird Farbe", prompt:"Nimm folgenden Satz und mach mir eine 5-Farben-Palette daraus (HEX + Einsatz). Satz folgt gleich."},
+  {label:"Mini-Story (5 Wörter)", prompt:"Schreibe eine ultrakurze Geschichte aus genau 5 Wörtern zu einem Thema nach Wahl, überraschend, poetisch, deutsch."},
+  {label:"Stil-Switcher", prompt:"Erkläre mir ein Fachthema zuerst extrem einfach, dann normal, dann nerdy – je 2 Sätze."},
+  {label:"Myth Busting", prompt:"Wähle einen verbreiteten KI-Mythos und widerlege ihn freundlich in 3 Sätzen mit einem Mini-Beispiel."},
+  {label:"Bild-Ideen (ohne Bild)", prompt:"Gib mir 4 kreative Bild-Ideen zu meinem Thema, je 1 Satz, präzise Briefings (Hintergrund, Licht, Stimmung)."},
+  {label:"Prompt des Tages", prompt:"Gib mir einen starken Prompt des Tages zum Ausprobieren (kurz, robust, keine Floskeln)."},
+  {label:"Punk-Modus", prompt:"Antworte radikal knapp, aber korrekt. Max. 3 Sätze. Hart & ehrlich."},
 
-  {label:"Ich in 20 Jahren (Foto)", prompt:"Ich lade gleich ein Foto hoch. Beschreibe seriös, wie ich in 20 Jahren aussehen könnte und nenne eine transparente Bild‑Pipeline fürs optische Aging."},
-  {label:"Avatar‑Briefing (Foto)",  prompt:"Erstelle 3 präzise Avatar‑Briefings für LinkedIn (Hintergrund, Licht, Pose, Kleidung, Farben)."},
-  {label:"Brand‑Farben (Foto)",     prompt:"Extrahiere 5 Markenfarben aus meinem Foto und schlage kurz Einsätze (Buttons, Links, Akzente) vor."},
-  {label:"Storyboard (Foto)",       prompt:"Schlage 4 Hintergrund‑Sets passend zu meinem Gesicht vor (Bokeh/Industrial/Neo‑Brutalism/Forest) – je 1 Satz Warum."},
+  // Persönlich & nahbar
+  {label:"Wolf in 3 Sätzen", prompt:"Wer ist Wolf Hohl (TÜV-zertifizierter KI-Manager), was treibt ihn an, wie hilft er konkret? Max. 3 Sätze, präzise."},
+  {label:"Wolfs Lieblings-Use-Case", prompt:"Beschreibe einen kleinen, aber wirkungsvollen KI-Use-Case aus Wolfs Alltag – so, dass ich ihn heute testen kann."},
 
-  {label:"DAN: 0→1 Prototyp",    prompt:"Tu so, als wärest du mein Product Hacker. Drei waghalsige, aber realistische Experimente in 2 Wochen: Hypothese, Setup, Metrik, Risiko."},
-  {label:"Gamechanger: KI‑Trailer", prompt:"Kombiniere Trailer‑Dramaturgie + GPT (Beat‑Sheet → Text‑to‑Video‑Boards). Liefere ein kurzes Beispiel‑Storyboard."},
-  {label:"Prompt‑Werkbank",      prompt:"5 universelle Prompt‑Schablonen (Plan, Diagnose, Decision, Kritik, Synthese) mit Beispiel & Checkliste."},
-  {label:"KI‑Coach",             prompt:"Übernimm für die nächsten Antworten die Rolle eines ruhigen Coaches. Stelle Fragen (Reifegrad) und gib 14‑Tage‑To‑dos."},
-  {label:"Tech‑Stack kompakt",   prompt:"Empfiehl einen schlanken Stack für GPT in Produktion (Auth, Logging, Eval, Kostenkontrolle) – je 3 Alternativen mit Pros/Cons."},
-  {label:"Skurril: Punk‑Modus",  prompt:"Antworte radikal knapp, punkig, aber korrekt. Max. 3 Sätze. Hart und ehrlich."}
+  // Foto-Spaß (mit Einwilligung)
+  {label:"Avatar-Briefing (Foto)", prompt:"Ich lade ein Foto hoch. Erstelle 3 präzise Avatar-Briefings (Hintergrund/Licht/Pose/Farben) – sachlich, kein Kitsch."},
+  {label:"Brand-Farben (Foto)", prompt:"Leite aus meinem Foto 5 Markenfarben ab (HEX) und schlage Einsätze auf hohl.rocks vor (Buttons/Links/Akzente)."},
+
+  // Lernen & Orientierung
+  {label:"KI in 60 Sekunden", prompt:"Erkläre mir in 60 Sekunden, was heute an KI wirklich nützlich ist – ohne Buzzwords, mit 1 Beispiel."},
+  {label:"Werkzeug-Safari", prompt:"Nenne 3 schlanke Tools/Patterns, mit denen ich GPT zuverlässig in den Alltag bringe (Auth, Logging, Auswertung) – je 1 Satz."},
+  {label:"Qualität statt Zufall", prompt:"Gib mir 3 kleine Prompt-Tricks, die Ergebnisse messbar besser machen – mit Mini-Beispiel."},
+
+  // Spaß & Skurril
+  {label:"Road-Trip-Haiku", prompt:"Schreibe ein Haiku zum Highway-Video im Hintergrund. Kein Pathos, eher minimal."},
+  {label:"Emojify my Day", prompt:"Kondensiere meinen Tag in eine knappe Emoji-Zeile + 1 Satz Kommentar – trocken-witzig."},
+
+  // Jetzt & Neu (zeitlos formuliert)
+  {label:"Was ist gerade spannend?", prompt:"Nenne 3 frische KI-Trends/Ideen (zeitlos formuliert), je 1 Satz, fokus auf konkrete Wirkung statt Technik."},
+  {label:"Kleinstes Experiment", prompt:"Gib mir ein 24-Stunden-Experiment, um KI produktiv zu testen – Hypothese, Setup, Erfolgskriterium."},
+
+  // Einstieg
+  {label:"Wo starte ich?", prompt:"Stell mir 3 Fragen (Ziel, Material, Zeit) und mach daraus einen minimalen KI-Plan für mich persönlich."}
 ];
