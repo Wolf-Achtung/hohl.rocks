@@ -96,8 +96,7 @@
       const msg = (input.value||'').trim(); if(!msg) return;
       input.value=''; button.disabled=true;
       bubble('user', msg);
-      const abot = bubble('assistant', '');
-      let acc='';
+      const abot = bubble('assistant', 'Antwort kommt gleich …'); try{ output.classList.add('show'); }catch{} let acc='';
       const onDelta = d => {  acc += d; abot.textContent = acc; output.classList.add('show'); output.scrollTop = output.scrollHeight;  try { window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: d } })); } catch{}; };
       const onDone = () => {  button.disabled=false;  try { window.dispatchEvent(new CustomEvent('chat:done', { detail: { } })); } catch{}; };
 
@@ -156,5 +155,5 @@ button.addEventListener('click', e=>{ e.preventDefault(); send(); });
     input.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
   }
 
-  window.ChatDock = Object.assign(window.ChatDock||{}, { initChatDock, sendAttachment });
+  window.ChatDock = Object.assign(window.ChatDock||{}, { initChatDock, sendAttachment, send });
 })();
