@@ -117,7 +117,7 @@
 
   // Chat-Events
   let acc='';
-  window.addEventListener('chat:send', ()=>{ acc=''; stopIdle(); setText('…'); try{ window.HarleyLite && HarleyLite.blip && HarleyLite.blip(); }catch{} });
+  window.addEventListener('chat:send', ()=>{ acc=''; stopIdle(); setText('Antwort kommt gleich …'); try{ window.HarleyLite && HarleyLite.blip && HarleyLite.blip(); }catch{} }); try{ window.HarleyLite && HarleyLite.blip && HarleyLite.blip(); }catch{} });
   window.addEventListener('chat:delta', (ev)=>{ acc += (ev.detail && ev.detail.delta) ? ev.detail.delta : ''; setText(acc); });
   window.addEventListener('chat:done', ()=>{ if(!acc) setCard(); startIdleTimer(); });
 

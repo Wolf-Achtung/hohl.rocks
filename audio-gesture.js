@@ -9,3 +9,4 @@
   window.addEventListener('pointerdown', arm, true);
   window.addEventListener('keydown', arm, true);
 })();
+;(function(){ document.addEventListener('DOMContentLoaded', function(){ const v=document.getElementById('bg-video'); if(v){ v.muted=true; v.volume=0.0; v.addEventListener('volumechange', ()=>{ v.muted=true; v.volume=0.0; }, true); } }); })();

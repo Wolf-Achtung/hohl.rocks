@@ -8,8 +8,7 @@
  */
 (function(){
   const isHome = location.pathname.endsWith('/') || location.pathname.endsWith('/index.html') || location.pathname==='/';
-  const targets = ['/ueber-mich.html','/projekte.html','/kontakt.html'];
-
+  
   const TAU = Math.PI*2;
   const lerp = (a,b,t)=> a+(b-a)*t;
   const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
@@ -120,19 +119,18 @@
       el.__raf = requestAnimationFrame(draw);
     }
 
-    // Click-Navigation + Sound (nur Home)
+    // Click → nur Sound + Chat-Fokus (keine Navigation)
     if(isHome){
-      const href = (Math.random() < 0.34) ? '/ueber-mich.html' : (Math.random() < 0.6 ? '/projekte.html' : '/kontakt.html');
-      
       el.addEventListener('click', ()=>{
         try{
           sessionStorage.setItem('harley_wants','1');
           if(window.HarleyLite && !window.HarleyLite.isRunning()){ window.HarleyLite.startAmbient(900); }
           else if(window.HarleyLite && window.HarleyLite.isRunning()){ window.HarleyLite.blip && window.HarleyLite.blip(); }
         }catch{}
-        setTimeout(()=>location.href=href, 650);
+        try{ if(window.ChatDock && (ChatDock.open||ChatDock.focus)) (ChatDock.open||ChatDock.focus).call(ChatDock); }catch{}
       });
-el.setAttribute('role','link'); el.setAttribute('tabindex','0'); el.setAttribute('aria-label','Navigation');
+    }
+    el.setAttribute('role','button'); el.setAttribute('tabindex','0'); el.setAttribute('aria-label','Navigation');
       el.addEventListener('keydown', ev=>{ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); el.click(); } });
     }
 
