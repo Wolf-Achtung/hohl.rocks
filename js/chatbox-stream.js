@@ -22,7 +22,7 @@
     return n;
   }
 
-  async function streamSSE({ message, systemPrompt, model, onDelta, onDone }) {
+  async function streamSSE({ message, systemPrompt, model, onDelta, onDone, image }) {
     const res = await fetch(CHAT_BASE + SSE_PATH, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -96,7 +96,8 @@
       const msg = (input.value||'').trim(); if(!msg) return;
       input.value=''; button.disabled=true;
       bubble('user', msg);
-      const abot = bubble('assistant', 'Antwort kommt gleich …'); try{ output.classList.add('show'); }catch{} let acc='';
+      const abot = bubble('assistant', '');
+      let acc='';
       const onDelta = d => {  acc += d; abot.textContent = acc; output.classList.add('show'); output.scrollTop = output.scrollHeight;  try { window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: d } })); } catch{}; };
       const onDone = () => {  button.disabled=false;  try { window.dispatchEvent(new CustomEvent('chat:done', { detail: { } })); } catch{}; };
 
@@ -113,6 +114,27 @@
           button.disabled=false;
         }
       }
+    }
+
+    // Expose a helper on ChatDock so external callers can send a message directly.
+    // This function focuses the input, populates it with the provided text and triggers send().
+    if(window.ChatDock){
+      try{
+        // Only set if not already provided
+        if(typeof window.ChatDock.send !== 'function'){
+          window.ChatDock.send = function(text){
+            try{
+              const m = (text||'').trim(); if(!m) return;
+              input.focus();
+              input.value = m;
+              // Immediately dispatch input event so any reactive bindings update
+              input.dispatchEvent(new Event('input',{bubbles:true}));
+              // Use the internal send() to process the message
+              send();
+            }catch(err){ console.error('[ChatDock.send] Error:', err); }
+          };
+        }
+      }catch(err){ /* ignore */ }
     }
 
     
@@ -155,5 +177,5 @@ button.addEventListener('click', e=>{ e.preventDefault(); send(); });
     input.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
   }
 
-  window.ChatDock = Object.assign(window.ChatDock||{}, { initChatDock, sendAttachment, send });
+  window.ChatDock = Object.assign(window.ChatDock||{}, { initChatDock, sendAttachment });
 })();

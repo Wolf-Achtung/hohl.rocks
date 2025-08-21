@@ -70,8 +70,3 @@
 
   document.addEventListener('DOMContentLoaded', ensureUI);
 })();
-
-
-// Setze globalen Speicher für letzte Foto-DataURL
-window.__lastPhotoDataURL = window.__lastPhotoDataURL || '';
-window.addEventListener('photo:selected', (ev)=>{ try{ window.__lastPhotoDataURL = ev.detail && ev.detail.dataUrl ? ev.detail.dataUrl : ''; }catch{} });
