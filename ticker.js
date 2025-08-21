@@ -27,7 +27,6 @@
     .ticker a{ margin:0 18px; padding:6px 10px; font:600 14px/1.1 ui-sans-serif,system-ui; }
   }
   @media (prefers-reduced-motion: reduce){ .ticker-track{ animation: none; } }
-  .ticker-track.paused{ animation-play-state: paused; }
   @keyframes ticker-move{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
   `;
   document.head.appendChild(style);
@@ -54,12 +53,6 @@
     document.body.appendChild(wrap);
     setTimeout(applyLayout, 0);
   });
-
-  function pauseTicker(){ track.classList.add('paused'); }
-  function resumeTicker(){ track.classList.remove('paused'); }
-  window.addEventListener('chat:send', pauseTicker);
-  window.addEventListener('chat:done', resumeTicker);
-  
 
   function locateChat(){
     const sels = ['.chatbox', '#chat-dock', '.chat-dock', '[data-chat-dock]', '.chatbox-dock'];
@@ -88,49 +81,49 @@
   document.addEventListener('DOMContentLoaded', ()=>{ const chat=locateChat(); if(ro && chat) ro.observe(chat); });
 
   function sendNow(text){
-    // Pause ticker immediately
-    try{ track.classList.add('paused'); }catch{}
-    // Prefer direct programmatic send
-    try{ if(window.ChatDock && ChatDock.send){ ChatDock.send(text); return; } }catch{}
-    // Fallback: fill input + fire Enter
-    const root = document; const input = root.querySelector('#chat-input, .chat-dock input, [data-chat-input]');
-    if(input){ input.focus(); input.value = text;
-      const kd = new KeyboardEvent('keydown',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true});
-      const ku = new KeyboardEvent('keyup',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true});
-      input.dispatchEvent(kd); input.dispatchEvent(ku); return;
-    }
-    // last fallback: click any visible "Senden"-Button
-    let btn = root.querySelector('#chat-send, [data-send], button.send, button:has([data-icon="send"])');
-    if(!btn){ btn = Array.from(root.querySelectorAll('button')).find(b=>/senden|send/i.test(b.textContent||'')); }
-    if(btn){ btn.click(); return; }
-    try{ navigator.clipboard && navigator.clipboard.writeText(text); }catch{}
-  } }catch{}
+    // Bring ChatDock in den Vordergrund
     try{
-      if(window.ChatDock && typeof ChatDock.send === 'function'){ ChatDock.send(text); return; }
-      if(window.ChatDock && ChatDock.postMessage){ ChatDock.postMessage(text); return; }
+      if(window.ChatDock && (ChatDock.open || ChatDock.focus)){
+        (ChatDock.open || ChatDock.focus).call(ChatDock);
+      }
     }catch{}
-    const selectors = ['textarea[data-chat-input]','#chat-input','textarea[name="chat"]','.chatbox textarea','.chat-input textarea','textarea'];
-    let input=null; for(const sel of selectors){ const cand=document.querySelector(sel); if(cand){ input=cand; break; } }
+    // Stoppe das Laufband während der Antwort
+    try{
+      track.style.animationPlayState = 'paused';
+    }catch{}
+    // Sende direkt über ChatDock.send, wenn vorhanden
+    try{
+      if(window.ChatDock && typeof ChatDock.send === 'function'){
+        ChatDock.send(text);
+        return;
+      }
+      if(window.ChatDock && typeof ChatDock.postMessage === 'function'){
+        ChatDock.postMessage(text);
+        return;
+      }
+    }catch{}
+    // Fallback: schreibe ins Chatfeld und triggere Enter
+    const selectors = ['#chat-input','textarea[data-chat-input]','textarea[name="chat"]','.chatbox textarea','.chat-input textarea','textarea'];
+    let input=null;
+    for(const sel of selectors){ const cand=document.querySelector(sel); if(cand){ input=cand; break; } }
     if(input){
       try{
         input.focus(); input.value=text; input.dispatchEvent(new Event('input',{bubbles:true}));
-        let root = input.closest('form') || input.closest('.chatbox') || document;
-        let btn = root.querySelector('[type="submit"], [data-send], button.send, button:has([data-icon="send"])');
-        if(!btn){ btn = Array.from(root.querySelectorAll('button')).find(b=>/senden|send/i.test(b.textContent||'')); }
-        if(btn){ btn.click(); return; }
-        const kd = new KeyboardEvent('keydown',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true});
-        const ku = new KeyboardEvent('keyup',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true});
-        input.dispatchEvent(kd); input.dispatchEvent(ku); return;
+        // drücke Enter
+        const keDown = new KeyboardEvent('keydown',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true});
+        const keUp   = new KeyboardEvent('keyup',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true});
+        input.dispatchEvent(keDown); input.dispatchEvent(keUp);
+        return;
       }catch{}
     }
+    // Wenn nichts geht: copy to clipboard
     try{ navigator.clipboard && navigator.clipboard.writeText(text); }catch{}
   }
-})();
-// mobile tweaks
-;(function(){
-  const css = `@media (max-width:520px){
-    .ticker-wrap{ left:12px; right:12px; bottom:10px; }
-    .ticker a{ font-size:13px; padding:8px 10px; }
-  }`;
-  const s=document.createElement('style'); s.textContent=css; document.head.appendChild(s);
+
+  // Nach Abschluss des Chats das Laufband fortsetzen
+  window.addEventListener('chat:done', ()=>{
+    try{
+      track.style.animationPlayState = 'running';
+    }catch{}
+  });
 })();
