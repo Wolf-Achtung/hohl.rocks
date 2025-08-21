@@ -3,7 +3,7 @@
   'use strict';
   const css = `
   .ticker-wrap{ position:fixed; left:24px; right:24px; z-index:45; pointer-events:auto; }
-  .ticker{ position:relative; overflow:hidden;
+  .ticker{ position:relative; overflow:hidden; height:48px; } /* height ensures visibility */
     -webkit-mask-image: linear-gradient(90deg, transparent 0, black 8%, black 92%, transparent 100%);
             mask-image: linear-gradient(90deg, transparent 0, black 8%, black 92%, transparent 100%); }
   .ticker-track{ position:absolute; display:inline-flex; gap:14px; white-space:nowrap;
@@ -13,7 +13,7 @@
     color:#eaf2ff; background:rgba(20,28,36,.64); border:1px solid rgba(255,255,255,.16); backdrop-filter: blur(6px); }
   .ticker a:hover{ filter:brightness(1.08); }
   @keyframes ticker-move{ from{ transform:translateX(100%);} to{ transform:translateX(-110%);} }
-  @media (max-width:880px){ .ticker-wrap{ left:12px; right:12px; } .ticker a{ padding:8px 12px; } }
+  @media (max-width:880px){ .ticker-wrap{ left:12px; right:12px; } .ticker{ height:42px; } .ticker a{ padding:8px 12px; } }
   `;
   const style=document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
