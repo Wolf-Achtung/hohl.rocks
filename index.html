@@ -1,110 +1,106 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>hohl.rocks</title>
-  <!-- Core styles (optional if bereits vorhanden) -->
-  <link rel="stylesheet" href="/site-frame.css">
-  <link rel="stylesheet" href="/projects-modern.css">
-  <!-- Chat styles -->
-  <link rel="stylesheet" href="/css/chatbox.css">
-  <!-- Video Preload -->
-  <link rel="preload" as="video" href="/videos/desert_drive.mp4">
-  <!-- Local overrides: Chat rechts unten, Panels heller falls nötig -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>hohl.rocks — Wolf Hohl · KI-Manager</title>
+  <link rel="icon" href="/favicon.ico" />
   <style>
-    /* Ensure video layer is always visible */
-    .bg-video, #bg-video { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; }
-    .overlay-gradient { position:fixed; inset:0; z-index:-1; pointer-events:none; }
-    /* Chips-Navigation top-right */
-    .chips { position:fixed; top:14px; right:16px; display:flex; gap:10px; z-index:10; }
-    .chips a { text-decoration:none; font-weight:700; padding:10px 14px; border-radius:999px; backdrop-filter: blur(8px);
-               color:#eaf7ff; background:rgba(10,16,22,.55); border:1px solid rgba(255,255,255,.18); }
-    /* Light glass panel baseline, if your CSS is missing */
-    .panel { background: rgba(255,255,255,.42); border:1px solid rgba(255,255,255,.18); border-radius:22px;
-              backdrop-filter: blur(10px); box-shadow: 0 10px 40px rgba(0,0,0,.32); padding:24px; width:min(1080px,92vw); margin:120px auto; }
-    /* Chat dock bottom-right override */
-    .chat-dock { left:auto !important; right:24px !important; width:auto; }
-    /* Prevent vertical scroll on home only (will be added inline there) */
-  </style>
-  <script>
-    // Railway-Backend für den Chat
-    window.HOHLROCKS_CHAT_BASE = "https://hohlrocks-production.up.railway.app";
-  </script>
-  <link rel="stylesheet" href="/hero-shapes.css">
-  <style>html,body{height:100%;overflow:hidden}</style>
-
-  <style>
-    /* singlepage-hide-nav */
-    header nav, .top-nav, .site-nav, .header-links, .nav, .top-links { display:none !important; }
-  </style>
-
-  <style>
-    /* hide chips nav */
-    nav.chips, .chips{ display:none !important; visibility:hidden !important; }
+    html,body{height:100%;margin:0;background:#0a1118;color:#eaf2ff;font:500 16px/1.45 ui-sans-serif,system-ui}
+    .stage{position:fixed;inset:0;overflow:hidden}
+    #bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(1) contrast(1.05)}
+    /* layer for shapes (if your hero-shapes.js uses one) */
+    #shape-layer{position:absolute;inset:0;pointer-events:auto}
+    /* chat dock (very lightweight – your CSS can override) */
+    .chat-dock{position:fixed;right:22px;bottom:22px;z-index:40;background:rgba(12,16,22,.72);
+      border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px);padding:10px;border-radius:18px;display:flex;gap:8px;align-items:center}
+    .chat-dock input{width:min(48vw,360px);max-width:68vw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);
+      color:#eaf2ff;border-radius:999px;padding:10px 14px;outline:none}
+    .chat-dock button{background:#1b66ff;border:0;color:#fff;border-radius:999px;padding:9px 12px;cursor:pointer}
+    .chat-dock .ghost{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);color:#eaf2ff}
+    /* output panel (optional; ChatDock erzeugt es automatisch, falls nicht vorhanden) */
+    #chat-output{position:fixed;right:22px;bottom:92px;width:min(640px,88vw);max-height:min(58vh,460px);overflow:auto;
+      background:rgba(12,16,22,.62);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(10px);border-radius:18px;padding:12px;display:none;z-index:42}
+    #chat-output.show{display:block}
+    .bubble-row{margin:8px 0;display:flex}
+    .bubble-row.user .b-inner{margin-left:auto;background:rgba(255,255,255,.08)}
+    .bubble-row.assistant .b-inner{margin-right:auto;background:rgba(27,102,255,.13)}
+    .b-inner{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.16)}
+    /* Datenschutz-Button Platzhalter unten links (falls vorhanden) */
+    .privacy-slot{position:fixed;left:14px;bottom:14px;z-index:34}
   </style>
 </head>
 <body>
-
-  <div class="video-wrap">
-    <video id="bg-video" class="bg-video" src="/videos/desert_drive.mp4" autoplay muted loop playsinline></video>
-  </div>
-  <div class="overlay-gradient"></div>
-
-  <!-- Navigation entfernt: Single‑Page‑Konzept -->
-
-  <!-- Neon Shapes (Navigation per Klick) -->
-  <div id="shapes"></div>
-
-  <!-- Scripts: Audio, Shapes, Ticker, Antworten, Foto & Datenschutz -->
-  <!-- Harley-Motorsound (mit unregelmäßigem Tuckern) -->
-  <script src="/harley-lite.js?v=gs1"></script>
-  <!-- Bubbles (organische Neonformen, keine Navigation) -->
-  <script src="/hero-shapes.js?v=gs1"></script>
-  <!-- Kuratierte Ticker-Prompts -->
-  <script src="/ticker-items.js?v=gs1"></script>
-  <!-- Ticker: sendet direkt und pausiert während des Chats -->
-  <script src="/ticker.js?v=gs1"></script>
-  <!-- Laufband für Status & Kurzantworten -->
-  <script src="/answer-marquee.js?v=gs1"></script>
-  <!-- Overlays: kleine Antwort-Card + Spotlight (optional) -->
-  <script src="/answers-overlay.js?v=2"></script>
-  <script src="/answers-spotlight.js?v=1"></script>
-  <!-- Foto-Upload & Datenschutz -->
-  <script src="/photo-intake.js?v=2"></script>
-  <script src="/privacy-panel.js?v=1"></script>
+  <main class="stage" aria-label="Highway-Video mit organischen Neon-Shapes">
+    <video id="bg-video" autoplay playsinline loop muted>
+      <source src="/videos/desert_drive.mp4" type="video/mp4" />
+    </video>
+    <div id="shape-layer"></div>
+  </main>
 
   <!-- Chat Dock -->
+  <div id="chat-output" aria-live="polite"></div>
   <div class="chat-dock">
-    <input id="chat-input" placeholder="Frage stellen… (KI, EU AI Act, Projekte)" autocomplete="off"/>
+    <input id="chat-input" type="text" placeholder="Frage stellen… (KI, EU)"/>
+    <button id="photo-btn" class="ghost" title="Foto nutzen">Foto</button>
     <button id="chat-send">Senden</button>
   </div>
-  <div id="chat-output" class="chat-output"></div>
 
-  <!-- Chat client -->
-  <script src="/js/chatbox-stream.js?v=chat2"></script>
+  <div class="privacy-slot" id="privacy-slot"></div>
+
   <script>
-    ChatDock.initChatDock({
-      inputSel:'#chat-input',
-      buttonSel:'#chat-send',
-      systemPrompt:"Du antwortest im Namen von Wolf Hohl – TÜV‑zertifizierter KI‑Manager. Ton: seriös, prägnant, deutsch, winter‑klar. Binde, wo sinnvoll, kurz ein, wie Wolf Kund:innen konkret hilft (Roadmaps, EU‑AI‑Act‑Einordnung, DSGVO‑saubere Datenwege). Vermeide Floskeln. Sei lösungsorientiert. Wenn ein Bild gesendet wurde: bleib respektvoll, keine Diagnosen, keine Gesichtserkennung, keine Identifizierung realer Personen.",
-      model:(window.OPENAI_MODEL||'gpt-4o-mini')
-    });
+    // Konfiguration: Railway-Backend & Systemprompt
+    window.HOHLROCKS_CHAT_BASE = 'https://hohlrocks-production.up.railway.app';
+    window.WOLF_SYSTEM_PROMPT = [
+      "Du antwortest im Namen von Wolf Hohl – TÜV‑zertifizierter KI‑Manager.",
+      "Ton: seriös, prägnant, deutsch, winter‑klar, freundlich.",
+      "Erstantwort maximal 3 Sätze. Wo sinnvoll: 1 kurzes Beispiel, 1 pragmatischer nächster Schritt.",
+      "Beziehe dich – wenn passend – auf Wolfs Erfahrung (30 Jahre Marketing/Kommunikation, Trailer, >50 Mio Umsatz) und Rolle als KI‑Manager.",
+      "Keine Buzzword‑Orgel. Falls unsicher: kurz Risiko/Trade‑off erwähnen."
+    ].join(" ");
   </script>
 
-  <!-- Ergänze den Systemprompt um Wolf-Guidelines (3-Sätze-Regel, pragmatischer Stil) -->
-  <script src="/system-prompt-addon.js?v=gs1"></script>
+  <!-- Deine bestehenden Skripte für Shapes etc. -->
+  <link rel="stylesheet" href="/hero-shapes.css?v=sp2">
+  <script src="/hero-shapes.js?v=sp2"></script>
 
+  <!-- Analytics (lokal) -->
+  <script src="/analytics-lite.js?v=1"></script>
 
+  <!-- Ticker (Inhalte → Laufband) -->
+  <script src="/ticker-items.js?v=gc3"></script>
+  <script src="/ticker.js?v=send5"></script>
+
+  <!-- Chat-Client (SSE + Backoff) -->
+  <script src="/js/chatbox-stream.js?v=chat4"></script>
   <script>
+    // ChatDock initialisieren
     document.addEventListener('DOMContentLoaded', function(){
-      try{ document.querySelectorAll('nav.chips, .chips').forEach(el=>el.remove()); }catch{}
+      if (window.ChatDock && ChatDock.initChatDock){
+        ChatDock.initChatDock({
+          inputSel:'#chat-input',
+          buttonSel:'#chat-send',
+          systemPrompt: window.WOLF_SYSTEM_PROMPT,
+          model: 'gpt-4o-mini'
+        });
+      }
     });
   </script>
 
-  <script src="/kill-nav.js?v=1"></script>
-  <script src="/audio-gesture.js?v=1"></script>
-  <script src="/no-subpage-nav.js?v=1"></script>
+  <!-- Spotlight + Micro-Demos + Foto-Flows + Style-Switcher -->
+  <script src="/spotlight-card.js?v=1"></script>
+  <script src="/micro-demos.js?v=1"></script>
+  <script src="/photo-flows.js?v=1"></script>
+  <script src="/style-switcher.js?v=1"></script>
 
+  <!-- Motorsound (Harley) -->
+  <script src="/harley-lite.js?v=3"></script>
+  <script>
+    // Sound erst nach User-Geste starten, dann weich absenken
+    window.addEventListener('pointerdown', function once(){
+      try{ HarleyLite.startAmbient(900); }catch(e){}
+      window.removeEventListener('pointerdown', once, { capture:false });
+    }, { capture:false, once:true });
+  </script>
 </body>
 </html>
