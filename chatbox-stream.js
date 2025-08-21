@@ -43,6 +43,8 @@
       const j = await r.json().catch(()=>({answer: 'Fehler beim Abruf.'}));
       streamEl.textContent = j.answer || String(j);
     }
+    // Markiere Fertig
+    try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}
   }
 
   function init(){
@@ -52,6 +54,7 @@
     const submit = ()=>{
       const prompt = input.value.trim();
       if(!prompt) return;
+      try{ window.dispatchEvent(new CustomEvent('chat:send')); }catch{}
       streamAnswer(prompt);
       input.value='';
     };
@@ -67,4 +70,31 @@
   }
   if(document.readyState!=='loading') init();
   else document.addEventListener('DOMContentLoaded', init);
+
+  // Expose ChatDock methods for external send
+  (function(){
+    // Ensure global ChatDock
+    const cd = window.ChatDock = window.ChatDock || {};
+    // Config stub
+    cd.config = cd.config || {};
+    // send text prompt via streamAnswer
+    cd.send = function(prompt){
+      if(!prompt) return;
+      try{ window.dispatchEvent(new CustomEvent('chat:send')); }catch{}
+      streamAnswer(String(prompt));
+    };
+    // focus or open chat (shows output panel)
+    cd.open = cd.focus = function(){
+      try{
+        const pane = qs('#chat-output');
+        if(pane) pane.classList.add('show');
+      }catch{}
+    };
+    // send attachment (image) plus prompt (fallback: ignore image)
+    cd.sendAttachment = function(opts){
+      opts = opts || {};
+      const prompt = opts.prompt || '';
+      cd.send(prompt);
+    };
+  })();
 })();

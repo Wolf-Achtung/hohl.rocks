@@ -8,7 +8,8 @@
  */
 (function(){
   const isHome = location.pathname.endsWith('/') || location.pathname.endsWith('/index.html') || location.pathname==='/';
-  
+  const targets = ['/ueber-mich.html','/projekte.html','/kontakt.html'];
+
   const TAU = Math.PI*2;
   const lerp = (a,b,t)=> a+(b-a)*t;
   const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
@@ -119,19 +120,30 @@
       el.__raf = requestAnimationFrame(draw);
     }
 
-    // Click → nur Sound + Chat-Fokus (keine Navigation)
+    // Interaktion: auf Startseite nur Sound & Chat-Fokus, keine Navigation
     if(isHome){
       el.addEventListener('click', ()=>{
         try{
+          // Merken, dass Audio gewünscht wird
           sessionStorage.setItem('harley_wants','1');
-          if(window.HarleyLite && !window.HarleyLite.isRunning()){ window.HarleyLite.startAmbient(900); }
-          else if(window.HarleyLite && window.HarleyLite.isRunning()){ window.HarleyLite.blip && window.HarleyLite.blip(); }
+          // Startet Ambient, blippt sanft wenn bereits läuft
+          if(window.HarleyLite){
+            if(!window.HarleyLite.isRunning()) window.HarleyLite.startAmbient(900);
+            else if(window.HarleyLite.blip) window.HarleyLite.blip();
+          }
         }catch{}
-        try{ if(window.ChatDock && (ChatDock.open||ChatDock.focus)) (ChatDock.open||ChatDock.focus).call(ChatDock); }catch{}
+        // Den Chat in den Vordergrund holen
+        try{
+          if(window.ChatDock && (ChatDock.open || ChatDock.focus)){
+            (ChatDock.open || ChatDock.focus).call(ChatDock);
+          }
+        }catch{}
       });
-    }
-    el.setAttribute('role','button'); el.setAttribute('tabindex','0'); el.setAttribute('aria-label','Navigation');
-      el.addEventListener('keydown', ev=>{ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); el.click(); } });
+      // Barrierefreiheit: Enter/Space löst Klick aus
+      el.setAttribute('role','button');
+      el.setAttribute('tabindex','0');
+      el.setAttribute('aria-label','Interaktive Bubble');
+      el.addEventListener('keydown', ev=>{ if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); el.click(); } });
     }
 
     // Einblenden, Render starten
