@@ -246,5 +246,127 @@
     mo.observe(document.body, {childList:true, subtree:true});
   })();
   </script>
+<!-- WOLF TICKER BOOT-RESCUE — erzwingt Start nach 5–7s, ruhig, ohne Überlappung -->
+<script>
+(function(){
+  'use strict';
+
+  const ANSWER_SEL = '.spotlight-card, #chat-output, .answer-overlay, .answer-marquee, .chat-answer, .chat-output';
+
+  function cssOnce(){
+    if (document.getElementById('wolf-ticker-css')) return;
+    const style = document.createElement('style'); style.id='wolf-ticker-css';
+    style.textContent = `
+      .ticker-wrap{position:fixed;left:24px;right:24px;z-index:320;pointer-events:auto}
+      .ticker{position:relative;overflow:hidden;height:48px;pointer-events:none;
+        padding-right:var(--safeR,340px);
+        -webkit-mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%);
+                mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%)}
+      .ticker-track{position:absolute;display:inline-flex;gap:14px;white-space:nowrap;will-change:transform;
+        animation:ticker-move var(--dur,140s) linear infinite;transform:translateZ(0)}
+      .ticker-track.paused{animation-play-state:paused}
+      .ticker a{display:inline-block;padding:10px 16px;border-radius:999px;text-decoration:none;pointer-events:auto;
+        color:#eaf2ff;background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
+      .ticker a:hover{filter:brightness(1.08)}
+      @keyframes ticker-move{from{transform:translateX(100%)}to{transform:translateX(-110%)}}
+      @media (max-width:880px){.ticker-wrap{left:12px;right:12px}.ticker{height:42px}.ticker a{padding:8px 12px}}
+      ${ANSWER_SEL}{position:relative;z-index:9999!important}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function buildItems(){
+    if (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) return window.__TICKER_ITEMS;
+    return [
+      {label:'Überrasch mich 🤯', prompt:'Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit kleinem Beispiel.'},
+      {label:'Mini-Story (5 Wörter)', prompt:'Erzeuge eine spannende Mini-Story mit genau 5 Wörtern. Danach ein kurzer Titel.'},
+      {label:'Haiku zur Fahrt', prompt:'Schreibe ein kurzes Haiku über eine nächtliche Highway-Fahrt. Ton: ruhig, präzise.'}
+    ];
+  }
+
+  function sendNow(text){
+    try{ if (window.ChatDock?.send){ ChatDock.send(text); return; } }catch(_){}
+    const i=document.querySelector('#chat-input'), b=document.querySelector('#chat-send');
+    if(i){ i.value=text; i.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true})); }
+    else { b?.click(); }
+  }
+
+  function mountTicker(){
+    cssOnce();
+    // bestehende, defekte Instanzen entfernen
+    document.querySelectorAll('.ticker-wrap').forEach(el=>el.remove());
+
+    const wrap=document.createElement('div'); wrap.className='ticker-wrap';
+    const inner=document.createElement('div'); inner.className='ticker';
+    const track=document.createElement('div'); track.className='ticker-track';
+    inner.appendChild(track); wrap.appendChild(inner); document.body.appendChild(wrap);
+
+    const items=buildItems();
+    function addChip(lbl,prm){
+      const a=document.createElement('a'); a.href='#'; a.textContent=lbl;
+      a.addEventListener('click',ev=>{ ev.preventDefault(); track.classList.add('paused'); sendNow(prm); });
+      track.appendChild(a);
+    }
+    items.forEach(it=>addChip(it.label,it.prompt));
+    // auffüllen bis lang genug
+    const vw=Math.max(320,window.innerWidth); let guard=20;
+    while(track.scrollWidth<3*vw && guard-->0) items.forEach(it=>addChip(it.label,it.prompt));
+
+    // sehr ruhig
+    const SPEED_PX_S=16;
+    const setDur=()=>{ const px=track.scrollWidth+Math.max(320,window.innerWidth);
+      const dur=Math.max(60,Math.min(260,px/SPEED_PX_S)); track.style.setProperty('--dur',dur.toFixed(1)+'s'); };
+    setDur();
+
+    function chatRect(){ const el=document.querySelector('.chat-dock'); return el?el.getBoundingClientRect():null; }
+    function ansRect(){  const el=document.querySelector(ANSWER_SEL); return el?el.getBoundingClientRect():null; }
+    function fixBottom(){
+      const chat=chatRect(), ans=ansRect(), tickH=inner.getBoundingClientRect().height||48;
+      let bottom = chat ? (window.innerHeight - chat.top) + 12 : 76;
+      if(ans){ const underAns=Math.max(12, window.innerHeight - ans.bottom - 12 - tickH); bottom=Math.min(bottom, underAns); }
+      wrap.style.bottom = Math.max(12,bottom)+'px';
+      inner.style.setProperty('--safeR', (chat?Math.ceil(chat.width+24):340)+'px');
+      // z unter Antwort
+      const zi = ans ? parseInt(getComputedStyle(ans).zIndex||'1000',10) : 320;
+      wrap.style.zIndex = String(Math.min(zi-5, 600));
+    }
+    fixBottom();
+
+    window.addEventListener('resize',()=>{ setDur(); fixBottom(); }, {passive:true});
+    window.addEventListener('chat:send',()=>{ track.classList.add('paused'); fixBottom(); });
+    window.addEventListener('chat:done',()=>{ track.classList.remove('paused'); fixBottom(); });
+
+    // kleine Debug-API
+    window.WolfTicker = {
+      status(){ const td=getComputedStyle(track).animationDuration; return {chips:track.querySelectorAll('a').length,duration:td,bottom:wrap.style.bottom}; },
+      faster(){ const d=parseFloat(getComputedStyle(track).animationDuration)||120; track.style.setProperty('--dur',Math.max(20,d*0.85)+'s'); },
+      slower(){ const d=parseFloat(getComputedStyle(track).animationDuration)||120; track.style.setProperty('--dur',d*1.15+'s'); }
+    };
+  }
+
+  function isRunning(){
+    const track=document.querySelector('.ticker-track');
+    if(!track) return false;
+    const chips = track.querySelectorAll('a').length;
+    const dur = parseFloat(getComputedStyle(track).animationDuration||'0');
+    const paused = getComputedStyle(track).animationPlayState==='paused' || track.classList.contains('paused');
+    return chips>0 && dur>10 && !paused;
+  }
+
+  // -> Starte Rettung nach 5.5s (stellbar: 7000 für 7s)
+  function boot(){
+    if (!isRunning()) mountTicker();
+  }
+  if (document.readyState==='complete') {
+    setTimeout(boot, 5500);
+  } else {
+    window.addEventListener('load', ()=> setTimeout(boot, 5500), {once:true});
+  }
+
+  // Safety: alle 20s prüfen – falls etwas stoppt, neu aufbauen
+  setInterval(()=>{ if(!isRunning()) mountTicker(); }, 20000);
+})();
+</script>
+
 </body>
 </html>
