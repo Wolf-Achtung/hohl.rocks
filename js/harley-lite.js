@@ -1,9 +1,9 @@
-/*! harley-lite.js — v4: unregelmäßiges V-Twin-Idle („potato-potato“), kein Meeresrauschen */
+/*! harley-lite.js — v5: schnelleres V-Twin-Idle („potato-potato“) mit Jitter */
 (function(){
   'use strict';
 
   let ctx, master, running=false, timer=null;
-  const state = { gain: 0.0 };
+  const state = { gain: 0.0, base: 0.16 }; // base ↓ = schneller
 
   function ensureCtx(){
     if (ctx) return ctx;
@@ -12,74 +12,75 @@
     return ctx;
   }
 
-  // Ein „Thump“: kurze Sinus-/Dreieck-Welle + Noise, stark tiefpassgefiltert
+  // einzelner „Thump“
   function scheduleThump(t, lvl){
-    const freqStart = 70, freqEnd = 40; // Hz
-    const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(freqStart, t);
-    o.frequency.exponentialRampToValueAtTime(freqEnd, t + 0.12);
+    const o = ctx.createOscillator(); o.type='triangle';
+    o.frequency.setValueAtTime(80, t);
+    o.frequency.exponentialRampToValueAtTime(45, t+0.10);
 
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.9*lvl, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    g.gain.exponentialRampToValueAtTime(0.95*lvl, t+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+0.16);
 
-    // leichter „Plopp“: Noise → LPF
-    const noise = ctx.createBufferSource();
-    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.2), ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i=0;i<data.length;i++) data[i] = (Math.random()*2-1) * Math.exp(-i/(ctx.sampleRate*0.02));
-    noise.buffer = buf;
+    // kurzer Noise-Impuls durch LPF
+    const n = ctx.createBufferSource();
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.18), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(ctx.sampleRate*0.018));
+    n.buffer = buf;
 
-    const lpf = ctx.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value = 320; lpf.Q.value = 0.7;
-    noise.connect(lpf);
+    const lpf = ctx.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value=360; lpf.Q.value=0.7;
 
-    const mix = ctx.createGain(); mix.gain.value = 0.5*lvl;
+    const mix = ctx.createGain(); mix.gain.value = 0.48*lvl;
 
-    o.connect(g); g.connect(mix); lpf.connect(mix); mix.connect(master);
-    noise.start(t); noise.stop(t+0.2); o.start(t); o.stop(t+0.2);
+    n.connect(lpf); o.connect(g); g.connect(mix); lpf.connect(mix); mix.connect(master);
+    n.start(t); n.stop(t+0.18); o.start(t); o.stop(t+0.18);
   }
 
-  // Unregelmäßiges Idle-Pattern (V-Twin): 0.23s – 0.23s – 0.36s + Jitter
-  function patternTimes(base = 0.27){
-    const jitter = () => (Math.random()*0.04 - 0.02); // ±20ms
-    return [ base-0.04+jitter(), base-0.04+jitter(), base+0.09+jitter() ];
+  // schnelleres, unregelmäßiges Pattern: zwei kurze, eine längere Pause
+  function patternTimes(){
+    // base ~0.16 → sehr flott; gern 0.14 für „noch schneller“
+    const b = state.base;
+    const jit = ()=> (Math.random()*0.02 - 0.01); // ±10ms
+    return [ Math.max(0.10, b-0.03+jit()), Math.max(0.10, b-0.03+jit()), Math.max(0.18, b+0.06+jit()) ];
   }
 
   function loop(){
     if (!running) return;
-    const now = ctx.currentTime;
-    const ahead = now + 0.9; // 900ms vorausplanen
+    const now = ctx.currentTime, ahead = now + 0.9;
     if (!loop.nextAt || loop.nextAt < now) loop.nextAt = now;
-
     while (loop.nextAt < ahead){
-      const patt = patternTimes(0.27 + (Math.random()*0.04 - 0.02));
+      const patt = patternTimes();
       for (const step of patt){
-        loop.nextAt += Math.max(0.16, step);
+        loop.nextAt += step;
         scheduleThump(loop.nextAt, state.gain);
       }
     }
   }
 
-  function startAmbient(initialRpm=900){
-    ensureCtx();
-    if (ctx.state === 'suspended') ctx.resume();
-    if (running) return;
-    running = true;
+  function setRpm(rpm){
+    // sehr grobe Abbildung: höhere RPM → kleinere base
+    // 900 → ~0.19 | 1200 → ~0.16 | 1500 → ~0.14
+    state.base = Math.max(0.12, Math.min(0.22, 0.32 - rpm/5000));
+  }
 
-    // Start laut, dann nach ~3.5s herunterfahren
-    state.gain = 0.85;
-    ramp(master.gain, 0.85, 0.3);
-    setTimeout(()=> ramp(master.gain, 0.38, 1.0), 3500);
+  function startAmbient(rpm=1300){
+    ensureCtx(); if (ctx.state==='suspended') ctx.resume();
+    if (running) return; running = true;
+    setRpm(rpm);
+
+    // Start kräftig, dann runter
+    state.gain = 0.9;
+    ramp(master.gain, 0.9, 0.25);
+    setTimeout(()=> ramp(master.gain, 0.42, 1.0), 3200);
 
     loop.nextAt = 0;
-    if (timer) clearInterval(timer);
-    timer = setInterval(loop, 80);
+    clearInterval(timer); timer = setInterval(loop, 70);
   }
 
   function stop(){
     if (!ctx || !running) return;
-    running = false;
-    clearInterval(timer); timer=null;
-    ramp(master.gain, 0.0001, 0.6);
+    running=false; clearInterval(timer); timer=null; ramp(master.gain, 0.0001, 0.5);
   }
 
   function ramp(param, target, seconds){
@@ -91,5 +92,5 @@
     }catch{}
   }
 
-  window.HarleyLite = { startAmbient, stop };
+  window.HarleyLite = { startAmbient, stop, setRpm };
 })();
