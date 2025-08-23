@@ -76,7 +76,7 @@
   <script src="/analytics-lite.js?v=1"></script>
 
   <!-- Ticker-Inhalte (nur Items) -->
-  <script src="/ticker-items.js?v=gc3"></script>
+  <script src="/ticker-items.js?v=gc4"></script>
 
   <!-- Chat-Client -->
   <script src="/js/chatbox-stream.js?v=chat4"></script>
@@ -100,6 +100,102 @@
   <script src="/photo-flows.js?v=1"></script>
   <script src="/style-switcher.js?v=1"></script>
 
+  <!-- WolfFX: kleine Interaktions-Demos (Sound/Bild/Visuals) -->
+  <script>
+  (function(){
+    'use strict';
+    const FX = {};
+    const layer = document.createElement('div');
+    layer.id='wolf-fx-layer';
+    layer.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:8000;';
+    document.addEventListener('DOMContentLoaded', ()=>document.body.appendChild(layer));
+
+    function ensureCtx(){
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!window.__wolfCtx) window.__wolfCtx = new Ctx();
+      if (window.__wolfCtx.state === 'suspended') window.__wolfCtx.resume();
+      return window.__wolfCtx;
+    }
+    FX.toast = (msg, ms=2000)=>{
+      const el=document.createElement('div'); el.className='fx-toast'; el.textContent=msg;
+      layer.appendChild(el); setTimeout(()=>el.classList.add('out'), ms); setTimeout(()=>el.remove(), ms+600);
+    };
+    FX.ring = (color='#a7b8ff')=>{
+      const el=document.createElement('div'); el.className='fx-ring'; el.style.setProperty('--c', color);
+      layer.appendChild(el); setTimeout(()=>el.remove(), 1000);
+    };
+    FX.whoosh = ()=>{
+      const ctx=ensureCtx(); if(!ctx) return;
+      const dur=.6, now=ctx.currentTime, buf=ctx.createBuffer(1, ctx.sampleRate*dur, ctx.sampleRate);
+      const data=buf.getChannelData(0); for(let i=0;i<data.length;i++){ data[i]=(Math.random()*2-1)*(1-i/data.length); }
+      const src=ctx.createBufferSource(); src.buffer=buf;
+      const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=800;
+      const lp=ctx.createBiquadFilter(); lp.type='lowpass';  lp.frequency.value=12000;
+      const g=ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.6, now+.08); g.gain.exponentialRampToValueAtTime(0.0001, now+dur);
+      src.connect(hp).connect(lp).connect(g).connect(ctx.destination); src.start(); FX.ring();
+    };
+    FX.bass = ()=>{
+      const ctx=ensureCtx(); if(!ctx) return; const now=ctx.currentTime;
+      const o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.value=55;
+      const g=ctx.createGain(); g.gain.value=0.0001; o.connect(g).connect(ctx.destination); o.start();
+      [0,0.22,0.47].forEach(t=>{ g.gain.setValueAtTime(0.0001, now+t); g.gain.exponentialRampToValueAtTime(0.5, now+t+.02); g.gain.exponentialRampToValueAtTime(0.0001, now+t+.18); });
+      o.stop(now+.8); FX.ring('#00f0ff');
+    };
+    FX.bokeh = ()=>{
+      const wrap=document.createElement('div'); wrap.className='fx-bokeh';
+      for(let i=0;i<36;i++){ const d=document.createElement('div'); d.className='dot';
+        d.style.left=(Math.random()*100)+'%'; d.style.top=(Math.random()*100)+'%';
+        d.style.animationDelay=(Math.random()*0.8)+'s'; d.style.animationDuration=(4+Math.random()*4)+'s';
+        wrap.appendChild(d);
+      }
+      layer.appendChild(wrap); setTimeout(()=>wrap.remove(), 6000);
+    };
+    FX.freeze = ()=>{
+      const v=document.getElementById('bg-video'); if(!v) return FX.toast('Video nicht verfügbar');
+      const c=document.createElement('canvas'); c.width=v.videoWidth||1280; c.height=v.videoHeight||720;
+      const g=c.getContext('2d'); try{ g.drawImage(v,0,0,c.width,c.height); }catch(e){ return FX.toast('Snapshot nicht erlaubt'); }
+      const img=document.createElement('img'); img.src=c.toDataURL('image/jpeg',.85);
+      const frame=document.createElement('div'); frame.className='fx-polaroid'; frame.appendChild(img); layer.appendChild(frame);
+      setTimeout(()=>frame.remove(), 7000);
+    };
+    FX.palette = ()=>{
+      const v=document.getElementById('bg-video'); if(!v) return FX.toast('Video nicht verfügbar');
+      const cw=320, ch=180, c=document.createElement('canvas'); c.width=cw; c.height=ch; const g=c.getContext('2d'); g.drawImage(v,0,0,cw,ch);
+      const data=g.getImageData(0,0,cw,ch).data, bins=new Map();
+      for(let i=0;i<data.length;i+=4*20){ const r=data[i], gg=data[i+1], b=data[i+2]; const key=((r>>4)<<8)|((gg>>4)<<4)|(b>>4); bins.set(key,(bins.get(key)||0)+1); }
+      const top=[...bins.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k])=>{ const r=((k>>8)&0xF)<<4,g=((k>>4)&0xF)<<4,b=(k&0xF)<<4; return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join(''); });
+      const pal=document.createElement('div'); pal.className='fx-palette'; top.forEach(hex=>{ const sw=document.createElement('span'); sw.textContent=hex; sw.style.background=hex; pal.appendChild(sw); });
+      layer.appendChild(pal); setTimeout(()=>pal.remove(), 6000);
+    };
+    FX.run = (cmd)=>{ try{ if(!cmd) return; const c=cmd.split('=')[0]; if (FX[c]) FX[c](); else FX.toast('Aktion: '+c); } catch(e){ console.warn(e); } };
+    window.WolfFX = FX;
+
+    const css = `
+      #wolf-fx-layer{position:fixed;inset:0;pointer-events:none;z-index:8000}
+      .fx-toast{position:absolute;left:24px;top:24px;background:rgba(12,16,22,.72);border:1px solid rgba(255,255,255,.2);
+        color:#eaf2ff;padding:8px 12px;border-radius:10px;backdrop-filter:blur(6px);opacity:1;transition:opacity .5s}
+      .fx-toast.out{opacity:0}
+      .fx-ring{position:absolute;left:50%;top:60%;width:20vmin;height:20vmin;border-radius:50%;
+        transform:translate(-50%,-50%);box-shadow:0 0 0 0 var(--c,#a7b8ff);outline:2px solid var(--c,#a7b8ff);
+        filter:blur(.6px);animation:ringPulse .9s ease-out forwards}
+      @keyframes ringPulse{0%{opacity:.9;transform:translate(-50%,-50%) scale(.6)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.2)}}
+      .fx-bokeh{position:absolute;inset:0;overflow:hidden}
+      .fx-bokeh .dot{position:absolute;width:80px;height:80px;border-radius:50%;
+        background:radial-gradient(circle at 30% 30%, rgba(120,170,255,.45), rgba(130,240,220,.22) 60%, rgba(255,255,255,0) 70%);
+        filter:blur(2px);animation:bokehFloat 6s ease-in-out infinite alternate}
+      @keyframes bokehFloat{from{transform:translateY(20px) scale(.8)}to{transform:translateY(-40px) scale(1.1)}}
+      .fx-polaroid{position:absolute;right:24px;bottom:120px;background:#111;border-radius:12px;border:1px solid rgba(255,255,255,.18);
+        padding:10px 10px 22px;box-shadow:0 12px 30px rgba(0,0,0,.35);backdrop-filter:blur(8px);pointer-events:none}
+      .fx-polaroid img{display:block;max-width:min(38vw,440px);height:auto;border-radius:8px}
+      .fx-palette{position:absolute;left:24px;bottom:120px;display:flex;gap:10px}
+      .fx-palette span{display:inline-block;color:#0a1118;font-weight:700;border-radius:10px;padding:14px 12px;border:1px solid rgba(255,255,255,.25);
+        backdrop-filter:blur(6px)}
+    `;
+    const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+  })();
+  </script>
+
   <!-- Motorsound (ein Autostart genügt) -->
   <script src="/js/harley-lite.js?v=3"></script>
   <script src="/harley-lite-autostart.js?v=1"></script>
@@ -112,7 +208,6 @@
     const ANSWER_SEL = '.spotlight-card, #chat-output, .answer-overlay, .answer-marquee, .chat-answer, .chat-output';
     const TONE_MATCH = ['einfach','normal','nerdy'];
 
-    // Antwort-Card immer über Ticker
     const css = `
       ${ANSWER_SEL} { position: relative; z-index: 9999 !important; }
       .ticker-wrap { position: fixed; left:24px; right:24px; z-index: 320 !important; pointer-events:auto; }
@@ -128,52 +223,36 @@
       .ticker a:hover{ filter:brightness(1.08); }
       @keyframes ticker-move{ from{ transform:translateX(100%) } to{ transform:translateX(-110%) } }
       @media (max-width:880px){ .ticker-wrap{left:12px; right:12px} .ticker{height:42px} .ticker a{padding:8px 12px} }
-      /* Chips entfernen */
       .tone-variants, .tone-chip, .tone-easy, .tone-normal, .tone-nerdy { display:none !important; }
     `;
     const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
-    // Helpers
     const $  = (s, r=document)=> r.querySelector(s);
     const $$ = (s, r=document)=> Array.from(r.querySelectorAll(s));
 
-    // Nur die aktuelle Q/A sichtbar halten (alles alte weg)
     function singleAnswerMode(){
-      const out = $('#chat-output');
-      if (!out) return;
-      // beim Senden: komplett leeren, dann zeigt ChatDock nur die aktuelle Q/A
+      const out = $('#chat-output'); if (!out) return;
       window.addEventListener('chat:send', ()=>{ out.innerHTML=''; out.classList.add('show'); });
-      // Safety: bei Done max. die letzten 3 Bubble-Nodes behalten (Frage, Antwort, evtl. Fortsetzung)
-      window.addEventListener('chat:done', ()=>{
-        const rows = $$('.bubble-row', out);
-        if (rows.length > 3) rows.slice(0, rows.length-3).forEach(n=>n.remove());
-      });
+      window.addEventListener('chat:done', ()=>{ const rows=$$('.bubble-row', out); if (rows.length>3) rows.slice(0,rows.length-3).forEach(n=>n.remove()); });
     }
 
-    // Tone-Chips (Text-basiert) entfernen – auch wenn sie dynamisch kommen
     function removeToneChips(root=document){
-      const candidates = $$('.tone-variants, .tone-chip, .tone-easy, .tone-normal, .tone-nerdy, button, .chip, .badge, .tag, [role="button"]', root);
-      for (const el of candidates) {
-        const t = (el.textContent||'').trim().toLowerCase();
-        if (TONE_MATCH.includes(t)) el.remove();
-      }
+      const candidates=$$('.tone-variants, .tone-chip, .tone-easy, .tone-normal, .tone-nerdy, button, .chip, .badge, .tag, [role="button"]', root);
+      for (const el of candidates){ const t=(el.textContent||'').trim().toLowerCase(); if(['einfach','normal','nerdy'].includes(t)) el.remove(); }
     }
 
-    // Ticker bauen (falls kein externes ticker.js aktiv ist)
     function ensureTicker(){
       if ($('.ticker-wrap')) return;
-      const wrap = document.createElement('div'); wrap.className='ticker-wrap';
-      const inner= document.createElement('div'); inner.className='ticker';
-      const track= document.createElement('div'); track.className='ticker-track';
+      const wrap=document.createElement('div'); wrap.className='ticker-wrap';
+      const inner=document.createElement('div'); inner.className='ticker';
+      const track=document.createElement('div'); track.className='ticker-track';
       inner.appendChild(track); wrap.appendChild(inner); document.body.appendChild(wrap);
 
-      const ITEMS = (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length)
-        ? window.__TICKER_ITEMS
-        : [
-            {label:'Überrasch mich 🤯', prompt:'Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit kleinem Beispiel.'},
-            {label:'Mini-Story (5 Wörter)', prompt:'Erzeuge eine spannende Mini-Story mit genau 5 Wörtern. Danach ein kurzer Titel.'},
-            {label:'Haiku zur Fahrt', prompt:'Schreibe ein kurzes Haiku über eine nächtliche Highway-Fahrt. Ton: ruhig, präzise.'}
-          ];
+      const ITEMS=(Array.isArray(window.__TICKER_ITEMS)&&window.__TICKER_ITEMS.length)?window.__TICKER_ITEMS:[
+        {label:'Überrasch mich 🤯',prompt:'Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit kleinem Beispiel.'},
+        {label:'Mini-Story (5 Wörter)',prompt:'Erzeuge eine spannende Mini-Story mit genau 5 Wörtern. Danach ein kurzer Titel.'},
+        {label:'Haiku zur Fahrt',prompt:'Schreibe ein kurzes Haiku über eine nächtliche Highway-Fahrt. Ton: ruhig, präzise.'}
+      ];
 
       function sendNow(text){
         try{ if (window.ChatDock?.send) { ChatDock.send(text); return; } }catch(_){}
@@ -183,37 +262,31 @@
       }
       function addChip(lbl, prm, prev){
         const a=document.createElement('a'); a.href='#'; a.textContent=lbl; if(prev) a.title=prev;
-        a.addEventListener('click', ev=>{ ev.preventDefault(); track.classList.add('paused'); sendNow(prm); });
+        a.addEventListener('click', ev=>{
+          ev.preventDefault(); track.classList.add('paused');
+          if (typeof prm==='string' && prm.indexOf('!action:')===0){ const cmd=prm.slice(8); window.WolfFX?.run(cmd); return; }
+          sendNow(prm);
+        });
         track.appendChild(a);
       }
       ITEMS.forEach(it=>addChip(it.label,it.prompt,it.preview));
 
-      // Endlos auffüllen
-      function topUp(){
-        const vw=Math.max(320,window.innerWidth); let guard=20;
-        while(track.scrollWidth<3*vw && guard-->0) ITEMS.forEach(it=>addChip(it.label,it.prompt,it.preview));
-      }
+      function topUp(){ const vw=Math.max(320,window.innerWidth); let guard=20; while(track.scrollWidth<3*vw && guard-->0) ITEMS.forEach(it=>addChip(it.label,it.prompt,it.preview)); }
       topUp();
 
-      // sehr ruhige Geschwindigkeit
-      const SPEED_PX_S = 16;
-      const setDuration=()=>{ const vw=Math.max(320,window.innerWidth), px=track.scrollWidth+vw;
-        const dur=Math.max(60, Math.min(260, px/SPEED_PX_S)); track.style.setProperty('--dur', dur.toFixed(1)+'s'); };
+      const SPEED_PX_S=16;
+      const setDuration=()=>{ const vw=Math.max(320,window.innerWidth), px=track.scrollWidth+vw; const dur=Math.max(60, Math.min(260, px/SPEED_PX_S)); track.style.setProperty('--dur', dur.toFixed(1)+'s'); };
       setDuration();
 
-      // Position & Layer
       function chatRect(){ const el=$('.chat-dock'); return el?el.getBoundingClientRect():null; }
       function ansRect(){  const el=$(ANSWER_SEL);  return el?el.getBoundingClientRect():null; }
       function fixBottom(){
-        const wrapEl = wrap, innerEl = inner;
-        const chat = chatRect(); const ans = ansRect(); const tickH = innerEl.getBoundingClientRect().height || 48;
-        let bottom = chat ? (window.innerHeight - chat.top) + 12 : 76;              // über Chat
-        if (ans){ const underAns = Math.max(12, window.innerHeight - ans.bottom - 12 - tickH); bottom = Math.min(bottom, underAns); }
-        wrapEl.style.bottom = Math.max(12, bottom) + 'px';
-        const safe = chat ? Math.ceil(chat.width + 24) : 340; innerEl.style.setProperty('--safeR', safe + 'px');
-        // z-index unter Antwort halten
-        const zi = ans ? parseInt(getComputedStyle($(ANSWER_SEL)).zIndex || '1000', 10) : 320;
-        wrapEl.style.zIndex = String(Math.min(zi - 5, 600));
+        const chat=chatRect(); const ans=ansRect(); const tickH=inner.getBoundingClientRect().height||48;
+        let bottom=chat ? (window.innerHeight - chat.top) + 12 : 76;
+        if (ans){ const underAns=Math.max(12, window.innerHeight - ans.bottom - 12 - tickH); bottom=Math.min(bottom, underAns); }
+        wrap.style.bottom=Math.max(12, bottom)+'px';
+        inner.style.setProperty('--safeR', (chat?Math.ceil(chat.width+24):340)+'px');
+        const zi=ans ? parseInt(getComputedStyle($(ANSWER_SEL)).zIndex||'1000',10) : 320; wrap.style.zIndex=String(Math.min(zi-5,600));
       }
       fixBottom();
 
@@ -223,150 +296,145 @@
       setInterval(()=> track.classList.remove('paused'), 30000);
     }
 
-    // Init
-    singleAnswerMode();
-    removeToneChips();
-    ensureTicker();
+    singleAnswerMode(); removeToneChips(); ensureTicker();
 
-    // Auf DOM-Änderungen reagieren (neue Antworten/Chips)
-    const mo = new MutationObserver((muts)=>{
-      for (const m of muts) m.addedNodes && m.addedNodes.forEach(n=>{ if(n.nodeType===1) removeToneChips(n); });
-      // nur letzte Q/A behalten
-      const out = document.getElementById('chat-output');
-      if (out) {
-        const rows = Array.from(out.querySelectorAll('.bubble-row'));
-        if (rows.length > 3) rows.slice(0, rows.length-3).forEach(n=>n.remove());
-      }
-      // Ticker unten halten (falls extern gebaut wurde)
-      const wrap = document.querySelector('.ticker-wrap');
-      if (wrap) {
-        const evt = new Event('resize'); window.dispatchEvent(evt);
-      }
+    const mo=new MutationObserver((muts)=>{
+      for(const m of muts){ m.addedNodes && m.addedNodes.forEach(n=>{ if(n.nodeType===1) removeToneChips(n); }); }
+      const out=document.getElementById('chat-output');
+      if(out){ const rows=Array.from(out.querySelectorAll('.bubble-row')); if(rows.length>3) rows.slice(0,rows.length-3).forEach(n=>n.remove()); }
+      if (document.querySelector('.ticker-wrap')) window.dispatchEvent(new Event('resize'));
     });
     mo.observe(document.body, {childList:true, subtree:true});
   })();
   </script>
-<!-- WOLF TICKER BOOT-RESCUE — erzwingt Start nach 5–7s, ruhig, ohne Überlappung -->
-<script>
-(function(){
-  'use strict';
 
-  const ANSWER_SEL = '.spotlight-card, #chat-output, .answer-overlay, .answer-marquee, .chat-answer, .chat-output';
+  <!-- WOLF TICKER BOOT-RESCUE — erzwingt Start nach 5–7s, ruhig, ohne Überlappung -->
+  <script>
+  (function(){
+    'use strict';
+    const ANSWER_SEL = '.spotlight-card, #chat-output, .answer-overlay, .answer-marquee, .chat-answer, .chat-output';
 
-  function cssOnce(){
-    if (document.getElementById('wolf-ticker-css')) return;
-    const style = document.createElement('style'); style.id='wolf-ticker-css';
-    style.textContent = `
-      .ticker-wrap{position:fixed;left:24px;right:24px;z-index:320;pointer-events:auto}
-      .ticker{position:relative;overflow:hidden;height:48px;pointer-events:none;
-        padding-right:var(--safeR,340px);
-        -webkit-mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%);
-                mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%)}
-      .ticker-track{position:absolute;display:inline-flex;gap:14px;white-space:nowrap;will-change:transform;
-        animation:ticker-move var(--dur,140s) linear infinite;transform:translateZ(0)}
-      .ticker-track.paused{animation-play-state:paused}
-      .ticker a{display:inline-block;padding:10px 16px;border-radius:999px;text-decoration:none;pointer-events:auto;
-        color:#eaf2ff;background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
-      .ticker a:hover{filter:brightness(1.08)}
-      @keyframes ticker-move{from{transform:translateX(100%)}to{transform:translateX(-110%)}}
-      @media (max-width:880px){.ticker-wrap{left:12px;right:12px}.ticker{height:42px}.ticker a{padding:8px 12px}}
-      ${ANSWER_SEL}{position:relative;z-index:9999!important}
-    `;
-    document.head.appendChild(style);
-  }
-
-  function buildItems(){
-    if (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) return window.__TICKER_ITEMS;
-    return [
-      {label:'Überrasch mich 🤯', prompt:'Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit kleinem Beispiel.'},
-      {label:'Mini-Story (5 Wörter)', prompt:'Erzeuge eine spannende Mini-Story mit genau 5 Wörtern. Danach ein kurzer Titel.'},
-      {label:'Haiku zur Fahrt', prompt:'Schreibe ein kurzes Haiku über eine nächtliche Highway-Fahrt. Ton: ruhig, präzise.'}
-    ];
-  }
-
-  function sendNow(text){
-    try{ if (window.ChatDock?.send){ ChatDock.send(text); return; } }catch(_){}
-    const i=document.querySelector('#chat-input'), b=document.querySelector('#chat-send');
-    if(i){ i.value=text; i.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true})); }
-    else { b?.click(); }
-  }
-
-  function mountTicker(){
-    cssOnce();
-    // bestehende, defekte Instanzen entfernen
-    document.querySelectorAll('.ticker-wrap').forEach(el=>el.remove());
-
-    const wrap=document.createElement('div'); wrap.className='ticker-wrap';
-    const inner=document.createElement('div'); inner.className='ticker';
-    const track=document.createElement('div'); track.className='ticker-track';
-    inner.appendChild(track); wrap.appendChild(inner); document.body.appendChild(wrap);
-
-    const items=buildItems();
-    function addChip(lbl,prm){
-      const a=document.createElement('a'); a.href='#'; a.textContent=lbl;
-      a.addEventListener('click',ev=>{ ev.preventDefault(); track.classList.add('paused'); sendNow(prm); });
-      track.appendChild(a);
+    function cssOnce(){
+      if (document.getElementById('wolf-ticker-css')) return;
+      const style=document.createElement('style'); style.id='wolf-ticker-css';
+      style.textContent = `
+        .ticker-wrap{position:fixed;left:24px;right:24px;z-index:320;pointer-events:auto}
+        .ticker{position:relative;overflow:hidden;height:48px;pointer-events:none;padding-right:var(--safeR,340px);
+          -webkit-mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%);
+                  mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%)}
+        .ticker-track{position:absolute;display:inline-flex;gap:14px;white-space:nowrap;will-change:transform;
+          animation:ticker-move var(--dur,140s) linear infinite;transform:translateZ(0)}
+        .ticker-track.paused{animation-play-state:paused}
+        .ticker a{display:inline-block;padding:10px 16px;border-radius:999px;text-decoration:none;pointer-events:auto;
+          color:#eaf2ff;background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
+        .ticker a:hover{filter:brightness(1.08)}
+        @keyframes ticker-move{from{transform:translateX(100%)}to{transform:translateX(-110%)}}
+        @media (max-width:880px){.ticker-wrap{left:12px;right:12px}.ticker{height:42px}.ticker a{padding:8px 12px}}
+        ${ANSWER_SEL}{position:relative;z-index:9999!important}
+      `;
+      document.head.appendChild(style);
     }
-    items.forEach(it=>addChip(it.label,it.prompt));
-    // auffüllen bis lang genug
-    const vw=Math.max(320,window.innerWidth); let guard=20;
-    while(track.scrollWidth<3*vw && guard-->0) items.forEach(it=>addChip(it.label,it.prompt));
 
-    // sehr ruhig
-    const SPEED_PX_S=16;
-    const setDur=()=>{ const px=track.scrollWidth+Math.max(320,window.innerWidth);
-      const dur=Math.max(60,Math.min(260,px/SPEED_PX_S)); track.style.setProperty('--dur',dur.toFixed(1)+'s'); };
-    setDur();
-
-    function chatRect(){ const el=document.querySelector('.chat-dock'); return el?el.getBoundingClientRect():null; }
-    function ansRect(){  const el=document.querySelector(ANSWER_SEL); return el?el.getBoundingClientRect():null; }
-    function fixBottom(){
-      const chat=chatRect(), ans=ansRect(), tickH=inner.getBoundingClientRect().height||48;
-      let bottom = chat ? (window.innerHeight - chat.top) + 12 : 76;
-      if(ans){ const underAns=Math.max(12, window.innerHeight - ans.bottom - 12 - tickH); bottom=Math.min(bottom, underAns); }
-      wrap.style.bottom = Math.max(12,bottom)+'px';
-      inner.style.setProperty('--safeR', (chat?Math.ceil(chat.width+24):340)+'px');
-      // z unter Antwort
-      const zi = ans ? parseInt(getComputedStyle(ans).zIndex||'1000',10) : 320;
-      wrap.style.zIndex = String(Math.min(zi-5, 600));
+    function buildItems(){
+      if (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) return window.__TICKER_ITEMS;
+      return [
+        {label:'Überrasch mich 🤯',prompt:'Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit kleinem Beispiel.'},
+        {label:'Mini-Story (5 Wörter)',prompt:'Erzeuge eine spannende Mini-Story mit genau 5 Wörtern. Danach ein kurzer Titel.'},
+        {label:'Haiku zur Fahrt',prompt:'Schreibe ein kurzes Haiku über eine nächtliche Highway-Fahrt. Ton: ruhig, präzise.'}
+      ];
     }
-    fixBottom();
 
-    window.addEventListener('resize',()=>{ setDur(); fixBottom(); }, {passive:true});
-    window.addEventListener('chat:send',()=>{ track.classList.add('paused'); fixBottom(); });
-    window.addEventListener('chat:done',()=>{ track.classList.remove('paused'); fixBottom(); });
+    function sendNow(text){
+      try{ if (window.ChatDock?.send){ ChatDock.send(text); return; } }catch(_){}
+      const i=document.querySelector('#chat-input'), b=document.querySelector('#chat-send');
+      if(i){ i.value=text; i.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true})); }
+      else { b?.click(); }
+    }
 
-    // kleine Debug-API
-    window.WolfTicker = {
-      status(){ const td=getComputedStyle(track).animationDuration; return {chips:track.querySelectorAll('a').length,duration:td,bottom:wrap.style.bottom}; },
-      faster(){ const d=parseFloat(getComputedStyle(track).animationDuration)||120; track.style.setProperty('--dur',Math.max(20,d*0.85)+'s'); },
-      slower(){ const d=parseFloat(getComputedStyle(track).animationDuration)||120; track.style.setProperty('--dur',d*1.15+'s'); }
-    };
-  }
+    function mountTicker(){
+      cssOnce();
+      document.querySelectorAll('.ticker-wrap').forEach(el=>el.remove());
+      const wrap=document.createElement('div'); wrap.className='ticker-wrap';
+      const inner=document.createElement('div'); inner.className='ticker';
+      const track=document.createElement('div'); track.className='ticker-track';
+      inner.appendChild(track); wrap.appendChild(inner); document.body.appendChild(wrap);
 
-  function isRunning(){
-    const track=document.querySelector('.ticker-track');
-    if(!track) return false;
-    const chips = track.querySelectorAll('a').length;
-    const dur = parseFloat(getComputedStyle(track).animationDuration||'0');
-    const paused = getComputedStyle(track).animationPlayState==='paused' || track.classList.contains('paused');
-    return chips>0 && dur>10 && !paused;
-  }
+      const items=buildItems();
+      function addChip(lbl,prm){
+        const a=document.createElement('a'); a.href='#'; a.textContent=lbl;
+        a.addEventListener('click',ev=>{
+          ev.preventDefault(); track.classList.add('paused');
+          if (typeof prm==='string' && prm.indexOf('!action:')===0){ const cmd=prm.slice(8); window.WolfFX?.run(cmd); return; }
+          sendNow(prm);
+        });
+        track.appendChild(a);
+      }
+      items.forEach(it=>addChip(it.label,it.prompt));
+      const vw=Math.max(320,window.innerWidth); let guard=20;
+      while(track.scrollWidth<3*vw && guard-->0) items.forEach(it=>addChip(it.label,it.prompt));
 
-  // -> Starte Rettung nach 5.5s (stellbar: 7000 für 7s)
-  function boot(){
-    if (!isRunning()) mountTicker();
-  }
-  if (document.readyState==='complete') {
-    setTimeout(boot, 5500);
-  } else {
-    window.addEventListener('load', ()=> setTimeout(boot, 5500), {once:true});
-  }
+      const SPEED_PX_S=16;
+      const setDur=()=>{ const px=track.scrollWidth+Math.max(320,window.innerWidth); const dur=Math.max(60,Math.min(260,px/SPEED_PX_S)); track.style.setProperty('--dur',dur.toFixed(1)+'s'); };
+      setDur();
 
-  // Safety: alle 20s prüfen – falls etwas stoppt, neu aufbauen
-  setInterval(()=>{ if(!isRunning()) mountTicker(); }, 20000);
-})();
-</script>
+      function chatRect(){ const el=document.querySelector('.chat-dock'); return el?el.getBoundingClientRect():null; }
+      function ansRect(){  const el=document.querySelector(ANSWER_SEL); return el?el.getBoundingClientRect():null; }
+      function fixBottom(){
+        const chat=chatRect(), ans=ansRect(), tickH=inner.getBoundingClientRect().height||48;
+        let bottom=chat ? (window.innerHeight - chat.top) + 12 : 76;
+        if(ans){ const underAns=Math.max(12, window.innerHeight - ans.bottom - 12 - tickH); bottom=Math.min(bottom, underAns); }
+        wrap.style.bottom=Math.max(12,bottom)+'px';
+        inner.style.setProperty('--safeR', (chat?Math.ceil(chat.width+24):340)+'px');
+        const zi=ans ? parseInt(getComputedStyle(ans).zIndex||'1000',10) : 320;
+        wrap.style.zIndex=String(Math.min(zi-5, 600));
+      }
+      fixBottom();
+
+      window.addEventListener('resize',()=>{ setDur(); fixBottom(); }, {passive:true});
+      window.addEventListener('chat:send',()=>{ track.classList.add('paused'); fixBottom(); });
+      window.addEventListener('chat:done',()=>{ track.classList.remove('paused'); fixBottom(); });
+
+      window.WolfTicker = {
+        status(){ const td=getComputedStyle(track).animationDuration; return {chips:track.querySelectorAll('a').length,duration:td,bottom:wrap.style.bottom}; },
+        faster(){ const d=parseFloat(getComputedStyle(track).animationDuration)||120; track.style.setProperty('--dur',Math.max(20,d*0.85)+'s'); },
+        slower(){ const d=parseFloat(getComputedStyle(track).animationDuration)||120; track.style.setProperty('--dur',d*1.15+'s'); }
+      };
+    }
+
+    function isRunning(){
+      const track=document.querySelector('.ticker-track'); if(!track) return false;
+      const chips=track.querySelectorAll('a').length;
+      const dur=parseFloat(getComputedStyle(track).animationDuration||'0');
+      const paused=getComputedStyle(track).animationPlayState==='paused' || track.classList.contains('paused');
+      return chips>0 && dur>10 && !paused;
+    }
+
+    function boot(){ if(!isRunning()) mountTicker(); }
+    if (document.readyState==='complete'){ setTimeout(boot, 5500); }
+    else { window.addEventListener('load', ()=> setTimeout(boot, 5500), {once:true}); }
+    setInterval(()=>{ if(!isRunning()) mountTicker(); }, 20000);
+  })();
+  </script>
+
+  <!-- Glasiger, transparenter Look für die Antwortkarte links oben -->
+  <style>
+    .spotlight-card,
+    .answer-overlay,
+    .answer-marquee,
+    #chat-output {
+      background: linear-gradient(180deg, rgba(10,14,20,.38), rgba(10,14,20,.46)) !important;
+      border: 1px solid rgba(255,255,255,.18) !important;
+      box-shadow: 0 10px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06) !important;
+      backdrop-filter: blur(12px) saturate(115%) !important;
+    }
+    .spotlight-card .b-inner,
+    .answer-overlay .b-inner,
+    .answer-marquee .b-inner,
+    #chat-output .b-inner {
+      background: rgba(255,255,255,.08) !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+    }
+  </style>
 
 </body>
 </html>
