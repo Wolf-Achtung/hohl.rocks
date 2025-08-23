@@ -298,6 +298,142 @@ window.__TICKER_ITEMS = window.__TICKER_ITEMS || [
   setInterval(()=> track.classList.remove('paused'), 30000); // Safety auto-resume
 })();
 </script>
+<!-- WOLF TICKER – force mount, slow, no overlap, always clickable -->
+<script>
+(function(){
+  'use strict';
+
+  // ---- wenn schon da, nichts doppelt bauen
+  if (document.querySelector('.ticker-wrap')) return;
+
+  // ---- Fallback-Inhalte (werden benutzt, falls __TICKER_ITEMS fehlt)
+  const FALLBACK = [
+    { label:"Überrasch mich 🤯", prompt:"Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit kleinem Beispiel.", preview:"Kleine Demo, große Wirkung." },
+    { label:"Mini-Story (5 Wörter)", prompt:"Erzeuge eine spannende Mini-Story mit genau 5 Wörtern. Danach ein kurzer Titel. Ton: smart, knapp, überraschend.", preview:"Fünf Wörter, ein Plot." },
+    { label:"Haiku zur Fahrt", prompt:"Schreibe ein kurzes Haiku über eine nächtliche Highway-Fahrt, Winterluft, Fernlicht, Weite. Ton: ruhig, präzise.", preview:"Drei Zeilen Highway-Luft." }
+  ];
+  const ITEMS = (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) ? window.__TICKER_ITEMS : FALLBACK;
+
+  // ---- Styles (ruhig + Safe-Zone rechts)
+  const css = `
+    .ticker-wrap{position:fixed;left:24px;right:24px;z-index:320;pointer-events:auto}
+    .ticker{position:relative;overflow:hidden;height:48px;padding-right:var(--safeR,320px);pointer-events:none;
+      -webkit-mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%);
+              mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%)}
+    .ticker-track{position:absolute;display:inline-flex;gap:14px;white-space:nowrap;will-change:transform;
+      animation:ticker-move var(--dur,140s) linear infinite;transform:translateZ(0)}
+    .ticker-track.paused{animation-play-state:paused}
+    .ticker a{display:inline-block;padding:10px 16px;border-radius:999px;text-decoration:none;pointer-events:auto;
+      color:#eaf2ff;background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
+    .ticker a:hover{filter:brightness(1.08)}
+    @keyframes ticker-move{from{transform:translateX(100%)}to{transform:translateX(-110%)}}
+    @media (max-width:880px){.ticker-wrap{left:12px;right:12px}.ticker{height:42px}.ticker a{padding:8px 12px}}
+  `;
+  const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
+
+  // ---- DOM erstellen
+  const wrap = document.createElement('div'); wrap.className='ticker-wrap';
+  const inner = document.createElement('div'); inner.className='ticker';
+  const track = document.createElement('div'); track.className='ticker-track';
+  inner.appendChild(track); wrap.appendChild(inner); document.body.appendChild(wrap);
+
+  // ---- Helpers: Ziel-Elemente im Layout
+  const answerSel = '.spotlight-card, .answer-overlay, .chat-answer, .chat-output, .answer-marquee';
+  function chatRect(){ const el=document.querySelector('.chat-dock'); return el?el.getBoundingClientRect():null; }
+  function answerRect(){ const el=document.querySelector(answerSel); return el?el.getBoundingClientRect():null; }
+
+  // nur die neueste Antwort sichtbar halten
+  function keepOnlyLatestAnswer(){
+    const list = Array.from(document.querySelectorAll('.spotlight-card, .answer-overlay, .answer-marquee'));
+    if (list.length>1) list.slice(0,-1).forEach(n=>n.remove());
+  }
+
+  // Klick → sofort an GPT senden, Ticker pausieren
+  function sendNow(text){
+    try{ if(window.ChatDock && typeof ChatDock.send==='function'){ ChatDock.send(text); return; } }catch(_){}
+    const input=document.querySelector('#chat-input'), btn=document.querySelector('#chat-send');
+    if(input){ input.value=text; input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true})); return; }
+    btn?.click();
+  }
+
+  function addChip(label,prompt,preview){
+    const a=document.createElement('a'); a.href='#'; a.textContent=label; if(preview) a.title=preview;
+    a.addEventListener('click',ev=>{ ev.preventDefault(); track.classList.add('paused'); keepOnlyLatestAnswer(); sendNow(prompt); });
+    track.appendChild(a);
+  }
+
+  // Grundmenge + Klone bis ≥ 3x Viewport
+  ITEMS.forEach(it=>addChip(it.label,it.prompt,it.preview));
+  function topUp(){
+    const vw=Math.max(320,window.innerWidth); let guard=20;
+    while(track.scrollWidth<3*vw && guard-->0) ITEMS.forEach(it=>addChip(it.label,it.prompt,it.preview));
+  }
+  topUp();
+
+  // sehr ruhig: Pixel/Sek (bei Bedarf 14 oder 12 setzen)
+  const SPEED_PX_S = 16;
+  function setDuration(){
+    const vw=Math.max(320,window.innerWidth), px=track.scrollWidth+vw;
+    const dur=Math.max(60, Math.min(260, px / SPEED_PX_S));
+    track.style.setProperty('--dur', dur.toFixed(1)+'s');
+  }
+
+  // nie überlappen: Position hängt von Antwort-Card UND Chat-Input ab
+  function updateBottom(){
+    const chat = chatRect(); const ans = answerRect();
+    const tickH = inner.getBoundingClientRect().height || 48;
+
+    // Standard: knapp über der Chat-Eingabe
+    let bottom = chat ? (window.innerHeight - chat.top) + 12 : 76;
+
+    // Wenn Antwort-Card sehr tief sitzt, Ticker noch tiefer (unter die Card)
+    if (ans){
+      const underAns = Math.max(12, window.innerHeight - ans.bottom - 12 - tickH);
+      bottom = Math.min(bottom, underAns);
+    }
+    wrap.style.bottom = Math.max(12, bottom) + 'px';
+  }
+
+  // Safe-Zone rechts (Ticker läuft nicht unters Eingabefeld)
+  function updateSafeZone(){
+    const chat = chatRect(); const safe = chat ? Math.ceil(chat.width + 24) : 340;
+    wrap.style.setProperty('--safeR', safe + 'px');
+  }
+
+  // Layering: immer UNTER Antwort-Card, aber ÜBER Video/Shapes
+  function updateZ(){
+    const ans = document.querySelector(answerSel);
+    let z = 320;
+    if (ans){
+      const zi = parseInt(getComputedStyle(ans).zIndex || '1000', 10);
+      z = Math.min(zi - 5, 600);
+    }
+    wrap.style.zIndex = String(z);
+  }
+
+  // Init-Lauf
+  setDuration(); updateBottom(); updateSafeZone(); updateZ();
+
+  // Events
+  window.addEventListener('resize', ()=>{ topUp(); setDuration(); updateBottom(); updateSafeZone(); updateZ(); }, {passive:true});
+  window.addEventListener('chat:send', ()=>{ keepOnlyLatestAnswer(); track.classList.add('paused'); updateBottom(); updateZ(); });
+  window.addEventListener('chat:done', ()=>{ keepOnlyLatestAnswer(); track.classList.remove('paused'); updateBottom(); updateZ(); });
+
+  // Änderungen im DOM (Antwort-Card) beobachten
+  const mo = new MutationObserver(()=>{ keepOnlyLatestAnswer(); updateBottom(); updateZ(); });
+  mo.observe(document.body, {childList:true, subtree:true});
+
+  // Safety: falls „done“ ausbleibt → nach 30s wieder laufen lassen
+  setInterval(()=> track.classList.remove('paused'), 30000);
+
+  // Kleine Debug-API
+  window.WolfTicker = {
+    status(){ return {items: ITEMS.length, dur: getComputedStyle(track).animationDuration, bottom: wrap.style.bottom, safeR: getComputedStyle(inner).paddingRight, z: wrap.style.zIndex}; },
+    slower(){ const cur=parseFloat(getComputedStyle(track).animationDuration); track.style.setProperty('--dur', (cur*1.15)+'s'); },
+    faster(){ const cur=parseFloat(getComputedStyle(track).animationDuration); track.style.setProperty('--dur', Math.max(20,cur*0.85)+'s'); }
+  };
+})();
+</script>
 
 </body>
 </html>
