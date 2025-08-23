@@ -1,10 +1,10 @@
-/*! ticker.js — vLoop4 (slow, clickable, safe-zone, seamless) */
+/*! ticker.js — vLoop5 (slow, seamless, clickable, safe-zone, answer-aware) */
 (function () {
   'use strict';
 
-  // ---------- Stil ----------
+  // ---------- Styles ----------
   const css = `
-    .ticker-wrap{position:fixed;left:24px;right:24px;z-index:1200;pointer-events:auto}
+    .ticker-wrap{position:fixed;left:24px;right:24px;z-index:350;pointer-events:auto}
     .ticker{position:relative;overflow:hidden;height:48px;padding-right:var(--safeR,320px);pointer-events:none;
       -webkit-mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%);
               mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%)}
@@ -19,21 +19,24 @@
   `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
+  // ---------- DOM ----------
   let wrap, inner, track, baseItems = [];
 
   function mount() {
-    if (wrap = document.querySelector('.ticker-wrap')) {
-      inner = wrap.querySelector('.ticker');
-      track = wrap.querySelector('.ticker-track');
-      return;
+    wrap = document.querySelector('.ticker-wrap');
+    if (!wrap) {
+      wrap = document.createElement('div'); wrap.className = 'ticker-wrap';
+      inner = document.createElement('div'); inner.className = 'ticker';
+      track = document.createElement('div'); track.className = 'ticker-track';
+      inner.appendChild(track); wrap.appendChild(inner); document.body.appendChild(wrap);
+    } else {
+      inner = wrap.querySelector('.ticker') || inner;
+      track = wrap.querySelector('.ticker-track') || track;
+      if (!track) { inner = document.createElement('div'); inner.className='ticker'; track=document.createElement('div'); track.className='ticker-track'; inner.appendChild(track); wrap.appendChild(inner); }
     }
-    wrap = document.createElement('div'); wrap.className = 'ticker-wrap';
-    inner = document.createElement('div'); inner.className = 'ticker';
-    track = document.createElement('div'); track.className = 'ticker-track';
-    inner.appendChild(track); wrap.appendChild(inner); document.body.appendChild(wrap);
   }
 
-  function getItems() {
+  function getItems(){
     if (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) return window.__TICKER_ITEMS;
     return [
       { label:"Überrasch mich 🤯", prompt:"Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit kleinem Beispiel.", preview:"Kleine Demo, große Wirkung." },
@@ -42,7 +45,7 @@
     ];
   }
 
-  function addChip(dst, label, prompt, preview) {
+  function addChip(dst, label, prompt, preview){
     const a = document.createElement('a');
     a.href = '#'; a.textContent = label; if (preview) a.title = preview;
     a.addEventListener('click', (ev) => {
@@ -59,7 +62,7 @@
     dst.appendChild(a);
   }
 
-  function build() {
+  function build(){
     track.innerHTML = '';
     baseItems = getItems().slice();
     baseItems.forEach(it => addChip(track, it.label, it.prompt, it.preview));
@@ -67,46 +70,84 @@
     setDuration();
   }
 
-  // ------- Layout/Lauf -------
-  function updateBottom() {
-    const chat = document.querySelector('.chat-dock');
-    let bottom = 104;
-    if (chat) { try { bottom = (window.innerHeight - chat.getBoundingClientRect().top) + 20; } catch {} }
-    wrap.style.bottom = Math.max(76, bottom) + 'px';
+  // ---------- Positionierung ----------
+  function chatDockRect(){ const c = document.querySelector('.chat-dock'); return c ? c.getBoundingClientRect() : null; }
+  function answerRect(){
+    // versuche mehrere mögliche Klassen der Antwort/Spotlight
+    const el = document.querySelector('.spotlight-card, .spotlight, .answer-overlay, .answer-marquee, .chat-answer, .chat-output');
+    return el ? el.getBoundingClientRect() : null;
   }
-  function updateSafeZone() {
-    const chat = document.querySelector('.chat-dock');
+
+  // Verhindere Überlappung: orientiere dich an Chat-Input UND an der unteren Kante der Antwort
+  function updateBottom(){
+    const chat = chatDockRect();
+    const ans  = answerRect();
+    let bottom = 76; // Mindestabstand
+
+    if (chat){
+      // ticker direkt oberhalb der Chat-Box platzieren (kleine Luft)
+      bottom = Math.max(bottom, (window.innerHeight - chat.top) + 12);
+    }
+    if (ans){
+      // wenn die Antwort bis sehr weit nach unten reicht, ticker NOCH tiefer drücken (unter die Antwort)
+      const distUnderAnswer = Math.max(8, (window.innerHeight - ans.bottom) + 12);
+      bottom = Math.min(bottom, distUnderAnswer); // kleinerer bottom = näher am unteren Rand
+    }
+    wrap.style.bottom = Math.max(12, bottom) + 'px';
+  }
+
+  // Rechts Freiraum für die Chat-Box (Safe-Zone)
+  function updateSafeZone(){
+    const chat = chatDockRect();
     let safe = 340;
-    if (chat) { try { safe = Math.ceil(chat.getBoundingClientRect().width + 24); } catch {} }
+    if (chat) safe = Math.ceil(chat.width + 24);
     wrap.style.setProperty('--safeR', safe + 'px');
   }
 
-  // sehr ruhig: noch langsamer
-  const SPEED_PX_S = 18; // ↓ drosselt deutlich
-  function setDuration() {
+  // ---------- Laufgeschwindigkeit ----------
+  const SPEED_PX_S = 18; // sehr ruhig
+  function setDuration(){
     const vw = Math.max(320, window.innerWidth);
     const px = track.scrollWidth + vw;
     const dur = Math.max(48, Math.min(240, px / SPEED_PX_S));
     track.style.setProperty('--dur', dur.toFixed(1) + 's');
   }
 
-  function topUp() {
+  function topUp(){
     const vw = Math.max(320, window.innerWidth);
     let guard = 18;
-    while (track.scrollWidth < 3 * vw && guard-- > 0) {
+    while (track.scrollWidth < 3 * vw && guard-- > 0){
       for (const it of baseItems) addChip(track, it.label, it.prompt, it.preview);
     }
   }
 
+  // ---------- Layering: Ticker UNTER der Antwort-Card, aber ÜBER Video/Shapes ----------
+  function updateZ(){
+    const ans = document.querySelector('.spotlight-card, .spotlight, .answer-overlay, .answer-marquee, .chat-answer, .chat-output');
+    let z = 350; // Default über Video/Shapes
+    if (ans){
+      const zi = parseInt(getComputedStyle(ans).zIndex || '1000', 10);
+      z = Math.max(1, zi - 2); // sicher unter der Antwort
+    }
+    wrap.style.zIndex = String(z);
+  }
+
+  // ---------- Pause/Resume ----------
   function pauseTicker(){ track?.classList.add('paused'); }
   function resumeTicker(){ track?.classList.remove('paused'); }
 
   function init(){
     mount(); if(!track) return;
-    build(); updateBottom(); updateSafeZone();
-    window.addEventListener('resize', ()=>{ updateBottom(); updateSafeZone(); topUp(); setDuration(); }, {passive:true});
-    window.addEventListener('chat:send', pauseTicker);
-    window.addEventListener('chat:done', resumeTicker);
+    build(); updateBottom(); updateSafeZone(); updateZ();
+
+    window.addEventListener('resize', ()=>{ updateBottom(); updateSafeZone(); topUp(); setDuration(); updateZ(); }, {passive:true});
+    window.addEventListener('chat:send', ()=>{ pauseTicker(); updateBottom(); updateZ(); });
+    window.addEventListener('chat:done', ()=>{ resumeTicker(); updateBottom(); updateZ(); });
+
+    // falls die Antwort-Card dynamisch in den DOM kommt/verschwindet
+    const mo = new MutationObserver(()=>{ updateBottom(); updateZ(); });
+    mo.observe(document.body, { childList:true, subtree:true });
+
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) resumeTicker(); });
     setInterval(()=>resumeTicker(), 30000);
   }
@@ -115,5 +156,5 @@
     ? document.addEventListener('DOMContentLoaded', init, {once:true})
     : init();
 
-  window.Ticker = { pause: pauseTicker, resume: resumeTicker, rebuild: ()=>{ build(); setDuration(); } };
+  window.Ticker = { pause: pauseTicker, resume: resumeTicker, rebuild: ()=>{ build(); setDuration(); updateBottom(); updateZ(); } };
 })();
