@@ -1,15 +1,15 @@
-/*! ticker.js — vLoop5 (slow, seamless, clickable, safe-zone, answer-aware) */
+/*! ticker.js — vLoop6 (slow, seamless, clickable, answer-aware, no-overlap) */
 (function () {
   'use strict';
 
   // ---------- Styles ----------
   const css = `
-    .ticker-wrap{position:fixed;left:24px;right:24px;z-index:350;pointer-events:auto}
+    .ticker-wrap{position:fixed;left:24px;right:24px;z-index:250;pointer-events:auto}
     .ticker{position:relative;overflow:hidden;height:48px;padding-right:var(--safeR,320px);pointer-events:none;
       -webkit-mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%);
               mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%)}
     .ticker-track{position:absolute;display:inline-flex;gap:14px;white-space:nowrap;will-change:transform;
-      animation:ticker-move var(--dur,120s) linear infinite;transform:translateZ(0)}
+      animation:ticker-move var(--dur,140s) linear infinite;transform:translateZ(0)}
     .ticker-track.paused{animation-play-state:paused}
     .ticker a{display:inline-block;padding:10px 16px;border-radius:999px;text-decoration:none;pointer-events:auto;
       color:#eaf2ff;background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
@@ -36,6 +36,7 @@
     }
   }
 
+  // ---------- Inhalte ----------
   function getItems(){
     if (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) return window.__TICKER_ITEMS;
     return [
@@ -51,6 +52,7 @@
     a.addEventListener('click', (ev) => {
       ev.preventDefault();
       pauseTicker();
+      ensureOneAnswerOnly(); // alte Spotlight(s) räumen
       try { window.AnalyticsLite?.emit?.('ticker_click', { label }); } catch {}
       try { if (window.ChatDock?.send) { ChatDock.send(prompt); return; } } catch {}
       const input = document.querySelector('#chat-input'); const btn = document.querySelector('#chat-send');
@@ -70,29 +72,39 @@
     setDuration();
   }
 
-  // ---------- Positionierung ----------
+  // ---------- Hilfen ----------
   function chatDockRect(){ const c = document.querySelector('.chat-dock'); return c ? c.getBoundingClientRect() : null; }
-  function answerRect(){
-    // versuche mehrere mögliche Klassen der Antwort/Spotlight
-    const el = document.querySelector('.spotlight-card, .spotlight, .answer-overlay, .answer-marquee, .chat-answer, .chat-output');
-    return el ? el.getBoundingClientRect() : null;
+  function answerEl(){
+    // häufige Klassen/IDs deines Overlays – erweitere bei Bedarf
+    return document.querySelector('.spotlight-card, .answer-overlay, .chat-answer, .chat-output, .answer-marquee');
+  }
+  function answerRect(){ const el = answerEl(); return el ? el.getBoundingClientRect() : null; }
+
+  // nur die NEUSTE Antwort sichtbar halten (ältere entfernen/ausblenden)
+  function ensureOneAnswerOnly(){
+    const all = Array.from(document.querySelectorAll('.spotlight-card, .answer-overlay, .answer-marquee'));
+    if (all.length > 1) {
+      all.slice(0, -1).forEach(n => { n.remove(); }); // oder: n.style.display='none';
+    }
   }
 
-  // Verhindere Überlappung: orientiere dich an Chat-Input UND an der unteren Kante der Antwort
+  // Bottom-Position: zwischen Antwort und Chat-Input, ohne Überschneidung
   function updateBottom(){
     const chat = chatDockRect();
     const ans  = answerRect();
-    let bottom = 76; // Mindestabstand
+    const tickerH = (inner?.getBoundingClientRect().height) || 48;
 
-    if (chat){
-      // ticker direkt oberhalb der Chat-Box platzieren (kleine Luft)
-      bottom = Math.max(bottom, (window.innerHeight - chat.top) + 12);
-    }
+    // Standard: oberhalb der Chat-Box
+    let bottom = 76;
+    if (chat) bottom = Math.max(bottom, (window.innerHeight - chat.top) + 12);
+
+    // Wenn eine Antwort-Card da ist: Ticker UNTER die Card (also näher zum unteren Rand),
+    // so dass die Oberkante des Tickers MINDESTENS 12px unter der Card liegt.
     if (ans){
-      // wenn die Antwort bis sehr weit nach unten reicht, ticker NOCH tiefer drücken (unter die Antwort)
-      const distUnderAnswer = Math.max(8, (window.innerHeight - ans.bottom) + 12);
-      bottom = Math.min(bottom, distUnderAnswer); // kleinerer bottom = näher am unteren Rand
+      const maxBottom = Math.max(12, window.innerHeight - ans.bottom - 12 - tickerH);
+      bottom = Math.min(bottom, maxBottom);
     }
+
     wrap.style.bottom = Math.max(12, bottom) + 'px';
   }
 
@@ -104,48 +116,50 @@
     wrap.style.setProperty('--safeR', safe + 'px');
   }
 
+  // Layering: immer UNTER der Antwort-Card, aber ÜBER Video/Shapes
+  function updateZ(){
+    const ans = answerEl();
+    let z = 250;
+    if (ans){
+      const zi = parseInt(getComputedStyle(ans).zIndex || '1000', 10);
+      z = Math.min(zi - 5, 600); // sicher unter der Antwort
+    }
+    wrap.style.zIndex = String(z);
+  }
+
   // ---------- Laufgeschwindigkeit ----------
-  const SPEED_PX_S = 18; // sehr ruhig
+  const SPEED_PX_S = 16; // sehr ruhig (ggf. 14 probieren)
   function setDuration(){
     const vw = Math.max(320, window.innerWidth);
     const px = track.scrollWidth + vw;
-    const dur = Math.max(48, Math.min(240, px / SPEED_PX_S));
+    const dur = Math.max(60, Math.min(260, px / SPEED_PX_S));
     track.style.setProperty('--dur', dur.toFixed(1) + 's');
   }
 
   function topUp(){
     const vw = Math.max(320, window.innerWidth);
-    let guard = 18;
+    let guard = 20;
     while (track.scrollWidth < 3 * vw && guard-- > 0){
       for (const it of baseItems) addChip(track, it.label, it.prompt, it.preview);
     }
-  }
-
-  // ---------- Layering: Ticker UNTER der Antwort-Card, aber ÜBER Video/Shapes ----------
-  function updateZ(){
-    const ans = document.querySelector('.spotlight-card, .spotlight, .answer-overlay, .answer-marquee, .chat-answer, .chat-output');
-    let z = 350; // Default über Video/Shapes
-    if (ans){
-      const zi = parseInt(getComputedStyle(ans).zIndex || '1000', 10);
-      z = Math.max(1, zi - 2); // sicher unter der Antwort
-    }
-    wrap.style.zIndex = String(z);
   }
 
   // ---------- Pause/Resume ----------
   function pauseTicker(){ track?.classList.add('paused'); }
   function resumeTicker(){ track?.classList.remove('paused'); }
 
+  // ---------- Init ----------
   function init(){
     mount(); if(!track) return;
     build(); updateBottom(); updateSafeZone(); updateZ();
 
+    // Reagieren auf Layout/Antwort
     window.addEventListener('resize', ()=>{ updateBottom(); updateSafeZone(); topUp(); setDuration(); updateZ(); }, {passive:true});
-    window.addEventListener('chat:send', ()=>{ pauseTicker(); updateBottom(); updateZ(); });
-    window.addEventListener('chat:done', ()=>{ resumeTicker(); updateBottom(); updateZ(); });
+    window.addEventListener('chat:send', ()=>{ ensureOneAnswerOnly(); pauseTicker(); updateBottom(); updateZ(); });
+    window.addEventListener('chat:done', ()=>{ ensureOneAnswerOnly(); resumeTicker(); updateBottom(); updateZ(); });
 
-    // falls die Antwort-Card dynamisch in den DOM kommt/verschwindet
-    const mo = new MutationObserver(()=>{ updateBottom(); updateZ(); });
+    // Wenn Spotlight/Antwort dynamisch wechselt
+    const mo = new MutationObserver(()=>{ ensureOneAnswerOnly(); updateBottom(); updateZ(); });
     mo.observe(document.body, { childList:true, subtree:true });
 
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) resumeTicker(); });
@@ -156,5 +170,6 @@
     ? document.addEventListener('DOMContentLoaded', init, {once:true})
     : init();
 
+  // Expose
   window.Ticker = { pause: pauseTicker, resume: resumeTicker, rebuild: ()=>{ build(); setDuration(); updateBottom(); updateZ(); } };
 })();
