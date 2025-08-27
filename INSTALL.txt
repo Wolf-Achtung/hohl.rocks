@@ -1,19 +1,18 @@
-hohl.rocks — Delta Update (0827)
+hohl.rocks — Delta 0827 (Prompt‑Studio, Small‑Screen ≤390px, Request‑IDs)
 
 Geänderte Dateien:
-- ticker.js
-- micro-demos.js (neu: WolfFX.run für !action:freeze | bokeh | ring | palette | melody=…)
-- answers-spotlight.js (neu mit Follow-up-Chips)
-- harley-lite-autostart.js (ersetzt: startet AmbientMelody statt HarleyLite)
-- audio-gesture.js (Sound-Gate für AmbientMelodie)
-- hero-shapes.js (stoppt AmbientMelodie beim Verlassen)
-- ticker-items.js (mehr Gold-Standard-Prompts und KI-Kombos)
+- micro-demos.js — WolfFX (Actions: freeze, bokeh, ring, palette, melody=…), PromptStudio Overlay
+- ticker.js — Action‑Parsing (!action:…); Small‑Screen CSS (≤390px) für Chips/Spacing
+- js/chatbox-stream.js — Request‑IDs (rid) + Exponential Backoff (mit Jitter); Events: chat:request, chat:attempt
+- ticker-items.js — "Prompt‑Studio 🎛️" → !action:promptstudio (öffnet Overlay)
+- answers-spotlight.js — Small‑Screen Tuning (≤390px): Breite, Bottom, Typo, Buttons
 
-Einbindung:
-- index.html lädt bereits micro-demos.js → WolfFX ist automatisch verfügbar.
-- Für die Ambient-Melodie müssen index.html oder bestehende Inline-Skripte `window.WolfMelody` bereitstellen (ist vorhanden).
-- Keine weiteren HTML-Änderungen nötig.
+Deployment:
+1) Dateien 1:1 ersetzen.
+2) Cache‑Bust in index.html hochziehen (z. B. ?v=sp3, ?v=chat5), wenn du harte Caches nutzt.
+3) In Railway: Logs enthalten nun „X-Request-ID“ (rid) in den Requests, wenn dein Server diese Header ausliest.
 
-Railway:
-- Setze ALLOWED_ORIGINS auf: https://hohl.rocks,https://www.hohl.rocks
-- Healthcheck: GET /healthz sollte 'ok' liefern.
+Kurztest:
+- Prompt‑Studio‑Chip klicken → Overlay öffnet sich, Prompt generieren, "An GPT senden".
+- Handybreite ≤390 px (DevTools) → Ticker kompakter, Spotlight passt sich an.
+- Offline/Restart simulieren → Stream retryt mit exponentiellem Backoff; Fallback JSON greift.

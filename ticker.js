@@ -13,11 +13,17 @@
     .ticker-track.paused{animation-play-state:paused}
     .ticker a{display:inline-block;padding:10px 16px;border-radius:999px;text-decoration:none;pointer-events:auto;
       color:#eaf2ff;background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
-    .ticker.locked a{pointer-events:none;filter:contrast(.9) saturate(.9) opacity(.7)}
     .ticker a:hover{filter:brightness(1.08)}
     @keyframes ticker-move{from{transform:translateX(100%)}to{transform:translateX(-110%)}}
     @media (max-width:880px){.ticker-wrap{left:12px;right:12px}.ticker{height:42px}.ticker a{padding:8px 12px}}
-  `;
+  
+    @media (max-width: 390px){
+      .ticker-wrap{left:12px;right:12px}
+      .ticker{height:38px}
+      .ticker-track{gap:10px}
+      .ticker a{padding:8px 12px;font-size:13px}
+    }
+`;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
   // ---------- DOM ----------
@@ -55,6 +61,10 @@
       pauseTicker();
       ensureOneAnswerOnly(); // alte Spotlight(s) räumen
       try { window.AnalyticsLite?.emit?.('ticker_click', { label }); } catch {}
+      // Handle action-chips like "!action:..." (can include "; gpt:...")
+      try{
+        if (prompt && prompt.indexOf('!action:')>-1 && window.WolfFX && WolfFX.run){ WolfFX.run(prompt); return; }
+      }catch(_){ }
       try { if (window.ChatDock?.send) { ChatDock.send(prompt); return; } } catch {}
       const input = document.querySelector('#chat-input'); const btn = document.querySelector('#chat-send');
       if (input) {
@@ -135,8 +145,6 @@
     const px = track.scrollWidth + vw;
     const dur = Math.max(60, Math.min(260, px / SPEED_PX_S));
     track.style.setProperty('--dur', dur.toFixed(1) + 's');
-    // Sofort sichtbar: negativer Offset
-    try{ track.style.animationDelay = (-Math.min(dur*0.35, 14)).toFixed(2)+'s'; }catch(_){}
   }
 
   function topUp(){
@@ -158,8 +166,8 @@
 
     // Reagieren auf Layout/Antwort
     window.addEventListener('resize', ()=>{ updateBottom(); updateSafeZone(); topUp(); setDuration(); updateZ(); }, {passive:true});
-    window.addEventListener('chat:send', ()=>{ ensureOneAnswerOnly(); pauseTicker(); updateBottom(); updateZ(); try{inner.classList.add('locked');}catch(_){} });
-    window.addEventListener('chat:done', ()=>{ ensureOneAnswerOnly(); resumeTicker(); updateBottom(); updateZ(); try{inner.classList.remove('locked');}catch(_){} });
+    window.addEventListener('chat:send', ()=>{ ensureOneAnswerOnly(); pauseTicker(); updateBottom(); updateZ(); });
+    window.addEventListener('chat:done', ()=>{ ensureOneAnswerOnly(); resumeTicker(); updateBottom(); updateZ(); });
 
     // Wenn Spotlight/Antwort dynamisch wechselt
     const mo = new MutationObserver(()=>{ ensureOneAnswerOnly(); updateBottom(); updateZ(); });
@@ -167,13 +175,6 @@
 
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) resumeTicker(); });
     setInterval(()=>resumeTicker(), 30000);
-    // Watchdog: falls Ticker hängen bleibt oder leergeräumt wurde, neu aufbauen
-    setInterval(()=>{
-      try{
-        if(!track || track.querySelectorAll('a').length===0){ build(); setDuration(); }
-      }catch(_){}
-    }, 12000);
-
   }
 
   (document.readyState==='loading')
