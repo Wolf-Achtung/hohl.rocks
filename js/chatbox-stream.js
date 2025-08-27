@@ -1,4 +1,4 @@
-/*! chatbox-stream.js — ChatDock mit SSE + Backoff + lastUser */
+/*! chatbox-stream.js — ChatDock mit SSE + Exponential Backoff + Request-IDs */
 (function () {
   'use strict';
   const CHAT_BASE = window.HOHLROCKS_CHAT_BASE || 'https://hohlrocks-production.up.railway.app';
@@ -20,11 +20,11 @@
     return n;
   }
 
-  async function streamSSE({ message, systemPrompt, model, onDelta, onDone }) {
-    const res = await fetch(CHAT_BASE + SSE_PATH, {
+  async function streamSSE({ message, systemPrompt, model, onDelta, onDone, rid }) {
+    const res = await fetch(CHAT_BASE + SSE_PATH + '?rid=' + encodeURIComponent(rid||''), {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message, systemPrompt, model }),
+      headers:{'Content-Type':'application/json', 'X-Request-ID': (rid||'')},
+      body: JSON.stringify({ message, systemPrompt, model, rid }),
       mode:'cors'
     });
     if (!res.ok || !res.body) throw new Error('SSE failed');
@@ -55,23 +55,27 @@
   }
 
   async function trySSEWithBackoff(opts){
-    const waits = [800, 1600, 3200];
-    for (let i=0;i<waits.length;i++){
+    const maxTries = 4;
+    for (let i=0;i<maxTries;i++){
       try{
+        const attempt = i+1;
+        try { window.dispatchEvent(new CustomEvent('chat:attempt', { detail: { rid: opts.rid, attempt } })); } catch(_){}
         await streamSSE(opts);
         return true;
       }catch(_){
-        await new Promise(r=>setTimeout(r, waits[i]));
+        const base = 700; const jitter = 0.6 + Math.random()*0.6; // 0.6–1.2x
+        const wait = Math.min(6500, Math.round(base * Math.pow(2,i) * jitter));
+        await new Promise(r=>setTimeout(r, wait));
       }
     }
     return false;
   }
 
-  async function fetchJSON({ message, systemPrompt, model, image }) {
-    const res = await fetch(CHAT_BASE + JSON_PATH, {
+  async function fetchJSON({ message, systemPrompt, model, image, rid }) {
+    const res = await fetch(CHAT_BASE + JSON_PATH + '?rid=' + encodeURIComponent(rid||''), {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message, systemPrompt, model, image }),
+      headers:{'Content-Type':'application/json', 'X-Request-ID': (rid||'')},
+      body: JSON.stringify({ message, systemPrompt, model, image, rid }),
       mode:'cors'
     });
     if (!res.ok) throw new Error('JSON failed');
@@ -112,21 +116,24 @@
       bubble('user', msg);
       const abot = bubble('assistant', 'Antwort kommt gleich …');
       let acc='';
+      const rid = (Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6));
+      window.ChatDock = Object.assign(window.ChatDock||{}, { lastRid: rid });
+      try { window.dispatchEvent(new CustomEvent('chat:request', { detail: { rid } })); } catch(_){}
       const onDelta = (d)=>{ acc += d; abot.textContent = acc; try { window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: d } })); } catch(_){}};
       const onDone  = ()=>{ button && (button.disabled=false); try { window.dispatchEvent(new CustomEvent('chat:done', { detail: {} })); } catch(_){}};
 
       window.ChatDock = Object.assign(window.ChatDock||{}, { lastUser: msg });
 
       try{
-        const ok = await trySSEWithBackoff({ message: msg, systemPrompt: system, model, onDelta, onDone });
+        const ok = await trySSEWithBackoff({ message: msg, systemPrompt: system, model, onDelta, onDone, rid });
         if (!ok){
-          const full = await fetchJSON({ message: msg, systemPrompt: system, model });
+          const full = await fetchJSON({ message: msg, systemPrompt: system, model, rid });
           abot.textContent = full;
           onDone();
         }
       }catch(_){
         try{
-          const full = await fetchJSON({ message: msg, systemPrompt: system, model });
+          const full = await fetchJSON({ message: msg, systemPrompt: system, model, rid });
           abot.textContent = full;
         }catch(__){
           abot.textContent = 'Server gerade nicht erreichbar. Bitte kurz neu versuchen.';
