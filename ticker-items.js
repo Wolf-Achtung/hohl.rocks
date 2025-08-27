@@ -26,5 +26,12 @@
     { label: "Seed 99",                 prompt: "!action:melody=seed:99" },
     { label: "Ambient GPT-Plan",        prompt: "!action:melody=gpt:neon winter highway" },
     { label: "Palette → Ambient + Claim", prompt: "!action:palette; !action:melody=gpt:farben der aktuellen Szene; gpt:Erfinde 3 kurze Claims, die zur generierten Ambient-Stimmung passen (deutsch)." }
-  ];
+  
+    /* Klarere Fragen */
+    { label: "Persona‑Switch 🧠", prompt: "Wechsle in die Persona »TÜV‑zertifizierter KI‑Manager & Trailer‑Stratege«. Beantworte meine nächste Frage in 3 knackigen Sätzen mit 1 Zahl, 1 Beispiel und 1 nächstem Schritt." },
+    { label: "Red‑Team‑Check 🛡️", prompt: "Überprüfe die letzte Antwort kritisch: Wo sind blinde Flecken, Risiken oder Annahmen? Nenne 3 Gegenargumente und einen Prüfplan." },
+    { label: "Meeting‑Destillat ⏱️", prompt: "Destilliere die letzten 5 Chat‑Nachrichten in 3 Bullet‑Points »Was zählt – Was fehlt – Nächste 10‑Minuten‑Aktion«." },
+    { label: "Avatar‑Briefing aus Foto", prompt: "!action:palette; gpt:Erzeuge aus der angezeigten Farbpalette ein neutrales Avatar‑Briefing in 6 Stichpunkten (Stil, Licht, Hintergrund, Pose, Kleidung, CI‑Kontext)." },
+    { label: "Palette → Claims", prompt: "!action:palette; gpt:Leite aus den 5 HEX‑Farben 3 prägnante Claims (max. 6 Wörter) ab und skizziere je 1 passende UI‑Theme‑Idee (Primary/Secondary/Accent/Surface/Text)." }
+];
 })();
