@@ -77,11 +77,14 @@
     });
   </script>
 
-  <script src="/variety-engine.js?v=1"></script>
+  <!-- Removed variety-engine.js: it contained invalid HTML and caused a syntax error -->
   <script src="/spotlight-card.js?v=1"></script>
   <script src="/micro-demos.js?v=1"></script>
   <script src="/photo-flows.js?v=1"></script>
   <script src="/style-switcher.js?v=1"></script>
+
+  <!-- Prime the ambient melody on first user interaction (pointer or key) -->
+  <script src="/js/ambient-melody-autostart.js?v=1"></script>
 
   <!-- Enable spotlight answer mode and load the spotlight answer panel -->
   <script>
@@ -287,7 +290,9 @@
 
       const SPEED_PX_S=14;
       const setDuration=()=>{ const px=track.scrollWidth+Math.max(320,innerWidth); const dur=Math.max(60,Math.min(300,px/SPEED_PX_S));
-        track.style.setProperty('--dur',dur.toFixed(1)+'s'); track.style.animationDelay = (-Math.min(dur*0.35, 14)).toFixed(2)+'s'; };
+        track.style.setProperty('--dur',dur.toFixed(1)+'s');
+        // Set a constant negative animation delay so the ticker appears to start immediately on load
+        track.style.animationDelay = '-8s'; };
       setDuration();
 
       function chatRect(){ const el=$('.chat-dock'); return el?el.getBoundingClientRect():null; }

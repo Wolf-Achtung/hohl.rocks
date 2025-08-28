@@ -43,21 +43,21 @@
     return card;
   }
 
+  // Disable automatic hiding so that the card remains visible until the user closes it.
   function scheduleHide(ms){
+    // clear any existing timer but do not hide automatically
     if(hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(()=>{
-      if(card){ card.classList.remove('show'); setTimeout(()=>{ card && card.remove(); card=null; }, 350); }
-    }, ms);
+    hideTimer = null;
   }
 
   window.addEventListener('chat:send', ()=>{
-    acc=''; ensureCard(); scheduleHide(15000);
+    acc=''; ensureCard(); scheduleHide(0);
   });
   window.addEventListener('chat:delta', (ev)=>{
     const d = (ev.detail && ev.detail.delta) ? ev.detail.delta : '';
     acc += d;
     ensureCard().querySelector('.spot-body').textContent = (acc.length>540? acc.slice(0,520)+' …' : acc);
-    scheduleHide(15000);
+    scheduleHide(0);
   });
-  window.addEventListener('chat:done', ()=> scheduleHide(12000));
+  window.addEventListener('chat:done', ()=> scheduleHide(0));
 })();
