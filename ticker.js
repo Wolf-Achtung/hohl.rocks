@@ -16,14 +16,7 @@
     .ticker a:hover{filter:brightness(1.08)}
     @keyframes ticker-move{from{transform:translateX(100%)}to{transform:translateX(-110%)}}
     @media (max-width:880px){.ticker-wrap{left:12px;right:12px}.ticker{height:42px}.ticker a{padding:8px 12px}}
-  
-    @media (max-width: 390px){
-      .ticker-wrap{left:12px;right:12px}
-      .ticker{height:38px}
-      .ticker-track{gap:10px}
-      .ticker a{padding:8px 12px;font-size:13px}
-    }
-`;
+  `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
   // ---------- DOM ----------
@@ -61,10 +54,6 @@
       pauseTicker();
       ensureOneAnswerOnly(); // alte Spotlight(s) räumen
       try { window.AnalyticsLite?.emit?.('ticker_click', { label }); } catch {}
-      // Handle action-chips like "!action:..." (can include "; gpt:...")
-      try{
-        if (prompt && prompt.indexOf('!action:')>-1 && window.WolfFX && WolfFX.run){ WolfFX.run(prompt); return; }
-      }catch(_){ }
       try { if (window.ChatDock?.send) { ChatDock.send(prompt); return; } } catch {}
       const input = document.querySelector('#chat-input'); const btn = document.querySelector('#chat-send');
       if (input) {
