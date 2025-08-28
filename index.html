@@ -26,8 +26,9 @@
     .bubble-row.assistant .b-inner{margin-right:auto;background:rgba(27,102,255,.13)}
     .b-inner{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.16)}
     .privacy-slot{position:fixed;left:14px;bottom:14px;z-index:34}
-    .ticker{height:48px}
-    @media (max-width:880px){.ticker{height:42px}}
+    /* update ticker height rules to use the renamed class */
+    .wolf-ticker{height:48px}
+    @media (max-width:880px){.wolf-ticker{height:42px}}
   </style>
 </head>
 <body>
@@ -93,7 +94,16 @@
        that the ticker is visible by rebuilding it as soon as possible. -->
   <script>
     window.addEventListener('load', function(){
-      try { window.Ticker && typeof window.Ticker.rebuild === 'function' && window.Ticker.rebuild(); } catch(_) {}
+      try {
+        // Attempt to rebuild the ticker once the page has loaded.  Use WolfTicker rather than
+        // Ticker since the ticker classes were renamed to avoid ad blockers.  Fall back to
+        // legacy Ticker if present.
+        if (window.WolfTicker && typeof window.WolfTicker.rebuild === 'function') {
+          window.WolfTicker.rebuild();
+        } else if (window.Ticker && typeof window.Ticker.rebuild === 'function') {
+          window.Ticker.rebuild();
+        }
+      } catch(_) {}
     });
   </script>
 
@@ -235,19 +245,26 @@
     const ANSWER_SEL = '.spotlight-card, #chat-output, .answer-overlay, .answer-marquee, .chat-answer, .chat-output';
     const css = `
       ${ANSWER_SEL} { position: relative; z-index: 9999 !important; }
-      .ticker-wrap { position: fixed; left:24px; right:24px; z-index: 320 !important; pointer-events:auto; visibility:visible; }
-      .ticker { position:relative; overflow:hidden; height:48px; pointer-events:none;
+      /*
+       * Use custom class names for the ticker to avoid being blocked by browser
+       * extensions (e.g. ad blockers) which may hide elements named "ticker".
+       * All ticker-related classes are prefixed with "wolf-" to ensure
+       * visibility while preserving existing behaviour.  See corresponding
+       * changes in the inline script below.
+       */
+      .wolf-ticker-wrap { position: fixed; left:24px; right:24px; z-index: 320 !important; pointer-events:auto; visibility:visible; }
+      .wolf-ticker { position:relative; overflow:hidden; height:48px; pointer-events:none;
                 padding-right: var(--safeR, 340px);
-                -webkit-mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%);
-                        mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%); }
-      .ticker-track { position:absolute; display:inline-flex; gap:14px; white-space:nowrap; will-change:transform;
-                      animation:ticker-move var(--dur,140s) linear infinite; transform:translateZ(0); }
-      .ticker-track.paused{ animation-play-state: paused; }
-      .ticker a { display:inline-block; padding:10px 16px; border-radius:999px; text-decoration:none; pointer-events:auto;
+                /* Removed CSS mask to ensure the ticker is visible in all contexts (e.g. file protocol) */
+                }
+      .wolf-ticker-track { position:absolute; display:inline-flex; gap:14px; white-space:nowrap; will-change:transform;
+                      animation:wolf-ticker-move var(--dur,140s) linear infinite; transform:translateZ(0); }
+      .wolf-ticker-track.paused{ animation-play-state: paused; }
+      .wolf-ticker a { display:inline-block; padding:10px 16px; border-radius:999px; text-decoration:none; pointer-events:auto;
                   color:#eaf2ff; background:rgba(20,28,36,.64); border:1px solid rgba(255,255,255,.16); backdrop-filter:blur(6px); }
-      .ticker a:hover{ filter:brightness(1.08); }
-      @keyframes ticker-move{ from{ transform:translateX(100%) } to{ transform:translateX(-110%) } }
-      @media (max-width:880px){ .ticker-wrap{left:12px; right:12px} .ticker{height:42px} .ticker a{padding:8px 12px} }
+      .wolf-ticker a:hover{ filter:brightness(1.08); }
+      @keyframes wolf-ticker-move{ from{ transform:translateX(100%) } to{ transform:translateX(-110%) } }
+      @media (max-width:880px){ .wolf-ticker-wrap{left:12px; right:12px} .wolf-ticker{height:42px} .wolf-ticker a{padding:8px 12px} }
     `;
     const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
@@ -277,10 +294,11 @@
     }
 
     function buildTicker(items){
-      $$('.ticker-wrap').forEach(el=>el.remove());
-      const wrap=document.createElement('div'); wrap.className='ticker-wrap';
-      const inner=document.createElement('div'); inner.className='ticker';
-      const track=document.createElement('div'); track.className='ticker-track';
+      // Remove any existing ticker elements to avoid duplicates
+      $$('.wolf-ticker-wrap').forEach(el=>el.remove());
+      const wrap=document.createElement('div'); wrap.className='wolf-ticker-wrap';
+      const inner=document.createElement('div'); inner.className='wolf-ticker';
+      const track=document.createElement('div'); track.className='wolf-ticker-track';
       inner.appendChild(track); wrap.appendChild(inner); document.body.appendChild(wrap);
 
       function addChip(label,prompt,preview){
@@ -308,6 +326,7 @@
         wrap.style.zIndex = '600';
       }
       fixBottom();
+      // Ensure responsive rebuild on resize and chat events
       addEventListener('resize',()=>{ setDuration(); fixBottom(); }, {passive:true});
       addEventListener('chat:send',()=>{ track.classList.add('paused'); fixBottom(); });
       addEventListener('chat:done',()=>{ track.classList.remove('paused'); fixBottom(); });
@@ -334,8 +353,9 @@
     if (document.readyState !== 'loading'){ setTimeout(boot, 150); }
     else { document.addEventListener('DOMContentLoaded', ()=> setTimeout(boot, 300), {once:true}); }
 
-    setTimeout(()=>{ const track=document.querySelector('.ticker-track'); if(!track || track.querySelectorAll('a').length===0){ boot(); } }, 3000);
-    setInterval(()=>{ const track=document.querySelector('.ticker-track'); const has=!!track && track.querySelectorAll('a').length>0; if(!has) boot(); }, 12000);
+    // Check periodically for ticker existence: use wolf-ticker-track class to avoid ad blockers
+    setTimeout(()=>{ const track=document.querySelector('.wolf-ticker-track'); if(!track || track.querySelectorAll('a').length===0){ boot(); } }, 3000);
+    setInterval(()=>{ const track=document.querySelector('.wolf-ticker-track'); const has=!!track && track.querySelectorAll('a').length>0; if(!has) boot(); }, 12000);
 
     const out = document.getElementById('chat-output');
     if(out){
