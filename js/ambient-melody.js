@@ -1,4 +1,13 @@
-/*! ambient-melody.js — WolfMelody v1 (ambient, Jon-Hopkins-like) */
+/*! ambient-melody.js — WolfMelody v1 (ambient, Jon-Hopkins-like)
+ *
+ * Dieses Skript implementiert eine kleine generative Ambient‑Engine im Stile
+ * von Jon Hopkins. Es erzeugt langsame Pads, Plucks und Sub‑Bässe, die sich
+ * über eine einfache Pentatonik oder dorische Tonleiter bewegen. Ein
+ * Feedback‑Hall sorgt für eine sanfte Atmosphäre. Die Engine exportiert
+ * sich als globales Objekt `window.WolfMelody` mit den Methoden
+ * `.start(mood)`, `.stop()`, `.setTempo(bpm)`, `.setMood(name)`, `.setSeed(val)`,
+ * `.tempoDelta(pct)` und `.gptPlan(theme)` (optional: holt Plan vom Backend).
+ */
 (function(){
   'use strict';
 
@@ -29,7 +38,6 @@
       this.ctx = null;
       this.master = null;
       this.bus = null;
-      this.fx = null;
       this.running = false;
 
       this.bpm = 86;
@@ -52,16 +60,13 @@
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return null;
       this.ctx = new Ctx();
-
       // master
       this.master = this.ctx.createGain(); this.master.gain.value = 0.28;
       this.master.connect(this.ctx.destination);
-
       // bus
       this.bus = this.ctx.createGain(); this.bus.gain.value = 0.8;
       this.bus.connect(this.master);
-
-      // simple FDN-ish reverb: 3 feedback delays + lowpass
+      // simple FDN‑ish reverb: 3 feedback delays + lowpass
       const mkDelay = (t)=> {
         const d = this.ctx.createDelay(2.0); d.delayTime.value = t;
         const g = this.ctx.createGain(); g.gain.value = 0.35;
@@ -75,7 +80,6 @@
       this.revSend = this.ctx.createGain(); this.revSend.gain.value = 0.22;
       this.revSend.connect(d1.in); this.revSend.connect(d2.in); this.revSend.connect(d3.in);
       d1.out.connect(this.master); d2.out.connect(this.master); d3.out.connect(this.master);
-
       return this.ctx;
     }
 
@@ -99,7 +103,7 @@
       }
     }
 
-    // ------- synths -------
+    // ------- synth voices -------
     pad(freq, t, len=1.8){
       const ctx=this.ctx;
       const o1=ctx.createOscillator(), o2=ctx.createOscillator();
@@ -107,18 +111,14 @@
       o1.frequency.value=freq; o2.frequency.value=freq* (1 + (this.rng()*0.008 - 0.004));
       const lfo=ctx.createOscillator(); lfo.frequency.value = 0.12 + this.rng()*0.1;
       const lfoGain=ctx.createGain(); lfoGain.gain.value=6; lfo.connect(lfoGain);
-
       const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1600; lp.Q.value=0.6;
       lfoGain.connect(lp.frequency);
-
       const g=ctx.createGain(); g.gain.setValueAtTime(0.0001, t);
       g.gain.exponentialRampToValueAtTime(this.level.pad, t+0.22);
       g.gain.exponentialRampToValueAtTime(0.0001, t+len);
-
       o1.connect(lp); o2.connect(lp); lp.connect(g); g.connect(this.bus);
-      // send to "reverb"
+      // send to reverb
       const rs = ctx.createGain(); rs.gain.value=0.8; lp.connect(rs); rs.connect(this.revSend);
-
       o1.start(t); o2.start(t); lfo.start(t);
       o1.stop(t+len+0.05); o2.stop(t+len+0.05); lfo.stop(t+len+0.05);
     }
@@ -129,13 +129,10 @@
       const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t);
       g.gain.exponentialRampToValueAtTime(this.level.pluck, t+0.01);
       g.gain.exponentialRampToValueAtTime(0.0001, t+len);
-
       const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=180;
       const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2400 + this.rng()*800;
-
       o.connect(hp).connect(lp).connect(g).connect(this.bus);
       const rs = ctx.createGain(); rs.gain.value=0.35; lp.connect(rs); rs.connect(this.revSend);
-
       o.start(t); o.stop(t+len+0.05);
     }
 
@@ -150,7 +147,6 @@
     // ------- generator -------
     scale(){ return SCALES[this.scaleName] || SCALES['minor-pent']; }
     degreeToHz(deg){ const semis=this.scale()[((deg%this.scale().length)+this.scale().length)%this.scale().length]; return this.rootHz * Math.pow(2, semis/12); }
-
     scheduleTick(){
       const ctx=this.ctx; const spb = 60/this.bpm; const stepDur = spb/this.div;
       while (this.nextTime < ctx.currentTime + this.lookahead){
@@ -168,22 +164,16 @@
         this.step++; this.nextTime += stepDur;
       }
     }
-
     start(mood){
-      const ctx = this.ensureCtx(); if(!ctx) return;
+      const ctx=this.ensureCtx(); if(!ctx) return;
       if (mood) this.setMood(mood);
       if (this.running) return;
-      this.running = true;
-      this.nextTime = ctx.currentTime + 0.12;
+      this.running=true; this.nextTime = ctx.currentTime + 0.12;
       this.interval = setInterval(()=> this.scheduleTick(), 25);
     }
-    stop(){
-      if(!this.running) return;
-      this.running=false; clearInterval(this.interval); this.interval=null;
-      try{ this.master.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime+0.6); }catch(_){}
-    }
-
-    // ---- KI-Plan (optional): holt bpm/scale/motif vom Backend; fällt sonst weich zurück
+    stop(){ if(!this.running) return; this.running=false; clearInterval(this.interval); this.interval=null;
+      try{ this.master.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime+0.6); }catch(_){} }
+    // ---- optional: holt bpm/scale/motif vom Backend (GPT Plan) ----
     async gptPlan(theme){
       try{
         const base = window.HOHLROCKS_CHAT_BASE || '';
@@ -198,13 +188,9 @@
         if (json.root) this.rootHz = note(json.root);
         if (json.scale && SCALES[json.scale]) this.scaleName = json.scale;
         if (json.mood) this.setMood(json.mood);
-        if (!this.running) this.start(json.mood||'hopkins');
-      } catch(e){
-        console.warn('GPT plan failed, using fallback', e);
-        if (!this.running) this.start('hopkins');
-      }
+        // optional motif: could be used to change scale degrees per step
+      }catch(_){ /* ignore */ }
     }
   }
-
   window.WolfMelody = new AmbientMelody();
 })();

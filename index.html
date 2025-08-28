@@ -57,14 +57,18 @@
   <div id="shapes"></div>
 
   <!-- Scripts: Audio, Shapes, Ticker, Antworten, Foto & Datenschutz -->
-  <!-- Harley-Motorsound (mit unregelmäßigem Tuckern) -->
-  <script src="/harley-lite.js?v=gs1"></script>
+  <!-- Ambient-Melodie (Jon-Hopkins-ähnlich) ersetzt den Harley-Motorsound -->
+  <!-- Verwende relative Pfade, damit sie auch im file://‑Kontext funktionieren -->
+  <script src="js/ambient-melody.js?v=1"></script>
+  <script src="js/ambient-melody-autostart.js?v=1"></script>
   <!-- Bubbles (organische Neonformen, keine Navigation) -->
   <script src="/hero-shapes.js?v=gs1"></script>
   <!-- Kuratierte Ticker-Prompts -->
   <script src="/ticker-items.js?v=gs1"></script>
   <!-- Ticker: sendet direkt und pausiert während des Chats -->
   <script src="/ticker.js?v=gs1"></script>
+  <!-- Setze den Antwort-Modus vor dem Laden der Spotlight-Skripte -->
+  <script>window.__ANSWER_MODE = 'spotlight';</script>
   <!-- Laufband für Status & Kurzantworten -->
   <script src="/answer-marquee.js?v=gs1"></script>
   <!-- Overlays: kleine Antwort-Card + Spotlight (optional) -->
@@ -82,7 +86,7 @@
   <div id="chat-output" class="chat-output"></div>
 
   <!-- Chat client -->
-  <script src="/js/chatbox-stream.js?v=chat2"></script>
+  <script src="js/chatbox-stream.js?v=chat2"></script>
   <script>
     ChatDock.initChatDock({
       inputSel:'#chat-input',
