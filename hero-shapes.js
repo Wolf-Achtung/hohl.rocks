@@ -164,7 +164,7 @@
     const isMobile = innerWidth < 820;
     const count = isMobile ? Math.round(4 + Math.random()) : Math.round(6 + Math.random()*3); // 4–5 / 6–9
     for(let i=0;i<count;i++) setTimeout(()=>spawn(holder), 1000 + i*1500);
-    addEventListener('beforeunload', ()=>{ try{ window.HarleyLite && window.HarleyLite.stop(); }catch{} });
+    addEventListener('beforeunload', ()=>{ try{ window.WolfMelody && window.WolfMelody.stop && window.WolfMelody.stop(); }catch{} });
   }
 
   if(document.readyState!=="loading") init();

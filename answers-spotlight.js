@@ -13,7 +13,14 @@
   .spot-btn{ border-radius: 999px; background: rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); color:#f1f6ff; padding:6px 10px; font:600 12px/1 ui-sans-serif; }
   .spot-btn:hover{ background: rgba(255,255,255,.18); }
   @media (max-width: 880px){ .spotlight-card{ left: 16px; width: 86vw; bottom: calc(16vh + 80px); } }
-  `;
+  
+  @media (max-width: 390px){
+    .spotlight-card{ left: 12px; width: 90vw; bottom: calc(22vh + 64px); padding: 10px; }
+    .spot-body{ font: 600 14px/1.35 ui-sans-serif,system-ui; max-height: 34vh; }
+    .spot-row{ gap:6px; }
+    .spot-btn{ padding:5px 9px; font-size:11px; }
+  }
+`;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
   let card=null, acc=''; let hideTimer=null;

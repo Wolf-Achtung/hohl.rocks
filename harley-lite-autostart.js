@@ -1,10 +1,10 @@
-/*! harley-lite-autostart.js — starts ambient on first user gesture; retries */
+/*! wolf-melody-autostart.js — start AmbientMelody on first gesture; retries */
 (function(){
   'use strict';
   let started = false;
   function tryStart(){
     if (started) return;
-    try { HarleyLite.startAmbient(900); started = true; } catch(_){}
+    try { window.WolfMelody?.start('hopkins'); started = true; } catch(_){}
   }
   function gesture(){
     if (started) return;

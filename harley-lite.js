@@ -1,61 +1,91 @@
-/*! harley-lite.js — dezenter V‑Twin‑Ambient (WebAudio, keine Dateien) */
+/*! harley-lite.js — richer, irregular V‑Twin ambiance */
 (function(){
+  'use strict';
   const HarleyLite = {};
-  let ctx=null, master=null, rumble=null, subOsc=null, lfo=null, lfoGain=null, running=false;
-  // Timer für unregelmäßige Modulation des Motorsounds
-  let varTimer = null;
+  let ctx, master, lp, oscA, oscB, sub, noise, noiseGain, running=false, lfo, lfoGain, varTimer;
 
-  function ensureCtx(){
+  function ensure(){
     if(ctx) return;
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    ctx = new (window.AudioContext||window.webkitAudioContext)();
     master = ctx.createGain(); master.gain.value = 0.0; master.connect(ctx.destination);
-    // Brownish noise
-    const bufferSize = 2 * ctx.sampleRate;
-    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = noiseBuffer.getChannelData(0);
-    let last=0; for(let i=0;i<bufferSize;i++){ const white=Math.random()*2-1; data[i]=(last + 0.02*white)/1.02; last=data[i]; }
-    rumble = ctx.createBufferSource(); rumble.buffer=noiseBuffer; rumble.loop=true;
-    const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=30;
-    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=220;
-    rumble.connect(hp); hp.connect(lp);
-    subOsc = ctx.createOscillator(); subOsc.type='sine'; subOsc.frequency.value=60;
-    const subGain = ctx.createGain(); subGain.gain.value=0.08;
-    lfo = ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.8;
-    lfoGain = ctx.createGain(); lfoGain.gain.value=0.08;
-    lp.connect(master); subOsc.connect(subGain); subGain.connect(master); lfo.connect(lfoGain); lfoGain.connect(master.gain);
+
+    // Core tones (etwas schnelleres Idle)
+    oscA = ctx.createOscillator(); oscA.type='sawtooth'; oscA.frequency.value=58;
+    oscB = ctx.createOscillator(); oscB.type='square';   oscB.frequency.value=116;
+    sub  = ctx.createOscillator(); sub.type='sine';      sub.frequency.value=29;
+
+    const oGain = ctx.createGain(); oGain.gain.value=0.18;
+    const subGain = ctx.createGain(); subGain.gain.value=0.12;
+
+    lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=340; lp.Q.value=0.8;
+
+    // Gentle exhaust noise (brown-ish)
+    const len = 2*ctx.sampleRate; const nb = ctx.createBuffer(1,len,ctx.sampleRate);
+    const ch = nb.getChannelData(0); let last=0;
+    for(let i=0;i<len;i++){ const white=Math.random()*2-1; last=(last+0.03*white)/1.03; ch[i]=last; }
+    noise = ctx.createBufferSource(); noise.buffer=nb; noise.loop=true;
+    noiseGain = ctx.createGain(); noiseGain.gain.value=0.02;
+
+    // Tremolo
+    lfo = ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=2.6;
+    lfoGain = ctx.createGain(); lfoGain.gain.value=0.33;
+
+    oscA.connect(oGain); oscB.connect(oGain); oGain.connect(lp); lp.connect(master);
+    sub.connect(subGain); subGain.connect(master);
+    noise.connect(noiseGain); noiseGain.connect(master);
+    lfo.connect(lfoGain); lfoGain.connect(master.gain);
   }
-  function fade(param, from, to, ms){ const t=ctx.currentTime; param.cancelScheduledValues(t); param.setValueAtTime(from,t); param.linearRampToValueAtTime(to, t+ms/1000); }
-  HarleyLite.prewarm = function(){ ensureCtx(); };
-  HarleyLite.startAmbient = async function(fadeMs=900){
-    ensureCtx();
-    await ctx.resume();
+
+  function scheduleIrregular(){
+    if(varTimer) clearInterval(varTimer);
+    varTimer = setInterval(()=>{
+      if(!ctx) return;
+      const wobble = 1 + (Math.random()*0.20 - 0.10); // ±10%
+      const baseA = 54*wobble, baseB = 108*wobble, baseSub = 27*wobble;
+      oscA.frequency.setTargetAtTime(baseA, ctx.currentTime, 0.25);
+      oscB.frequency.setTargetAtTime(baseB, ctx.currentTime, 0.25);
+      sub.frequency.setTargetAtTime(baseSub, ctx.currentTime, 0.25);
+
+      const t = ctx.currentTime;
+      const g = master.gain;
+      const peak = Math.min(0.28 + Math.random()*0.08, 0.34);
+      g.setTargetAtTime(peak, t, 0.04);
+      g.setTargetAtTime(0.13 + Math.random()*0.03, t+0.18, 0.18);
+    }, 260 + Math.random()*180);
+  }
+
+  HarleyLite.prewarm = function(){ ensure(); };
+
+  HarleyLite.startAmbient = function(fadeMs=900){
+    ensure();
     if(!running){
-      rumble.start(); subOsc.start(); lfo.start(); running=true;
+      oscA.start(); oscB.start(); sub.start(); lfo.start(); noise.start();
+      running = true;
     }
-    // Starte Fade-In
-    fade(master.gain, master.gain.value, 0.22, fadeMs);
-    // Starte unregelmäßige Frequenzmodulation für authentisches Tuckern
-    if(!varTimer){
-      varTimer = setInterval(()=>{
-        const now = ctx.currentTime;
-        // variiere Subbass zwischen 48 und 86 Hz (unregelmäßiger Takt)
-        const newSub = 48 + Math.random()*38;
-        subOsc.frequency.setTargetAtTime(newSub, now, 0.25);
-        // variiere LFO zwischen 0.8 und 2.4 Hz für leichtes Schwanken
-        const newLfo = 0.8 + Math.random()*1.6;
-        lfo.frequency.setTargetAtTime(newLfo, now, 0.25);
-      }, 1200 + Math.random()*800);
-    }
+    const t = ctx.currentTime;
+    const peak = 0.26, cruise = 0.13;
+    master.gain.setValueAtTime(master.gain.value, t);
+    master.gain.linearRampToValueAtTime(peak,  t + Math.max(0.05, fadeMs/1000));
+    master.gain.linearRampToValueAtTime(cruise, t + Math.max(0.05, fadeMs/1000) + 3.2);
+    scheduleIrregular();
+  };
+
+  HarleyLite.blip = function(intensity=1){
+    if(!ctx || !running) return;
+    const t = ctx.currentTime;
+    const boost = Math.min(0.30 + 0.12*intensity, 0.42);
+    master.gain.cancelScheduledValues(t);
+    master.gain.setTargetAtTime(boost, t, 0.06);
+    master.gain.setTargetAtTime(0.14, t+0.22, 0.28);
   };
 
   HarleyLite.stop = function(fadeMs=350){
-    if(!ctx||!running) return;
-    // Fade-Out
-    fade(master.gain, master.gain.value, 0.0, fadeMs);
-    // Stoppe unregelmäßige Modulation
-    if(varTimer){ clearInterval(varTimer); varTimer = null; }
+    if(!ctx || !running) return;
+    const t = ctx.currentTime;
+    master.gain.setTargetAtTime(0.0, t, Math.max(0.05, fadeMs/1000));
+    if(varTimer) { clearInterval(varTimer); varTimer=null; }
   };
-  HarleyLite.isRunning = ()=> running && master && master.gain.value>0.001;
-  HarleyLite.blip = function(){ if(!ctx) return; const target=Math.min(0.34, master.gain.value+0.12); fade(master.gain, master.gain.value, target, 80); setTimeout(()=>fade(master.gain, master.gain.value, 0.22, 260),160); };
+
+  HarleyLite.isRunning = function(){ return !!running; };
   window.HarleyLite = HarleyLite;
 })();
