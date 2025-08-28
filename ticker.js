@@ -1,175 +1,129 @@
-/*! ticker.js — vLoop6 (slow, seamless, clickable, answer-aware, no-overlap) */
-(function () {
-  'use strict';
+/*! ticker.js — "Aktuell"-Laufband: Klick sendet direkt an GPT; unterstützt {label,prompt} */
+(function(){
+  const items = (window.__TICKER_ITEMS && window.__TICKER_ITEMS.length) ? window.__TICKER_ITEMS : [
+    {label:"Über mich",   prompt:"Kurzer Überblick über Wolf Hohl (TÜV‑zertifizierter KI‑Manager): Profil, Fokus, Angebot in 5 Sätzen."},
+    {label:"Projekte",    prompt:"Gib mir 3 Projekt‑Highlights von Wolf Hohl (Ziel, Umsetzung, Ergebnis) prägnant."},
+    {label:"Kontakt",     prompt:"Ich möchte Kontakt aufnehmen. Welche Möglichkeiten habe ich (E‑Mail, LinkedIn)? Bitte kurz & präzise."},
+    "Sind wir fit für den EU AI Act?",
+    "Dürfen wir interne Daten mit GPT nutzen?",
+    "Wie starte ich ein KI‑Pilotprojekt unter DSGVO?",
+    "Welche Fördermittel passen zu KMU‑KI?"
+  ];
 
-  // ---------- Styles ----------
-  const css = `
-    .ticker-wrap{position:fixed;left:24px;right:24px;z-index:250;pointer-events:auto}
-    .ticker{position:relative;overflow:hidden;height:48px;padding-right:var(--safeR,320px);pointer-events:none;
-      -webkit-mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%);
-              mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%)}
-    .ticker-track{position:absolute;display:inline-flex;gap:14px;white-space:nowrap;will-change:transform;
-      animation:ticker-move var(--dur,140s) linear infinite;transform:translateZ(0)}
-    .ticker-track.paused{animation-play-state:paused}
-    .ticker a{display:inline-block;padding:10px 16px;border-radius:999px;text-decoration:none;pointer-events:auto;
-      color:#eaf2ff;background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
-    .ticker a:hover{filter:brightness(1.08)}
-    @keyframes ticker-move{from{transform:translateX(100%)}to{transform:translateX(-110%)}}
-    @media (max-width:880px){.ticker-wrap{left:12px;right:12px}.ticker{height:42px}.ticker a{padding:8px 12px}}
+  const style = document.createElement('style');
+  style.textContent = `
+  .ticker-wrap{ position:fixed; left:24px; right:24px; bottom:140px; height:44px; z-index:38; pointer-events:none; }
+  @media (max-width: 880px){ .ticker-wrap{ height:38px; left:16px; right:16px; } }
+  .ticker{ position:relative; width:100%; height:100%; overflow:hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 6%, black calc(100% - var(--fade-right, 28vw)), transparent);
+            mask-image: linear-gradient(90deg, transparent, black 6%, black calc(100% - var(--fade-right, 28vw)), transparent);
+  }
+  .ticker-track{ position:absolute; white-space:nowrap; will-change:transform; animation:ticker-move 60s linear infinite; }
+  .ticker a{ pointer-events:auto; display:inline-inline; display:inline-block; margin:0 28px; padding:8px 12px;
+    border-radius:999px; background:rgba(20,28,36,0.42); border:1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(8px); color:#f1f6ff; text-decoration:none; font: 600 15px/1.1 ui-sans-serif,system-ui; letter-spacing:.1px; }
+  .ticker a:hover{ background:rgba(32,40,52,0.52); border-color: rgba(255,255,255,0.22); }
+  @media (max-width: 880px){
+    .ticker a{ margin:0 18px; padding:6px 10px; font:600 14px/1.1 ui-sans-serif,system-ui; }
+  }
+  @media (prefers-reduced-motion: reduce){ .ticker-track{ animation: none; } }
+  @keyframes ticker-move{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
   `;
-  const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
+  document.head.appendChild(style);
 
-  // ---------- DOM ----------
-  let wrap, inner, track, baseItems = [];
+  const wrap = document.createElement('div'); wrap.className='ticker-wrap'; wrap.setAttribute('aria-label','Aktuell');
+  const inner = document.createElement('div'); inner.className='ticker';
+  const track = document.createElement('div'); track.className='ticker-track';
 
-  function mount() {
-    wrap = document.querySelector('.ticker-wrap');
-    if (!wrap) {
-      wrap = document.createElement('div'); wrap.className = 'ticker-wrap';
-      inner = document.createElement('div'); inner.className = 'ticker';
-      track = document.createElement('div'); track.className = 'ticker-track';
-      inner.appendChild(track); wrap.appendChild(inner); document.body.appendChild(wrap);
-    } else {
-      inner = wrap.querySelector('.ticker') || inner;
-      track = wrap.querySelector('.ticker-track') || track;
-      if (!track) { inner = document.createElement('div'); inner.className='ticker'; track=document.createElement('div'); track.className='ticker-track'; inner.appendChild(track); wrap.appendChild(inner); }
-    }
-  }
-
-  // ---------- Inhalte ----------
-  function getItems(){
-    if (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) return window.__TICKER_ITEMS;
-    return [
-      { label:"Überrasch mich 🤯", prompt:"Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit kleinem Beispiel.", preview:"Kleine Demo, große Wirkung." },
-      { label:"Mini-Story (5 Wörter)", prompt:"Erzeuge eine spannende Mini-Story mit genau 5 Wörtern. Danach ein kurzer Titel. Ton: smart, knapp, überraschend.", preview:"Fünf Wörter, ein Plot." },
-      { label:"Haiku zur Fahrt", prompt:"Schreibe ein kurzes Haiku über eine nächtliche Highway-Fahrt, Winterluft, Fernlicht, Weite. Ton: ruhig, präzise.", preview:"Drei Zeilen Highway-Luft." }
-    ];
-  }
-
-  function addChip(dst, label, prompt, preview){
-    const a = document.createElement('a');
-    a.href = '#'; a.textContent = label; if (preview) a.title = preview;
-    a.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      pauseTicker();
-      ensureOneAnswerOnly(); // alte Spotlight(s) räumen
-      try { window.AnalyticsLite?.emit?.('ticker_click', { label }); } catch {}
-      try { if (window.ChatDock?.send) { ChatDock.send(prompt); return; } } catch {}
-      const input = document.querySelector('#chat-input'); const btn = document.querySelector('#chat-send');
-      if (input) {
-        input.value = prompt;
-        input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true}));
-      } else { btn?.click(); }
+  function renderChunk(){
+    const frag = document.createDocumentFragment();
+    items.forEach(item=>{
+      const label = (typeof item==='string') ? item : (item.label || item.prompt || 'Frage');
+      const prompt = (typeof item==='string') ? item : (item.prompt || item.label);
+      const a=document.createElement('a'); a.href='#'; a.textContent=label;
+      a.addEventListener('click', (ev)=>{ ev.preventDefault(); sendNow(prompt); });
+      frag.appendChild(a);
     });
-    dst.appendChild(a);
+    return frag;
   }
+  track.appendChild(renderChunk());
+  track.appendChild(renderChunk());
+  inner.appendChild(track); wrap.appendChild(inner);
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.body.appendChild(wrap);
+    setTimeout(applyLayout, 0);
+  });
 
-  function build(){
-    track.innerHTML = '';
-    baseItems = getItems().slice();
-    baseItems.forEach(it => addChip(track, it.label, it.prompt, it.preview));
-    topUp();
-    setDuration();
+  function locateChat(){
+    const sels = ['.chatbox', '#chat-dock', '.chat-dock', '[data-chat-dock]', '.chatbox-dock'];
+    for(const s of sels){ const el = document.querySelector(s); if(el) return el; }
+    return null;
   }
-
-  // ---------- Hilfen ----------
-  function chatDockRect(){ const c = document.querySelector('.chat-dock'); return c ? c.getBoundingClientRect() : null; }
-  function answerEl(){
-    // häufige Klassen/IDs deines Overlays – erweitere bei Bedarf
-    return document.querySelector('.spotlight-card, .answer-overlay, .chat-answer, .chat-output, .answer-marquee');
-  }
-  function answerRect(){ const el = answerEl(); return el ? el.getBoundingClientRect() : null; }
-
-  // nur die NEUSTE Antwort sichtbar halten (ältere entfernen/ausblenden)
-  function ensureOneAnswerOnly(){
-    const all = Array.from(document.querySelectorAll('.spotlight-card, .answer-overlay, .answer-marquee'));
-    if (all.length > 1) {
-      all.slice(0, -1).forEach(n => { n.remove(); }); // oder: n.style.display='none';
+  function applyLayout(){
+    const chat = locateChat();
+    const th = wrap.offsetHeight || 44;
+    if(chat){
+      const r = chat.getBoundingClientRect();
+      const centerY = r.top + r.height/2;
+      const bottomPx = Math.max(12, window.innerHeight - centerY - th/2);
+      wrap.style.bottom = bottomPx.toFixed(0) + 'px';
+      const fadeRight = Math.max(40, (window.innerWidth - r.left) + 16);
+      wrap.style.setProperty('--fade-right', fadeRight.toFixed(0) + 'px');
+    }else{
+      wrap.style.bottom = '140px';
+      wrap.style.setProperty('--fade-right', '28vw');
     }
   }
+  window.addEventListener('resize', ()=> requestAnimationFrame(applyLayout), {passive:true});
+  window.addEventListener('scroll', ()=> requestAnimationFrame(applyLayout), {passive:true});
+  window.addEventListener('orientationchange', ()=> setTimeout(applyLayout, 100));
+  const ro = ('ResizeObserver' in window) ? new ResizeObserver(()=>applyLayout()) : null;
+  document.addEventListener('DOMContentLoaded', ()=>{ const chat=locateChat(); if(ro && chat) ro.observe(chat); });
 
-  // Bottom-Position: zwischen Antwort und Chat-Input, ohne Überschneidung
-  function updateBottom(){
-    const chat = chatDockRect();
-    const ans  = answerRect();
-    const tickerH = (inner?.getBoundingClientRect().height) || 48;
-
-    // Standard: oberhalb der Chat-Box
-    let bottom = 76;
-    if (chat) bottom = Math.max(bottom, (window.innerHeight - chat.top) + 12);
-
-    // Wenn eine Antwort-Card da ist: Ticker UNTER die Card (also näher zum unteren Rand),
-    // so dass die Oberkante des Tickers MINDESTENS 12px unter der Card liegt.
-    if (ans){
-      const maxBottom = Math.max(12, window.innerHeight - ans.bottom - 12 - tickerH);
-      bottom = Math.min(bottom, maxBottom);
+  function sendNow(text){
+    // Bring ChatDock in den Vordergrund
+    try{
+      if(window.ChatDock && (ChatDock.open || ChatDock.focus)){
+        (ChatDock.open || ChatDock.focus).call(ChatDock);
+      }
+    }catch{}
+    // Stoppe das Laufband während der Antwort
+    try{
+      track.style.animationPlayState = 'paused';
+    }catch{}
+    // Sende direkt über ChatDock.send, wenn vorhanden
+    try{
+      if(window.ChatDock && typeof ChatDock.send === 'function'){
+        ChatDock.send(text);
+        return;
+      }
+      if(window.ChatDock && typeof ChatDock.postMessage === 'function'){
+        ChatDock.postMessage(text);
+        return;
+      }
+    }catch{}
+    // Fallback: schreibe ins Chatfeld und triggere Enter
+    const selectors = ['#chat-input','textarea[data-chat-input]','textarea[name="chat"]','.chatbox textarea','.chat-input textarea','textarea'];
+    let input=null;
+    for(const sel of selectors){ const cand=document.querySelector(sel); if(cand){ input=cand; break; } }
+    if(input){
+      try{
+        input.focus(); input.value=text; input.dispatchEvent(new Event('input',{bubbles:true}));
+        // drücke Enter
+        const keDown = new KeyboardEvent('keydown',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true});
+        const keUp   = new KeyboardEvent('keyup',{key:'Enter',code:'Enter',which:13,keyCode:13,bubbles:true});
+        input.dispatchEvent(keDown); input.dispatchEvent(keUp);
+        return;
+      }catch{}
     }
-
-    wrap.style.bottom = Math.max(12, bottom) + 'px';
+    // Wenn nichts geht: copy to clipboard
+    try{ navigator.clipboard && navigator.clipboard.writeText(text); }catch{}
   }
 
-  // Rechts Freiraum für die Chat-Box (Safe-Zone)
-  function updateSafeZone(){
-    const chat = chatDockRect();
-    let safe = 340;
-    if (chat) safe = Math.ceil(chat.width + 24);
-    wrap.style.setProperty('--safeR', safe + 'px');
-  }
-
-  // Layering: immer UNTER der Antwort-Card, aber ÜBER Video/Shapes
-  function updateZ(){
-    const ans = answerEl();
-    let z = 250;
-    if (ans){
-      const zi = parseInt(getComputedStyle(ans).zIndex || '1000', 10);
-      z = Math.min(zi - 5, 600); // sicher unter der Antwort
-    }
-    wrap.style.zIndex = String(z);
-  }
-
-  // ---------- Laufgeschwindigkeit ----------
-  const SPEED_PX_S = 16; // sehr ruhig (ggf. 14 probieren)
-  function setDuration(){
-    const vw = Math.max(320, window.innerWidth);
-    const px = track.scrollWidth + vw;
-    const dur = Math.max(60, Math.min(260, px / SPEED_PX_S));
-    track.style.setProperty('--dur', dur.toFixed(1) + 's');
-  }
-
-  function topUp(){
-    const vw = Math.max(320, window.innerWidth);
-    let guard = 20;
-    while (track.scrollWidth < 3 * vw && guard-- > 0){
-      for (const it of baseItems) addChip(track, it.label, it.prompt, it.preview);
-    }
-  }
-
-  // ---------- Pause/Resume ----------
-  function pauseTicker(){ track?.classList.add('paused'); }
-  function resumeTicker(){ track?.classList.remove('paused'); }
-
-  // ---------- Init ----------
-  function init(){
-    mount(); if(!track) return;
-    build(); updateBottom(); updateSafeZone(); updateZ();
-
-    // Reagieren auf Layout/Antwort
-    window.addEventListener('resize', ()=>{ updateBottom(); updateSafeZone(); topUp(); setDuration(); updateZ(); }, {passive:true});
-    window.addEventListener('chat:send', ()=>{ ensureOneAnswerOnly(); pauseTicker(); updateBottom(); updateZ(); });
-    window.addEventListener('chat:done', ()=>{ ensureOneAnswerOnly(); resumeTicker(); updateBottom(); updateZ(); });
-
-    // Wenn Spotlight/Antwort dynamisch wechselt
-    const mo = new MutationObserver(()=>{ ensureOneAnswerOnly(); updateBottom(); updateZ(); });
-    mo.observe(document.body, { childList:true, subtree:true });
-
-    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) resumeTicker(); });
-    setInterval(()=>resumeTicker(), 30000);
-  }
-
-  (document.readyState==='loading')
-    ? document.addEventListener('DOMContentLoaded', init, {once:true})
-    : init();
-
-  // Expose
-  window.Ticker = { pause: pauseTicker, resume: resumeTicker, rebuild: ()=>{ build(); setDuration(); updateBottom(); updateZ(); } };
+  // Nach Abschluss des Chats das Laufband fortsetzen
+  window.addEventListener('chat:done', ()=>{
+    try{
+      track.style.animationPlayState = 'running';
+    }catch{}
+  });
 })();

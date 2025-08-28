@@ -1,37 +1,41 @@
-/* ticker-items.js — curiosity + interactivity + KI-Combos (Gold-Standard, Melody-Sektion) */
-(function () {
+/* ticker-items.js — curated list of prompts for the "Aktuell" ticker
+ * Each entry has a label and a prompt that is sent directly to ChatDock when clicked.
+ */
+(function(){
   window.__TICKER_ITEMS = [
-    // — Conversational (GPT – Basis)
-    { label: "Überrasch mich 🤯", prompt: "Zeig mir in 3 Sätzen etwas Unerwartetes, das KI heute schon gut kann – inkl. 1 Mini-Beispiel + 1 pragmatischem nächsten Schritt." },
-    { label: "Mini-Story (5 Wörter)", prompt: "Erzeuge eine spannende Mini-Story mit genau 5 Wörtern. Danach 1 kurzer Titel. Stil: smart, knapp, überraschend." },
-    { label: "Haiku zur Fahrt", prompt: "Haiku über nächtliche Highway-Fahrt: Winterluft, Fernlicht, Weite. Ton: ruhig, präzise." },
-    { label: "Prompt-Studio 🎛️", prompt: "Nimm meine nächste Frage und forme sie in einen Gold-Standard-Prompt mit Rollenbild, Kontext, Ziel, Leitplanken, Output-Format. Danach 1 Kurz-Version." },
+    { label: "Überrasch mich 🤯", prompt: "Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit einem kleinen Beispiel." },
 
-    // — Client-Aktionen pur
-    { label: "Freeze-Frame 📸",       prompt: "!action:freeze" },
-    { label: "Bokeh-Burst ✨",        prompt: "!action:bokeh" },
-    { label: "Neon-Pulse 🔆",         prompt: "!action:ring" },
-    { label: "Palette aus Video",     prompt: "!action:palette" },
+    // Wow & Play
+    { label: "Aus Text wird Farbe", prompt: "Nimm folgenden Satz und mach mir eine 5‑Farben‑Palette daraus (HEX + Einsatz). Satz folgt gleich." },
+    { label: "Mini‑Story (5 Wörter)", prompt: "Schreibe eine ultrakurze Geschichte aus genau 5 Wörtern zu einem Thema nach Wahl, überraschend, poetisch, deutsch." },
+    { label: "Stil‑Switcher", prompt: "Erkläre mir ein Fachthema zuerst extrem einfach, dann normal, dann nerdy – je 2 Sätze." },
+    { label: "Myth Busting", prompt: "Wähle einen verbreiteten KI‑Mythos und widerlege ihn freundlich in 3 Sätzen mit einem Mini‑Beispiel." },
+    { label: "Bild‑Ideen (ohne Bild)", prompt: "Gib mir 4 kreative Bild‑Ideen zu meinem Thema, je 1 Satz, präzise Briefings (Hintergrund, Licht, Stimmung)." },
+    { label: "Prompt des Tages", prompt: "Gib mir einen starken Prompt des Tages zum Ausprobieren (kurz, robust, keine Floskeln)." },
+    { label: "Punk‑Modus", prompt: "Antworte radikal knapp, aber korrekt. Max. 3 Sätze. Hart & ehrlich." },
 
-    // — KI-Combos Core
-    { label: "Trailer-Teaser 🎬",     prompt: "!action:whoosh; gpt:Schreibe eine 12-Sekunden-Trailer-Hookline zur aktuellen Szene. 1 Satz, poetisch-prägnant, deutsch." },
-    { label: "Freeze → Voiceover",    prompt: "!action:freeze; gpt:Formuliere einen 12-Sekunden-Voiceover-Text zur eben fixierten Szene. Ton: ruhig, cineastisch, deutsch." },
-    { label: "Palette → 3 UI-Themes", prompt: "!action:palette; gpt:Erzeuge aus 5 HEX-Farben drei UI-Themen (Primary/Secondary/Accent/Surface/Text) mit kurzen Begründungen, deutsch." },
+    // Persönlich & nahbar
+    { label: "Wolf in 3 Sätzen", prompt: "Wer ist Wolf Hohl (TÜV‑zertifizierter KI‑Manager), was treibt ihn an, wie hilft er konkret? Max. 3 Sätze, präzise." },
+    { label: "Wolfs Lieblings‑Use‑Case", prompt: "Beschreibe einen kleinen, aber wirkungsvollen KI‑Use‑Case aus Wolfs Alltag – so, dass ich ihn heute testen kann." },
 
-    // — 🎵 Melody-Sektion (8–10 Chips)
-    { label: "Ambient START (Hopkins)", prompt: "!action:melody=start:hopkins" },
-    { label: "Ambient STOP",            prompt: "!action:melody=stop" },
-    { label: "Ambient Tempo +8%",       prompt: "!action:melody=tempo:+8" },
-    { label: "Ambient Tempo −10%",      prompt: "!action:melody=tempo:-10" },
-    { label: "Mood: dawn (calm)",       prompt: "!action:melody=mood:dawn" },
-    { label: "Mood: drive (schneller)", prompt: "!action:melody=mood:drive" },
-    { label: "Seed 7",                  prompt: "!action:melody=seed:7" },
-    { label: "Seed 99",                 prompt: "!action:melody=seed:99" },
-    { label: "Ambient GPT-Plan",        prompt: "!action:melody=gpt:neon winter highway" },
-    { label: "Palette → Ambient + Claim", prompt: "!action:palette; !action:melody=gpt:farben der aktuellen Szene; gpt:Erfinde 3 kurze Claims, die zur generierten Ambient-Stimmung passen (deutsch)." },
+    // Foto‑Spaß (mit Einwilligung)
+    { label: "Avatar‑Briefing (Foto)", prompt: "Ich lade ein Foto hoch. Erstelle 3 präzise Avatar‑Briefings (Hintergrund/Licht/Pose/Farben) – sachlich, kein Kitsch." },
+    { label: "Brand‑Farben (Foto)", prompt: "Leite aus meinem Foto 5 Markenfarben ab (HEX) und schlage Einsätze auf hohl.rocks vor (Buttons/Links/Akzente)." },
 
-    // — Extras
-    { label: "Neon-Pulse → Claim",    prompt: "!action:ring; gpt:Erfinde 5 knackige Claims für Wolf Hohl (TÜV-zertifizierter KI-Manager). Stil: seriös, frisch, deutsch." },
-    { label: "Bokeh → Mood-Tags",     prompt: "!action:bokeh; gpt:Nenne 12 präzise Mood-Tags zur Szene (stark→schwach), deutsch." }
+    // Lernen & Orientierung
+    { label: "KI in 60 Sekunden", prompt: "Erkläre mir in 60 Sekunden, was heute an KI wirklich nützlich ist – ohne Buzzwords, mit 1 Beispiel." },
+    { label: "Werkzeug‑Safari", prompt: "Nenne 3 schlanke Tools/Patterns, mit denen ich GPT zuverlässig in den Alltag bringe (Auth, Logging, Auswertung) – je 1 Satz." },
+    { label: "Qualität statt Zufall", prompt: "Gib mir 3 kleine Prompt‑Tricks, die Ergebnisse messbar besser machen – mit Mini‑Beispiel." },
+
+    // Spaß & Skurril
+    { label: "Road‑Trip‑Haiku", prompt: "Schreibe ein Haiku zum Highway‑Video im Hintergrund. Kein Pathos, eher minimal." },
+    { label: "Emojify my Day", prompt: "Kondensiere meinen Tag in eine knappe Emoji‑Zeile + 1 Satz Kommentar – trocken‑witzig." },
+
+    // Jetzt & Neu (zeitlos formuliert)
+    { label: "Was ist gerade spannend?", prompt: "Nenne 3 frische KI‑Trends/Ideen (zeitlos formuliert), je 1 Satz, fokus auf konkrete Wirkung statt Technik." },
+    { label: "Kleinstes Experiment", prompt: "Gib mir ein 24‑Stunden‑Experiment, um KI produktiv zu testen – Hypothese, Setup, Erfolgskriterium." },
+
+    // Einstieg
+    { label: "Wo starte ich?", prompt: "Stell mir 3 Fragen (Ziel, Material, Zeit) und mach daraus einen minimalen KI‑Plan für mich persönlich." }
   ];
 })();
