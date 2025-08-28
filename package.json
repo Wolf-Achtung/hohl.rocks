@@ -1,0 +1,13 @@
+{
+  "name": "hohlrocks-server",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": { "node": ">=18" },
+  "scripts": { "start": "node server/index.js" }
+}
