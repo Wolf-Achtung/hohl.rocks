@@ -1,0 +1,18 @@
+hohl.rocks — Delta 0827 (Prompt‑Studio, Small‑Screen ≤390px, Request‑IDs)
+
+Geänderte Dateien:
+- micro-demos.js — WolfFX (Actions: freeze, bokeh, ring, palette, melody=…), PromptStudio Overlay
+- ticker.js — Action‑Parsing (!action:…); Small‑Screen CSS (≤390px) für Chips/Spacing
+- js/chatbox-stream.js — Request‑IDs (rid) + Exponential Backoff (mit Jitter); Events: chat:request, chat:attempt
+- ticker-items.js — "Prompt‑Studio 🎛️" → !action:promptstudio (öffnet Overlay)
+- answers-spotlight.js — Small‑Screen Tuning (≤390px): Breite, Bottom, Typo, Buttons
+
+Deployment:
+1) Dateien 1:1 ersetzen.
+2) Cache‑Bust in index.html hochziehen (z. B. ?v=sp3, ?v=chat5), wenn du harte Caches nutzt.
+3) In Railway: Logs enthalten nun „X-Request-ID“ (rid) in den Requests, wenn dein Server diese Header ausliest.
+
+Kurztest:
+- Prompt‑Studio‑Chip klicken → Overlay öffnet sich, Prompt generieren, "An GPT senden".
+- Handybreite ≤390 px (DevTools) → Ticker kompakter, Spotlight passt sich an.
+- Offline/Restart simulieren → Stream retryt mit exponentiellem Backoff; Fallback JSON greift.

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Chatbox Demo</title>
+  <link rel="stylesheet" href="../css/chatbox.css">
+  <style>body{font-family:system-ui;margin:0;padding:40px;background:#0b1520;color:#dfefff}</style>
+
+  <script>
+    // TODO: hier deine Railway-URL eintragen:
+    window.HOHLROCKS_CHAT_BASE = "https://hohlrocks-production.up.railway.app";
+  </script>
+</head>
+<body>
+  <h1>Chatbox Demo</h1>
+  <p>Unten Dock öffnen und Frage stellen. Streaming via /chat-sse, Fallback /chat.</p>
+
+  <div class="chat-dock">
+    <input id="chat-input" placeholder="Frage stellen…" autocomplete="off"/>
+    <button id="chat-send">Senden</button>
+  </div>
+  <div id="chat-output" class="chat-output"></div>
+
+  <script src="../js/chatbox-stream.js"></script>
+  <script>ChatDock.initChatDock({});</script>
+</body>
+</html>
