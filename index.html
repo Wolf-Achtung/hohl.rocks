@@ -33,7 +33,8 @@
 <body>
   <main class="stage" aria-label="Highway-Video mit organischen Neon-Shapes">
     <video id="bg-video" autoplay playsinline loop muted>
-      <source src="/videos/desert_drive.mp4" type="video/mp4" />
+    <!-- Use a relative path for the background video so it also works when opened via file:// -->
+      <source src="videos/desert_drive.mp4" type="video/mp4" />
     </video>
     <div id="shape-layer"></div>
   </main>
@@ -57,13 +58,14 @@
     ].join(" ");
   </script>
 
-  <link rel="stylesheet" href="/hero-shapes.css?v=sp2">
-  <script src="/hero-shapes.js?v=sp2"></script>
+  <!-- Use relative URLs for all scripts and styles so the site functions both when served from a web server and when opened via file:/// -->
+  <link rel="stylesheet" href="hero-shapes.css?v=sp2">
+  <script src="hero-shapes.js?v=sp2"></script>
 
-  <script src="/analytics-lite.js?v=1"></script>
-  <script src="/ticker-items.js?v=melody2"></script>
+  <script src="analytics-lite.js?v=1"></script>
+  <script src="ticker-items.js?v=melody2"></script>
 
-  <script src="/js/chatbox-stream.js?v=chat4"></script>
+  <script src="js/chatbox-stream.js?v=chat4"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function(){
       if (window.ChatDock && ChatDock.initChatDock){
@@ -77,11 +79,23 @@
     });
   </script>
 
-  <script src="/variety-engine.js?v=1"></script>
-  <script src="/spotlight-card.js?v=1"></script>
-  <script src="/micro-demos.js?v=1"></script>
-  <script src="/photo-flows.js?v=1"></script>
-  <script src="/style-switcher.js?v=1"></script>
+  <script src="variety-engine.js?v=1"></script>
+  <script src="spotlight-card.js?v=1"></script>
+  <script src="micro-demos.js?v=1"></script>
+  <script src="photo-flows.js?v=1"></script>
+  <script src="style-switcher.js?v=1"></script>
+
+  <!-- Load the ambient melody autostart script to prime the WebAudio context on first user gesture.  This file lives in js/ and will automatically start the WolfMelody after the user interacts. -->
+  <script src="js/ambient-melody-autostart.js?v=1"></script>
+
+  <!-- Force ticker rebuild once the page is fully loaded.  The inline ticker kernel should normally handle this, but
+       when running the site via the file:// scheme some scripts may execute out of order.  This helper ensures
+       that the ticker is visible by rebuilding it as soon as possible. -->
+  <script>
+    window.addEventListener('load', function(){
+      try { window.Ticker && typeof window.Ticker.rebuild === 'function' && window.Ticker.rebuild(); } catch(_) {}
+    });
+  </script>
 
   <!-- Ambient Melody inline -->
   <script>
