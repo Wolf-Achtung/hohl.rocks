@@ -1,6 +1,8 @@
-/*! chatbox-stream.js — ChatDock mit SSE + Backoff + lastUser */
+/*! chatbox-stream.js — streaming chat (SSE) + fallback JSON */
 (function () {
   'use strict';
+  // Set your server base in HTML before loading this script:
+  //   window.HOHLROCKS_CHAT_BASE = 'https://<your>.railway.app';
   const CHAT_BASE = window.HOHLROCKS_CHAT_BASE || 'https://hohlrocks-production.up.railway.app';
   const SSE_PATH  = '/chat-sse';
   const JSON_PATH = '/chat';
@@ -20,11 +22,11 @@
     return n;
   }
 
-  async function streamSSE({ message, systemPrompt, model, onDelta, onDone }) {
+  async function streamSSE({ message, systemPrompt, model, onDelta, onDone, image }) {
     const res = await fetch(CHAT_BASE + SSE_PATH, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message, systemPrompt, model }),
+      body: JSON.stringify({ message, systemPrompt, model, image }),
       mode:'cors'
     });
     if (!res.ok || !res.body) throw new Error('SSE failed');
@@ -47,24 +49,11 @@
             const obj = JSON.parse(payload);
             if (obj.done) { onDone && onDone(); return; }
             if (obj.delta) onDelta && onDelta(obj.delta);
-          }catch(_){ /* ignore non-JSON */ }
+          }catch{ /* ignore non-JSON */ }
         }
       }
     }
     onDone && onDone();
-  }
-
-  async function trySSEWithBackoff(opts){
-    const waits = [800, 1600, 3200];
-    for (let i=0;i<waits.length;i++){
-      try{
-        await streamSSE(opts);
-        return true;
-      }catch(_){
-        await new Promise(r=>setTimeout(r, waits[i]));
-      }
-    }
-    return false;
   }
 
   async function fetchJSON({ message, systemPrompt, model, image }) {
@@ -83,93 +72,110 @@
     const input  = $(opts.inputSel  || '#chat-input');
     const button = $(opts.buttonSel || '#chat-send');
     let output   = $(opts.outputSel || '#chat-output');
-    const system = String(opts.systemPrompt || '').trim();
-    const model  = opts.model || 'gpt-4o-mini';
+    const system = opts.systemPrompt || 'Antworte präzise, deutsch, knapp, KI-Management & EU AI Act.';
 
+    if (!input || !button){
+      console.warn('[chatbox] input/button nicht gefunden.'); return;
+    }
     if (!output){
-      output = document.createElement('div');
-      output.id='chat-output';
+      output = el('div',{id:'chat-output','class':'chat-output'});
       document.body.appendChild(output);
     }
 
     function bubble(role, text){
-      const out = output;
-      out.classList.add('show');
-      const wrap = el('div', {class:'bubble-row '+role},
-        el('div', {class:'b-inner'}, text||'')
-      );
-      out.appendChild(wrap);
-      return wrap.querySelector('.b-inner');
+      const node = el('div',{class:'msg '+role}, el('div',{class:'bubble'}, text||''));
+      output.appendChild(node);
+      output.scrollTop = output.scrollHeight;
+      return node.querySelector('.bubble');
     }
 
-    async function send(message){
-      const msg = String(message || input.value || '').trim();
-      if (!msg) return;
-      input.value='';
-      button && (button.disabled=true);
-      try { window.dispatchEvent(new CustomEvent('chat:send', { detail: { } })); } catch(_){}
+    async function send(){
+      // Notify listeners that a message is being sent
+      try { window.dispatchEvent(new CustomEvent('chat:send', { detail: { } })); } catch{};
 
+      const msg = (input.value||'').trim(); if(!msg) return;
+      input.value=''; button.disabled=true;
       bubble('user', msg);
-      const abot = bubble('assistant', 'Antwort kommt gleich …');
+      const abot = bubble('assistant', '');
       let acc='';
-      const onDelta = (d)=>{ acc += d; abot.textContent = acc; try { window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: d } })); } catch(_){}};
-      const onDone  = ()=>{ button && (button.disabled=false); try { window.dispatchEvent(new CustomEvent('chat:done', { detail: {} })); } catch(_){}};
-
-      window.ChatDock = Object.assign(window.ChatDock||{}, { lastUser: msg });
+      const onDelta = d => {  acc += d; abot.textContent = acc; output.classList.add('show'); output.scrollTop = output.scrollHeight;  try { window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: d } })); } catch{}; };
+      const onDone = () => {  button.disabled=false;  try { window.dispatchEvent(new CustomEvent('chat:done', { detail: { } })); } catch{}; };
 
       try{
-        const ok = await trySSEWithBackoff({ message: msg, systemPrompt: system, model, onDelta, onDone });
-        if (!ok){
-          const full = await fetchJSON({ message: msg, systemPrompt: system, model });
-          abot.textContent = full;
-          onDone();
-        }
-      }catch(_){
+        await streamSSE({ message: msg, systemPrompt: system, onDelta, onDone });
+      }catch(e){
         try{
-          const full = await fetchJSON({ message: msg, systemPrompt: system, model });
+          const full = await fetchJSON({ message: msg, systemPrompt: system });
           abot.textContent = full;
-        }catch(__){
-          abot.textContent = 'Server gerade nicht erreichbar. Bitte kurz neu versuchen.';
+          output.classList.add('show');
+        }catch(err){
+          abot.textContent = 'Server nicht erreichbar.';
         }finally{
-          onDone();
+          button.disabled=false;
         }
       }
     }
 
-    async function sendAttachment({ dataUrl, prompt }){
-      try { window.dispatchEvent(new CustomEvent('chat:send', { detail: { hasImage:true } })); } catch(_){}
-      if(!dataUrl) return;
-      const msg = (prompt||'Bitte bewerte dieses Bild seriös in 5 Punkten, inkl. möglicher nächster Schritte.');
-      button && (button.disabled=true);
+    // Expose a helper on ChatDock so external callers can send a message directly.
+    // This function focuses the input, populates it with the provided text and triggers send().
+    if(window.ChatDock){
+      try{
+        // Only set if not already provided
+        if(typeof window.ChatDock.send !== 'function'){
+          window.ChatDock.send = function(text){
+            try{
+              const m = (text||'').trim(); if(!m) return;
+              input.focus();
+              input.value = m;
+              // Immediately dispatch input event so any reactive bindings update
+              input.dispatchEvent(new Event('input',{bubbles:true}));
+              // Use the internal send() to process the message
+              send();
+            }catch(err){ console.error('[ChatDock.send] Error:', err); }
+          };
+        }
+      }catch(err){ /* ignore */ }
+    }
 
+    
+    // --- NEW: sendAttachment({dataUrl, prompt}) — prefers JSON route for images ---
+    async function sendAttachment({ dataUrl, prompt }){
+      try { window.dispatchEvent(new CustomEvent('chat:send', { detail: { hasImage:true } })); } catch{};
+      if(!dataUrl) return;
+      const msg = (prompt||'Bitte bewerte dieses Bild seriös und knappe 5 Punkte, inkl. möglicher nächsten Schritte.');
+      button.disabled=true;
+
+      // User bubble with preview
       const ub = bubble('user', '');
       const imgWrap = el('div', {class:'upl-img'} , el('img', {src:dataUrl, alt:'Upload'}));
       const txtNode = el('div', {class:'upl-txt'}, msg);
       ub.appendChild(imgWrap); ub.appendChild(txtNode);
 
-      const abot = bubble('assistant', 'Antwort kommt gleich …');
+      // Assistant bubble + streaming or JSON fallback
+      const abot = bubble('assistant', '');
+      let acc='';
+      const onDelta = d => { acc += d; abot.textContent = acc; try { window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: d } })); } catch{}; };
+      const onDone = () => { button.disabled=false; try { window.dispatchEvent(new CustomEvent('chat:done', { detail: { } })); } catch{}; };
+
+      // Prefer JSON for images
       try{
-        const full = await fetchJSON({ message: msg, systemPrompt: system, model, image: dataUrl });
-        abot.textContent = (typeof full==='string') ? full : (full.answer || '');
-      }catch(_){
-        abot.textContent = 'Bild-Upload wird vom Server aktuell nicht unterstützt.';
-      }finally{
-        button && (button.disabled=false);
-        try { window.dispatchEvent(new CustomEvent('chat:done', { detail: {} })); } catch(_){}
+        const full = await fetchJSON({ message: msg, systemPrompt: system, image: dataUrl });
+        abot.textContent = (typeof full==='string') ? full : (full.answer || ''); 
+        output.classList.add('show');
+      }catch(err){
+        // Try SSE text-only as fallback (image not supported server-side)
+        try{
+          await streamSSE({ message: msg + "\n(Hinweis: Der Client hat ein Bild hochgeladen.)", systemPrompt: system, onDelta, onDone });
+        }catch(e){
+          abot.textContent = 'Bild-Upload wird vom Server aktuell nicht unterstützt.';
+        }finally{
+          button.disabled=false;
+        }
       }
     }
-
-    if (button) button.addEventListener('click', e=>{ e.preventDefault(); send(); });
-    if (input)  input.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
-
-    window.ChatDock = Object.assign(window.ChatDock||{}, {
-      config: { systemPrompt: system, model },
-      send, sendAttachment,
-      open: ()=>{ try{ input && input.focus(); }catch(_){}},
-      focus: ()=>{ try{ input && input.focus(); }catch(_){}},
-      initChatDock
-    });
+button.addEventListener('click', e=>{ e.preventDefault(); send(); });
+    input.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
   }
 
-  window.ChatDock = Object.assign(window.ChatDock||{}, { initChatDock });
+  window.ChatDock = Object.assign(window.ChatDock||{}, { initChatDock, sendAttachment });
 })();

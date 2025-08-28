@@ -1,96 +1,32 @@
-/*! harley-lite.js — v5: schnelleres V-Twin-Idle („potato-potato“) mit Jitter */
+/*! harley-lite.js — dezenter V‑Twin‑Ambient (WebAudio, keine Dateien) */
 (function(){
-  'use strict';
-
-  let ctx, master, running=false, timer=null;
-  const state = { gain: 0.0, base: 0.16 }; // base ↓ = schneller
+  const HarleyLite = {};
+  let ctx=null, master=null, rumble=null, subOsc=null, lfo=null, lfoGain=null, running=false;
 
   function ensureCtx(){
-    if (ctx) return ctx;
+    if(ctx) return;
     ctx = new (window.AudioContext || window.webkitAudioContext)();
-    master = ctx.createGain(); master.gain.value = 0.0001; master.connect(ctx.destination);
-    return ctx;
+    master = ctx.createGain(); master.gain.value = 0.0; master.connect(ctx.destination);
+    // Brownish noise
+    const bufferSize = 2 * ctx.sampleRate;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    let last=0; for(let i=0;i<bufferSize;i++){ const white=Math.random()*2-1; data[i]=(last + 0.02*white)/1.02; last=data[i]; }
+    rumble = ctx.createBufferSource(); rumble.buffer=noiseBuffer; rumble.loop=true;
+    const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=30;
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=220;
+    rumble.connect(hp); hp.connect(lp);
+    subOsc = ctx.createOscillator(); subOsc.type='sine'; subOsc.frequency.value=46;
+    const subGain = ctx.createGain(); subGain.gain.value=0.08;
+    lfo = ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.8;
+    lfoGain = ctx.createGain(); lfoGain.gain.value=0.08;
+    lp.connect(master); subOsc.connect(subGain); subGain.connect(master); lfo.connect(lfoGain); lfoGain.connect(master.gain);
   }
-
-  // einzelner „Thump“
-  function scheduleThump(t, lvl){
-    const o = ctx.createOscillator(); o.type='triangle';
-    o.frequency.setValueAtTime(80, t);
-    o.frequency.exponentialRampToValueAtTime(45, t+0.10);
-
-    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.95*lvl, t+0.008);
-    g.gain.exponentialRampToValueAtTime(0.0001, t+0.16);
-
-    // kurzer Noise-Impuls durch LPF
-    const n = ctx.createBufferSource();
-    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.18), ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(ctx.sampleRate*0.018));
-    n.buffer = buf;
-
-    const lpf = ctx.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value=360; lpf.Q.value=0.7;
-
-    const mix = ctx.createGain(); mix.gain.value = 0.48*lvl;
-
-    n.connect(lpf); o.connect(g); g.connect(mix); lpf.connect(mix); mix.connect(master);
-    n.start(t); n.stop(t+0.18); o.start(t); o.stop(t+0.18);
-  }
-
-  // schnelleres, unregelmäßiges Pattern: zwei kurze, eine längere Pause
-  function patternTimes(){
-    // base ~0.16 → sehr flott; gern 0.14 für „noch schneller“
-    const b = state.base;
-    const jit = ()=> (Math.random()*0.02 - 0.01); // ±10ms
-    return [ Math.max(0.10, b-0.03+jit()), Math.max(0.10, b-0.03+jit()), Math.max(0.18, b+0.06+jit()) ];
-  }
-
-  function loop(){
-    if (!running) return;
-    const now = ctx.currentTime, ahead = now + 0.9;
-    if (!loop.nextAt || loop.nextAt < now) loop.nextAt = now;
-    while (loop.nextAt < ahead){
-      const patt = patternTimes();
-      for (const step of patt){
-        loop.nextAt += step;
-        scheduleThump(loop.nextAt, state.gain);
-      }
-    }
-  }
-
-  function setRpm(rpm){
-    // sehr grobe Abbildung: höhere RPM → kleinere base
-    // 900 → ~0.19 | 1200 → ~0.16 | 1500 → ~0.14
-    state.base = Math.max(0.12, Math.min(0.22, 0.32 - rpm/5000));
-  }
-
-  function startAmbient(rpm=1300){
-    ensureCtx(); if (ctx.state==='suspended') ctx.resume();
-    if (running) return; running = true;
-    setRpm(rpm);
-
-    // Start kräftig, dann runter
-    state.gain = 0.9;
-    ramp(master.gain, 0.9, 0.25);
-    setTimeout(()=> ramp(master.gain, 0.42, 1.0), 3200);
-
-    loop.nextAt = 0;
-    clearInterval(timer); timer = setInterval(loop, 70);
-  }
-
-  function stop(){
-    if (!ctx || !running) return;
-    running=false; clearInterval(timer); timer=null; ramp(master.gain, 0.0001, 0.5);
-  }
-
-  function ramp(param, target, seconds){
-    const now = ctx.currentTime;
-    try{
-      param.cancelScheduledValues(now);
-      param.setValueAtTime(param.value, now);
-      param.exponentialRampToValueAtTime(Math.max(0.0001, target), now + Math.max(0.01, seconds));
-    }catch{}
-  }
-
-  window.HarleyLite = { startAmbient, stop, setRpm };
+  function fade(param, from, to, ms){ const t=ctx.currentTime; param.cancelScheduledValues(t); param.setValueAtTime(from,t); param.linearRampToValueAtTime(to, t+ms/1000); }
+  HarleyLite.prewarm = function(){ ensureCtx(); };
+  HarleyLite.startAmbient = async function(fadeMs=900){ ensureCtx(); await ctx.resume(); if(!running){ rumble.start(); subOsc.start(); lfo.start(); running=true; } fade(master.gain, master.gain.value, 0.22, fadeMs); };
+  HarleyLite.stop = function(fadeMs=350){ if(!ctx||!running) return; fade(master.gain, master.gain.value, 0.0, fadeMs); };
+  HarleyLite.isRunning = ()=> running && master && master.gain.value>0.001;
+  HarleyLite.blip = function(){ if(!ctx) return; const target=Math.min(0.34, master.gain.value+0.12); fade(master.gain, master.gain.value, target, 80); setTimeout(()=>fade(master.gain, master.gain.value, 0.22, 260),160); };
+  window.HarleyLite = HarleyLite;
 })();
