@@ -32,6 +32,7 @@
     pane.classList.add('show');
     // Emit chat:send event (in case caller didn't)
     try{ window.dispatchEvent(new CustomEvent('chat:send')); }catch{}
+
     // Helper to parse SSE lines
     const readSSE = (url) => {
       fetch(url).then(res => {
@@ -49,8 +50,15 @@
               if(!dataStr) continue;
               let data;
               try { data = JSON.parse(dataStr); } catch { continue; }
-              if(data && typeof data.text !== 'undefined'){ streamEl.textContent += data.text; pane.scrollTop = pane.scrollHeight; try{ window.dispatchEvent(new CustomEvent('chat:delta',{ detail:{ delta: data.text } })); }catch{}; }
-              if(data && data.done){ try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}; return; }
+              if(data && typeof data.text !== 'undefined'){
+                streamEl.textContent += data.text;
+                pane.scrollTop = pane.scrollHeight;
+                try{ window.dispatchEvent(new CustomEvent('chat:delta', { detail:{ delta: data.text } })); }catch{};
+              }
+              if(data && data.done){
+                try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{};
+                return;
+              }
             }
           }
         }
