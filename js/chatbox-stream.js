@@ -32,46 +32,74 @@
     pane.classList.add('show');
     // Emit chat:send event (in case caller didn't)
     try{ window.dispatchEvent(new CustomEvent('chat:send')); }catch{}
-
-    // Try the SSE-ish endpoint using fetch + ReadableStream
-    const fetchOpts = {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ prompt }),
-      mode:'cors'
-    };
-    fetch(API_BASE + SSE_PATH, fetchOpts).then(res=>{
-      if(!res.ok || !res.body){ throw new Error('no stream'); }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      function read(){
-        return reader.read().then(({done, value})=>{
-          if(done){
-            try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}
-            return;
+    // Helper to parse SSE lines
+    const readSSE = (url) => {
+      fetch(url).then(res => {
+        if(!res.ok || !res.body){ throw new Error('no stream'); }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        function process(){
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() || '';
+          for(const line of lines){
+            if(!line.trim()) continue;
+            if(line.startsWith('data:')){
+              const dataStr = line.slice(5).trim();
+              if(!dataStr) continue;
+              let data;
+              try { data = JSON.parse(dataStr); } catch { continue; }
+              if(data && typeof data.text !== 'undefined'){ streamEl.textContent += data.text; pane.scrollTop = pane.scrollHeight; try{ window.dispatchEvent(new CustomEvent('chat:delta',{ detail:{ delta: data.text } })); }catch{}; }
+              if(data && data.done){ try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}; return; }
+            }
           }
-          const chunk = decoder.decode(value, { stream:true });
-          // Append new content
-          streamEl.textContent += chunk;
-          pane.scrollTop = pane.scrollHeight;
-          // Notify listeners (e.g. spotlight-card) about incremental delta
-          try{ window.dispatchEvent(new CustomEvent('chat:delta', { detail:{ delta: chunk } })); }catch{}
-          return read();
-        });
-      }
-      return read();
-    }).catch(()=>{
-      // Fallback: use plain JSON endpoint
-      fetch(API_BASE + JSON_PATH, fetchOpts).then(r=>r.json()).then(json=>{
-        const answer = json && (json.answer || json.text || json.message || '');
-        streamEl.textContent = answer || '';
-        pane.scrollTop = pane.scrollHeight;
-        try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}
-      }).catch(()=>{
-        streamEl.textContent = 'Fehler beim Abruf.';
-        pane.scrollTop = pane.scrollHeight;
-        try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}
+        }
+        function read(){
+          return reader.read().then(({ done, value }) => {
+            if(done){ process(); try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}; return; }
+            buffer += decoder.decode(value, { stream:true });
+            process();
+            return read();
+          });
+        }
+        return read();
+      }).catch(() => {
+        // Fallback to JSON endpoint on error
+        postJson(prompt);
       });
+    };
+    // Build query parameters for SSE
+    const params = new URLSearchParams();
+    params.set('message', String(prompt));
+    const cfg = (window.ChatDock && ChatDock.config) || {};
+    if(cfg.systemPrompt) params.set('systemPrompt', cfg.systemPrompt);
+    if(cfg.model) params.set('model', cfg.model);
+    const url = API_BASE + SSE_PATH + '?' + params.toString();
+    readSSE(url);
+  }
+
+  // Send a non-streaming JSON request to /chat as fallback
+  function postJson(prompt){
+    const pane = qs('#chat-output');
+    if(!pane) return;
+    pane.innerHTML = '';
+    const streamEl = document.createElement('div');
+    streamEl.className = 'stream';
+    pane.appendChild(streamEl);
+    pane.classList.add('show');
+    const body = { message: String(prompt) };
+    const cfg = (window.ChatDock && ChatDock.config) || {};
+    if(cfg.systemPrompt) body.systemPrompt = cfg.systemPrompt;
+    if(cfg.model) body.model = cfg.model;
+    fetch(API_BASE + JSON_PATH, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) }).then(r => r.json()).then(json => {
+      const answer = json && (json.answer || json.text || json.message || '');
+      streamEl.textContent = answer || '';
+      pane.scrollTop = pane.scrollHeight;
+    }).catch(() => {
+      streamEl.textContent = 'Fehler beim Abruf.';
+      pane.scrollTop = pane.scrollHeight;
+    }).finally(() => {
+      try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{};
     });
   }
 
