@@ -168,6 +168,9 @@
   <!-- Hide the legacy chat dock; the ticker includes its own input field. -->
   <style>
     .chat-dock{ display:none !important; }
+    /* Hide the legacy chat output as well. Spotlight mode renders answers in its
+       own card; suppress the built‑in chat bubbles. */
+    #chat-output{ display:none !important; }
   </style>
 
   <!-- Load the neon shapes stylesheet and script. hero-shapes.js creates
@@ -182,6 +185,15 @@
   <script src="/js/analytics-lite.js?v=1"></script>
   <script src="/js/ticker-items.js?v=melody2"></script>
   <script src="/js/ticker.js?v=input1"></script>
+
+  <!-- Ensure the ticker animation starts immediately. Although ticker.js
+       initialises itself on page load, calling resume() here provides an
+       extra guarantee that the animation is running from the beginning. -->
+  <script>
+    document.addEventListener('DOMContentLoaded', ()=>{
+      try{ window.Ticker?.resume(); }catch(_){}
+    });
+  </script>
 
   <!-- Chat streaming: GET /chat-sse with JSON fallback. chatbox-stream.js
        dispatches chat:send/delta/done events and connects the ticker input
@@ -207,6 +219,11 @@
   <script src="/js/micro-demos.js?v=1"></script>
   <script src="/js/photo-flows.js?v=1"></script>
   <script src="/js/style-switcher.js?v=1"></script>
+
+  <!-- Load the ambient melody generator. This defines window.WolfMelody
+       which is used by ambient-melody-autostart.js. Without this script,
+       no sound will play. -->
+  <script src="/js/ambient-melody.js?v=1"></script>
 
   <!-- Prime the ambient melody on first user interaction. ambient-melody-
        autostart.js hooks into pointer/keyboard events and starts the
