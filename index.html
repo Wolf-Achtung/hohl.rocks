@@ -57,19 +57,26 @@
     ].join(" ");
   </script>
 
+  <!-- Hide the legacy chat dock; the ticker includes its own input field -->
+  <style>
+    .chat-dock{ display:none !important; }
+  </style>
+
   <link rel="stylesheet" href="/hero-shapes.css?v=sp2">
   <script src="/hero-shapes.js?v=sp2"></script>
 
   <script src="/analytics-lite.js?v=1"></script>
   <script src="/ticker-items.js?v=melody2"></script>
+  <!-- Load modular ticker implementation with integrated ask bar -->
+  <script src="/ticker.js?v=input1"></script>
 
-  <script src="/js/chatbox-stream.js?v=chat4"></script>
+  <!-- Load chat logic (GET SSE + JSON fallback) -->
+  <script src="/chatbox-stream.js?v=chat5"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function(){
       if (window.ChatDock && ChatDock.initChatDock){
+        // Initialise ChatDock with system prompt and model only. Input is handled by ticker.
         ChatDock.initChatDock({
-          inputSel:'#chat-input',
-          buttonSel:'#chat-send',
           systemPrompt: window.WOLF_SYSTEM_PROMPT,
           model: 'gpt-4o-mini'
         });
@@ -228,6 +235,8 @@
   <script>
   (function(){
     'use strict';
+    // Disable the inline ticker implementation; use the modular ticker instead.
+    return;
     const ANSWER_SEL = '.spotlight-card, #chat-output, .answer-overlay, .answer-marquee, .chat-answer, .chat-output';
     const css = `
       ${ANSWER_SEL} { position: relative; z-index: 9999 !important; }
