@@ -63,15 +63,16 @@
   </style>
 
   <link rel="stylesheet" href="/hero-shapes.css?v=sp2">
-  <script src="/hero-shapes.js?v=sp2"></script>
+  <!-- Load scripts from the js directory -->
+  <script src="/js/hero-shapes.js?v=sp2"></script>
 
-  <script src="/analytics-lite.js?v=1"></script>
-  <script src="/ticker-items.js?v=melody2"></script>
+  <script src="/js/analytics-lite.js?v=1"></script>
+  <script src="/js/ticker-items.js?v=melody2"></script>
   <!-- Load modular ticker implementation with integrated ask bar -->
-  <script src="/ticker.js?v=input1"></script>
+  <script src="/js/ticker.js?v=input1"></script>
 
   <!-- Load chat logic (GET SSE + JSON fallback) -->
-  <script src="/chatbox-stream.js?v=chat5"></script>
+  <script src="/js/chatbox-stream.js?v=chat5"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function(){
       if (window.ChatDock && ChatDock.initChatDock){
@@ -85,10 +86,10 @@
   </script>
 
   <!-- Removed variety-engine.js: it contained invalid HTML and caused a syntax error -->
-  <script src="/spotlight-card.js?v=1"></script>
-  <script src="/micro-demos.js?v=1"></script>
-  <script src="/photo-flows.js?v=1"></script>
-  <script src="/style-switcher.js?v=1"></script>
+  <script src="/js/spotlight-card.js?v=1"></script>
+  <script src="/js/micro-demos.js?v=1"></script>
+  <script src="/js/photo-flows.js?v=1"></script>
+  <script src="/js/style-switcher.js?v=1"></script>
 
   <!-- Prime the ambient melody on first user interaction (pointer or key) -->
   <script src="/js/ambient-melody-autostart.js?v=1"></script>
@@ -98,7 +99,7 @@
     // Configure answer mode so that answers appear in the spotlight card on the left.
     window.__ANSWER_MODE = 'spotlight';
   </script>
-  <script src="/answers-spotlight.js?v=1"></script>
+  <script src="/js/answers-spotlight.js?v=1"></script>
 
   <!-- Ambient Melody inline -->
   <script>
