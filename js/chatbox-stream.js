@@ -1,186 +1,180 @@
-/* chatbox-stream.js — improved ChatDock with SSE streaming and fallbacks.
- *  - Uses window.HOHLROCKS_CHAT_BASE to determine API base.
- *  - Dispatches chat:send, chat:delta and chat:done events so answer overlays can react.
- *  - Exposes ChatDock global with send(), open()/focus() and sendAttachment() methods.
+/* chatbox-stream.js — ChatDock with GET SSE streaming and JSON fallback.
+ *
+ * This module wires up a simple chat interface to a back-end that
+ * exposes two endpoints:
+ *   GET  /chat-sse?message=...&systemPrompt=...&model=...  — returns a server-sent events stream
+ *   POST /chat                                      — returns a JSON response
+ *
+ * It exposes a global `ChatDock` object with the following methods:
+ *   - initChatDock(opts): configure the system prompt, model and optionally bind an input & button
+ *   - send(prompt): send a prompt immediately and stream the response
+ *   - open()/focus(): show the chat output pane
+ *   - sendAttachment(opts): currently forwards the prompt to send()
+ *
+ * The module dispatches DOM events to allow other UI components to react:
+ *   - chat:send — emitted when a message starts streaming
+ *   - chat:delta — emitted with { detail: { delta: string } } for every chunk of data
+ *   - chat:done — emitted once the stream has finished or on error
  */
 (function(){
   'use strict';
-  // Determine API base from global or fallback
-  const API_BASE = (window.HOHLROCKS_CHAT_BASE || '').replace(/\/+$/,'');
+
+  // Determine the API base from the global variable, trimming trailing slashes.
+  const API_BASE = (window.HOHLROCKS_CHAT_BASE || '').replace(/\/+$/, '');
   const SSE_PATH  = '/chat-sse';
   const JSON_PATH = '/chat';
 
-  // Helper query selector
+  // Configuration options (systemPrompt and model) are stored here and
+  // updated whenever initChatDock() is called.
+  const configOpts = { systemPrompt: '', model: '' };
+
+  // Helper to select a single element
   function qs(sel){ return document.querySelector(sel); }
 
   /**
-   * Stream an answer from the server. It will try the SSE endpoint first and
-   * falls back to the JSON endpoint if streaming isn't available. During the
-   * stream it will dispatch "chat:delta" events with a `detail.delta` field
-   * containing the newest chunk. When the stream completes or fails it will
-   * dispatch a "chat:done" event.
-   * @param {string} prompt
+   * Stream an answer from the server. It first tries the SSE endpoint via
+   * a GET request with query parameters. If that fails, it falls back to
+   * the JSON endpoint with a POST request. During the stream it dispatches
+   * events so that other modules (e.g. answer overlays) can update.
+   *
+   * @param {string} message - the user's prompt/question
    */
-  function streamAnswer(prompt){
+  function streamAnswer(message){
     const pane = qs('#chat-output');
     if(!pane) return;
-    // Clear previous contents and prepare output area
+    // Reset pane and show it
     pane.innerHTML = '';
     const streamEl = document.createElement('div');
     streamEl.className = 'stream';
     pane.appendChild(streamEl);
     pane.classList.add('show');
-    // Emit chat:send event (in case caller didn't)
+
+    // Emit chat:send so listeners can react (e.g. pause the ticker)
     try{ window.dispatchEvent(new CustomEvent('chat:send')); }catch{}
 
-    // Helper to parse SSE lines
-    const readSSE = (url) => {
-      fetch(url).then(res => {
-        if(!res.ok || !res.body){ throw new Error('no stream'); }
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        function process(){
-          const lines = buffer.split(/\r?\n/);
-          buffer = lines.pop() || '';
-          for(const line of lines){
-            if(!line.trim()) continue;
-            if(line.startsWith('data:')){
-              const dataStr = line.slice(5).trim();
-              if(!dataStr) continue;
-              let data;
-              try { data = JSON.parse(dataStr); } catch { continue; }
-              if(data && typeof data.text !== 'undefined'){
-                streamEl.textContent += data.text;
-                pane.scrollTop = pane.scrollHeight;
-                try{ window.dispatchEvent(new CustomEvent('chat:delta', { detail:{ delta: data.text } })); }catch{};
-              }
-              if(data && data.done){
-                try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{};
-                return;
-              }
-            }
-          }
-        }
-        function read(){
-          return reader.read().then(({ done, value }) => {
-            if(done){ process(); try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}; return; }
-            buffer += decoder.decode(value, { stream:true });
-            process();
-            return read();
-          });
-        }
-        return read();
-      }).catch(() => {
-        // Fallback to JSON endpoint on error
-        postJson(prompt);
-      });
-    };
     // Build query parameters for SSE
     const params = new URLSearchParams();
-    params.set('message', String(prompt));
-    const cfg = (window.ChatDock && ChatDock.config) || {};
-    if(cfg.systemPrompt) params.set('systemPrompt', cfg.systemPrompt);
-    if(cfg.model) params.set('model', cfg.model);
-    const url = API_BASE + SSE_PATH + '?' + params.toString();
-    readSSE(url);
-  }
+    params.set('message', message);
+    if(configOpts.systemPrompt) params.set('systemPrompt', configOpts.systemPrompt);
+    if(configOpts.model) params.set('model', configOpts.model);
 
-  // Send a non-streaming JSON request to /chat as fallback
-  function postJson(prompt){
-    const pane = qs('#chat-output');
-    if(!pane) return;
-    pane.innerHTML = '';
-    const streamEl = document.createElement('div');
-    streamEl.className = 'stream';
-    pane.appendChild(streamEl);
-    pane.classList.add('show');
-    const body = { message: String(prompt) };
-    const cfg = (window.ChatDock && ChatDock.config) || {};
-    if(cfg.systemPrompt) body.systemPrompt = cfg.systemPrompt;
-    if(cfg.model) body.model = cfg.model;
-    fetch(API_BASE + JSON_PATH, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) }).then(r => r.json()).then(json => {
-      const answer = json && (json.answer || json.text || json.message || '');
-      streamEl.textContent = answer || '';
-      pane.scrollTop = pane.scrollHeight;
+    // Helper for processing SSE chunks. The SSE endpoint sends lines
+    // beginning with "data: ..." followed by a newline. A [DONE] marker
+    // indicates completion. We buffer incomplete lines across chunks.
+    let buffer = '';
+    function handleChunk(text){
+      buffer += text;
+      let idx;
+      while((idx = buffer.indexOf('\n')) >= 0){
+        const line = buffer.slice(0, idx);
+        buffer = buffer.slice(idx + 1);
+        if(!line.trim()) continue;
+        const prefix = 'data: ';
+        if(line.startsWith(prefix)){
+          const data = line.slice(prefix.length);
+          if(data === '[DONE]'){
+            try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}
+            return;
+          }
+          // Append the new data chunk
+          streamEl.textContent += data;
+          pane.scrollTop = pane.scrollHeight;
+          // Notify listeners about the delta
+          try{ window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: data } })); }catch{}
+        }
+      }
+    }
+
+    // Attempt to fetch the SSE stream
+    fetch(`${API_BASE}${SSE_PATH}?${params.toString()}`, { method:'GET', mode:'cors' }).then(res=>{
+      if(!res.ok || !res.body) throw new Error('no stream');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      function read(){
+        return reader.read().then(({ done, value }) => {
+          if(done){
+            try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}
+            return;
+          }
+          const chunk = decoder.decode(value, { stream:true });
+          handleChunk(chunk);
+          return read();
+        });
+      }
+      return read();
     }).catch(() => {
-      streamEl.textContent = 'Fehler beim Abruf.';
-      pane.scrollTop = pane.scrollHeight;
-    }).finally(() => {
-      try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{};
+      // Fallback: plain JSON POST
+      const body = { message: message };
+      if(configOpts.systemPrompt) body.systemPrompt = configOpts.systemPrompt;
+      if(configOpts.model) body.model = configOpts.model;
+      fetch(`${API_BASE}${JSON_PATH}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(body),
+        mode:'cors'
+      }).then(r => r.json()).then(json => {
+        const answer = json && (json.answer || json.text || json.message || '');
+        streamEl.textContent = answer || '';
+        pane.scrollTop = pane.scrollHeight;
+        try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}
+      }).catch(() => {
+        streamEl.textContent = 'Fehler beim Abruf.';
+        pane.scrollTop = pane.scrollHeight;
+        try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}
+      });
     });
   }
 
   /**
-   * Initialise the chat dock by wiring up input and send button. It accepts
-   * optional selectors for the input and button. When the user submits a prompt
-   * the prompt is sent to the API and the input is cleared.
+   * Initialise the chat dock. Stores configuration values and, if an input
+   * and button are provided, wires up event handlers. You can call this
+   * without inputSel/buttonSel to only configure systemPrompt and model.
+   *
    * @param {object} opts
-   * @param {string} opts.inputSel
-   * @param {string} opts.buttonSel
+   * @param {string} [opts.inputSel]  - selector for the input field
+   * @param {string} [opts.buttonSel] - selector for the submit button
+   * @param {string} [opts.systemPrompt] - system prompt to include in every request
+   * @param {string} [opts.model] - model name to pass to the backend
    */
   function initChatDock(opts){
     opts = opts || {};
-    const inputSel  = opts.inputSel  || '#chat-input';
+    // Save config; do not overwrite existing values with empty strings
+    if(opts.systemPrompt) configOpts.systemPrompt = opts.systemPrompt;
+    if(opts.model) configOpts.model = opts.model;
+    const inputSel  = opts.inputSel || '#chat-input';
     const buttonSel = opts.buttonSel || '#chat-send';
     const input  = qs(inputSel);
     const button = qs(buttonSel);
-    if(!input || !button) return;
-    function submit(){
-      const prompt = input.value.trim();
-      if(!prompt) return;
-      input.value = '';
-      // Emit chat:send and stream answer
-      try{ window.dispatchEvent(new CustomEvent('chat:send')); }catch{}
-      streamAnswer(prompt);
-    }
-    button.addEventListener('click', submit);
-    input.addEventListener('keydown', e=>{
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        submit();
+    if(input && button){
+      function submit(){
+        const prompt = input.value.trim();
+        if(!prompt) return;
+        input.value = '';
+        streamAnswer(prompt);
       }
-    });
-    // Optional: close panel on outside click
-    document.addEventListener('click', ev=>{
+      button.addEventListener('click', submit);
+      input.addEventListener('keydown', e => {
+        if(e.key === 'Enter'){ e.preventDefault(); submit(); }
+      });
+    }
+    // Close the pane when clicking outside, except within the dock or ticker input
+    document.addEventListener('click', ev => {
       const pane = qs('#chat-output');
       if(!pane) return;
-      if(pane.classList.contains('show') && !ev.target.closest('#chat-output') && !ev.target.closest('.chat-dock')){
+      if(pane.classList.contains('show') &&
+         !ev.target.closest('#chat-output') &&
+         !ev.target.closest('.chat-dock') &&
+         !ev.target.closest('.ticker-ask')){
         pane.classList.remove('show');
       }
     });
   }
 
-  // Expose ChatDock API
+  // Expose the ChatDock API globally
   const cd = window.ChatDock = window.ChatDock || {};
-  cd.config = cd.config || {};
-  /**
-   * Initialise ChatDock. Accepts selectors and other options (currently unused).
-   */
-  cd.initChatDock = function(opts){ initChatDock(opts); cd.config = opts || {}; };
-  /**
-   * Send a prompt immediately. This triggers streaming and events.
-   * @param {string} prompt
-   */
-  cd.send = function(prompt){
-    if(!prompt) return;
-    streamAnswer(String(prompt));
-  };
-  /**
-   * Focus or open the chat output panel.
-   */
-  cd.open = cd.focus = function(){
-    const pane = qs('#chat-output');
-    if(pane) pane.classList.add('show');
-  };
-  /**
-   * Send an attachment with an optional prompt. For now attachments are ignored.
-   * @param {object} opts
-   * @param {string} opts.prompt
-   */
-  cd.sendAttachment = function(opts){
-    opts = opts || {};
-    const prompt = opts.prompt || '';
-    cd.send(prompt);
-  };
+  cd.config = configOpts;
+  cd.initChatDock = function(opts){ initChatDock(opts); };
+  cd.send = function(prompt){ if(prompt) streamAnswer(String(prompt)); };
+  cd.open = cd.focus = function(){ const pane = qs('#chat-output'); if(pane) pane.classList.add('show'); };
+  cd.sendAttachment = function(opts){ opts = opts || {}; const prompt = opts.prompt || ''; cd.send(prompt); };
 })();

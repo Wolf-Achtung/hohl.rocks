@@ -16,9 +16,27 @@
   const smoothstep = (a,b,x)=>{ const t = clamp((x-a)/(b-a), 0, 1); return t*t*(3 - 2*t); };
 
   // Farben
-  const BASE = ['#3AA1FF','#7C93FF','#7CF4FF','#6EC1FF','#9B8CFF'];
-  const NEON = ['#00F5D4','#7CF4FF'];
-  function pickColor(r){ return (r()<0.85) ? BASE[Math.floor(r()*BASE.length)] : NEON[Math.floor(r()*NEON.length)]; }
+  // Wir wollen deutlich neon‑lastigere Bubbles: die Basisfarben sind jetzt heller/türkiser
+  // und die Neon‑Palette wurde erweitert. Das Verhältnis wurde auf 60/40 verschoben, sodass
+  // häufiger Neon gewählt wird. Dadurch wirken die Shapes frischer und weniger fliederfarben.
+  const BASE = [
+    '#00BCD4', // heller Cyan
+    '#2196F3', // sattes Blau
+    '#8C9EFF', // softer Lavendel
+    '#B388FF', // lila mit Neon‑Charakter
+    '#4DD0E1'  // aquamarin
+  ];
+  const NEON = [
+    '#00F5D4', // kräftiges Aquamarin
+    '#7CF4FF', // helles Türkis
+    '#FFD700', // Neon‑Gold / Gelb
+    '#00FA9A', // MediumSpringGreen
+    '#E0FFFF'  // LightCyan
+  ];
+  function pickColor(r){
+    // mit 40 % Wahrscheinlichkeit Neon, sonst Basis
+    return (r() < 0.6) ? NEON[Math.floor(r() * NEON.length)] : BASE[Math.floor(r() * BASE.length)];
+  }
 
   function rand(seed){ let x = seed || Math.floor(Math.random()*0xffffffff); return ()=>(x^=x<<13,x^=x>>17,x^=x<<5,(x>>>0)/4294967296); }
 
@@ -81,6 +99,9 @@
     const opBase  = lerp(0.96, 0.86, z);
     const glow = (hex,a)=>{ const h=hex.replace('#',''); const R=parseInt(h.slice(0,2),16),G=parseInt(h.slice(2,4),16),B=parseInt(h.slice(4,6),16); return `rgba(${R},${G},${B},${a})`; };
     el.style.filter = `drop-shadow(0 12px 26px rgba(0,0,0,.36)) drop-shadow(0 0 16px ${glow(color,0.44)}) blur(${blurPx.toFixed(2)}px)`;
+    // Blend‑Mode: 'screen' hebt sich besser ab und erzeugt beim Überlappen überraschende Farbmischungen.
+    // So wird das „Neo‑Neon“‑Gefühl betont.
+    el.style.mixBlendMode = 'screen';
 
     // Zeitkonstanten
     const t0 = performance.now() - r()*life*0.3; // Phasenversatz

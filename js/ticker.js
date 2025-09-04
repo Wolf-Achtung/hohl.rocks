@@ -9,17 +9,17 @@
       -webkit-mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%);
               mask-image:linear-gradient(90deg,transparent 0,black 8%,black 92%,transparent 100%)}
     .ticker-track{position:absolute;display:inline-flex;gap:14px;white-space:nowrap;will-change:transform;
-      animation:ticker-move var(--dur,140s) linear infinite;transform:translateZ(0);animation-delay:-8s;}
+      animation:ticker-move var(--dur,140s) linear infinite;animation-delay:var(--delay,-8s);transform:translateZ(0)}
     .ticker-track.paused{animation-play-state:paused}
     .ticker a{display:inline-block;padding:10px 16px;border-radius:999px;text-decoration:none;pointer-events:auto;
       color:#eaf2ff;background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
     .ticker a:hover{filter:brightness(1.08)}
-
-    /* Ask bar container inside ticker */
-    .ticker-ask{position:absolute;right:0;top:0;height:100%;display:flex;align-items:center;gap:4px;padding-left:8px;pointer-events:auto}
-    .ticker-ask input{height:28px;padding:4px 8px;border-radius:20px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.4);color:#eaf2ff;font-size:14px;outline:none}
-    .ticker-ask button{height:28px;padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.35);background:rgba(58,76,102,.6);color:#eaf2ff;font-size:14px;cursor:pointer}
-    .ticker-ask button:hover{filter:brightness(1.1)}
+    /* Integrated ask bar for free-form questions */
+    .ticker-ask{position:absolute;top:0;right:0;height:100%;display:flex;align-items:center;gap:8px;pointer-events:auto;padding-left:8px;background:transparent}
+    .ticker-ask input{width:min(48vw,360px);max-width:68vw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);
+      color:#eaf2ff;border-radius:999px;padding:10px 14px;outline:none;flex:1 1 auto;}
+    .ticker-ask button{background:#1b66ff;border:0;color:#fff;border-radius:999px;padding:9px 14px;cursor:pointer;flex:0 0 auto;}
+    .ticker-ask button:hover{background:#2857e7}
     @keyframes ticker-move{from{transform:translateX(100%)}to{transform:translateX(-110%)}}
     @media (max-width:880px){.ticker-wrap{left:12px;right:12px}.ticker{height:42px}.ticker a{padding:8px 12px}}
   
@@ -28,14 +28,14 @@
       .ticker{height:38px}
       .ticker-track{gap:10px}
       .ticker a{padding:8px 12px;font-size:13px}
+      .ticker-ask input{padding:8px 12px;font-size:14px}
+      .ticker-ask button{padding:8px 12px;font-size:14px}
     }
 `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
   // ---------- DOM ----------
-  let wrap, inner, track, baseItems = [];
-  // Elements for free-form question bar
-  let askWrap, askInput, askButton;
+  let wrap, inner, track, askWrap, askInput, askButton, baseItems = [];
 
   function mount() {
     wrap = document.querySelector('.ticker-wrap');
@@ -48,63 +48,6 @@
       inner = wrap.querySelector('.ticker') || inner;
       track = wrap.querySelector('.ticker-track') || track;
       if (!track) { inner = document.createElement('div'); inner.className='ticker'; track=document.createElement('div'); track.className='ticker-track'; inner.appendChild(track); wrap.appendChild(inner); }
-    }
-
-    // Create ask bar for free-form questions
-    askWrap = wrap.querySelector('.ticker-ask');
-    if (!askWrap) {
-      askWrap = document.createElement('div');
-      askWrap.className = 'ticker-ask';
-      askInput = document.createElement('input');
-      askInput.type = 'text';
-      askInput.placeholder = 'Frage stellen… (KI, EU)';
-      askButton = document.createElement('button');
-      askButton.type = 'button';
-      askButton.textContent = 'Senden';
-      askWrap.appendChild(askInput);
-      askWrap.appendChild(askButton);
-      wrap.appendChild(askWrap);
-      // Helper to send prompt
-      const sendPrompt = (msg) => {
-        if (!msg) return;
-        pauseTicker();
-        ensureOneAnswerOnly();
-        try {
-          if (window.ChatDock?.send) {
-            ChatDock.send(msg);
-            return;
-          }
-        } catch (_) {}
-        // fallback: fill chat input and trigger enter or send button
-        const inputEl = document.querySelector('#chat-input');
-        const btnEl = document.querySelector('#chat-send');
-        if (inputEl) {
-          inputEl.value = msg;
-          inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', which: 13, keyCode: 13, bubbles: true }));
-        } else {
-          btnEl?.click();
-        }
-      };
-      askButton.addEventListener('click', () => {
-        const val = (askInput.value || '').trim();
-        if (val) {
-          sendPrompt(val);
-          askInput.value = '';
-        }
-      });
-      askInput.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter') {
-          const val = (askInput.value || '').trim();
-          if (val) {
-            sendPrompt(val);
-            askInput.value = '';
-          }
-          ev.preventDefault();
-        }
-      });
-    } else {
-      askInput = askWrap.querySelector('input');
-      askButton = askWrap.querySelector('button');
     }
   }
 
@@ -146,8 +89,6 @@
     baseItems.forEach(it => addChip(track, it.label, it.prompt, it.preview));
     topUp();
     setDuration();
-    // Start ticker immediately by applying negative animation delay
-    if (track) track.style.animationDelay = '-8s';
   }
 
   // ---------- Hilfen ----------
@@ -190,15 +131,7 @@
   function updateSafeZone(){
     const chat = chatDockRect();
     let safe = 340;
-    // Use width of ask bar if present
-    if (askWrap) {
-      const rect = askWrap.getBoundingClientRect();
-      safe = Math.max(safe, Math.ceil(rect.width + 24));
-    }
-    // Also consider chat dock width if chat-dock is visible
-    if (chat) {
-      safe = Math.max(safe, Math.ceil(chat.width + 24));
-    }
+    if (chat) safe = Math.ceil(chat.width + 24);
     wrap.style.setProperty('--safeR', safe + 'px');
   }
 
@@ -238,6 +171,10 @@
   function init(){
     mount(); if(!track) return;
     build(); updateBottom(); updateSafeZone(); updateZ();
+    // Sofort loslaufen: ein negativer Delay sorgt dafür, dass der Track schon „am Laufen“ ist
+    // und resumeTicker startet die Animation direkt
+    setDuration();
+    resumeTicker();
 
     // Reagieren auf Layout/Antwort
     window.addEventListener('resize', ()=>{ updateBottom(); updateSafeZone(); topUp(); setDuration(); updateZ(); }, {passive:true});
