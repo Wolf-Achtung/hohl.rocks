@@ -23,7 +23,10 @@
   'use strict';
 
   // Determine the API base from the global variable, trimming trailing slashes.
-  const API_BASE = (window.HOHLROCKS_CHAT_BASE || '').replace(/\/+/g, '/').replace(/\/+$/, '');
+  // Trim only trailing slashes. Do not collapse internal double slashes so that
+  // protocols like "https://" remain valid. Collapsing all slashes would
+  // inadvertently turn "https://" into "https:/" and break requests.
+  const API_BASE = (window.HOHLROCKS_CHAT_BASE || '').replace(/\/+$/, '');
   const SSE_PATH  = '/chat-sse';
   const JSON_PATH = '/chat';
 
