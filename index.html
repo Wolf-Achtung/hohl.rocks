@@ -28,6 +28,9 @@
     .chat-dock{ display:none !important; }
     #chat-output{ display:none !important; }
 
+    /* --- Ticker sichtbar über Shapes halten --- */
+    .ticker-wrap{ z-index: 1200 !important; }   /* Shapes gehen bis ~1000 */
+
     .privacy-slot{position:fixed;left:14px;bottom:14px;z-index:34}
   </style>
 
@@ -65,12 +68,6 @@
     ].join(" ");
     // Spotlight-Rendering aktivieren
     window.__ANSWER_MODE = 'spotlight';
-
-    document.addEventListener('DOMContentLoaded', function(){
-      if (window.ChatDock && ChatDock.initChatDock){
-        ChatDock.initChatDock({ systemPrompt: window.WOLF_SYSTEM_PROMPT, model: 'gpt-4o-mini' });
-      }
-    });
   </script>
 
   <!-- Scripts: Shapes, Ticker, Spotlight, Demos -->
@@ -95,5 +92,22 @@
 
   <!-- Chat/SSE: gefixte Version (v=chat7 cache bust) -->
   <script src="/js/chatbox-stream.js?v=chat7"></script>
+
+  <!-- Notfall: Ticker sichtbar & funktionsfähig erzwingen -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      // Minimale Verzögerung, dann sicherstellen, dass der Ticker läuft
+      setTimeout(()=>{ try{ window.Ticker?.resume?.(); }catch(e){} }, 200);
+
+      // Wenn aus irgendeinem Grund keine Chips gerendert wurden: rebuild
+      setTimeout(()=>{
+        const track = document.querySelector('.ticker-track');
+        const ok = track && track.querySelectorAll('a').length>0;
+        if (!ok){
+          try{ window.Ticker?.rebuild?.(); }catch(e){}
+        }
+      }, 1200);
+    });
+  </script>
 </body>
 </html>
