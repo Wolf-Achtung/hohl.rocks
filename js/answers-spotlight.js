@@ -13,7 +13,14 @@
   .spot-btn{ border-radius: 999px; background: rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); color:#f1f6ff; padding:6px 10px; font:600 12px/1 ui-sans-serif; }
   .spot-btn:hover{ background: rgba(255,255,255,.18); }
   @media (max-width: 880px){ .spotlight-card{ left: 16px; width: 86vw; bottom: calc(16vh + 80px); } }
-  `;
+  
+  @media (max-width: 390px){
+    .spotlight-card{ left: 12px; width: 90vw; bottom: calc(22vh + 64px); padding: 10px; }
+    .spot-body{ font: 600 14px/1.35 ui-sans-serif,system-ui; max-height: 34vh; }
+    .spot-row{ gap:6px; }
+    .spot-btn{ padding:5px 9px; font-size:11px; }
+  }
+`;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
   let card=null, acc=''; let hideTimer=null;
@@ -36,21 +43,21 @@
     return card;
   }
 
+  // Disable automatic hiding so that the card remains visible until the user closes it.
   function scheduleHide(ms){
+    // clear any existing timer but do not hide automatically
     if(hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(()=>{
-      if(card){ card.classList.remove('show'); setTimeout(()=>{ card && card.remove(); card=null; }, 350); }
-    }, ms);
+    hideTimer = null;
   }
 
   window.addEventListener('chat:send', ()=>{
-    acc=''; ensureCard(); scheduleHide(15000);
+    acc=''; ensureCard(); scheduleHide(0);
   });
   window.addEventListener('chat:delta', (ev)=>{
     const d = (ev.detail && ev.detail.delta) ? ev.detail.delta : '';
     acc += d;
     ensureCard().querySelector('.spot-body').textContent = (acc.length>540? acc.slice(0,520)+' …' : acc);
-    scheduleHide(15000);
+    scheduleHide(0);
   });
-  window.addEventListener('chat:done', ()=> scheduleHide(12000));
+  window.addEventListener('chat:done', ()=> scheduleHide(0));
 })();
