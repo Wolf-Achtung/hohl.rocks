@@ -2,134 +2,40 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <!-- Ensure the site scales correctly on mobile and uses the full viewport. -->
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>hohl.rocks — Wolf Hohl · KI‑Manager</title>
 
-  <!-- Use the same inline favicon as the original project. -->
-  <link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" />
-
-  <!-- Base styles: height 100%, dark background and primary font.  These mirror the
-       original file so that the highway video fills the page and text remains
-       legible. -->
   <style>
-    html,body{
-      height:100%;
-      margin:0;
-      background:#0a1118;
-      color:#eaf2ff;
-      font:500 16px/1.45 ui-sans-serif,system-ui;
-    }
-    .stage{
-      position:fixed;
-      inset:0;
-      overflow:hidden;
-    }
-    #bg-video{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      filter:brightness(1) contrast(1.05);
-    }
-    #shape-layer{
-      position:absolute;
-      inset:0;
-      pointer-events:auto;
-    }
-    /* Chat dock definitions remain in the markup for compatibility with
-       ChatDock.js, but the element is hidden via a later style. */
-    .chat-dock{
-      position:fixed;
-      right:22px;
-      bottom:22px;
-      z-index:40;
-      background:rgba(12,16,22,.72);
-      border:1px solid rgba(255,255,255,.14);
-      backdrop-filter:blur(10px);
-      padding:10px;
-      border-radius:18px;
-      display:flex;
-      gap:8px;
-      align-items:center;
-    }
-    .chat-dock input{
-      width:min(48vw,360px);
-      max-width:68vw;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.16);
-      color:#eaf2ff;
-      border-radius:999px;
-      padding:10px 14px;
-      outline:none;
-    }
-    .chat-dock button{
-      background:#1b66ff;
-      border:0;
-      color:#fff;
-      border-radius:999px;
-      padding:9px 12px;
-      cursor:pointer;
-    }
-    .chat-dock .ghost{
-      background:rgba(255,255,255,.10);
-      border:1px solid rgba(255,255,255,.18);
-      color:#eaf2ff;
-    }
-    #chat-output{
-      position:fixed;
-      right:22px;
-      bottom:92px;
-      width:min(640px,88vw);
-      max-height:min(58vh,460px);
-      overflow:auto;
-      background:rgba(12,16,22,.62);
-      border:1px solid rgba(255,255,255,.12);
-      backdrop-filter:blur(10px);
-      border-radius:18px;
-      padding:12px;
-      display:none;
-      z-index:42;
-    }
-    #chat-output.show{
-      display:block;
-    }
-    .bubble-row{
-      margin:8px 0;
-      display:flex;
-    }
-    .bubble-row.user .b-inner{
-      margin-left:auto;
-      background:rgba(255,255,255,.08);
-    }
-    .bubble-row.assistant .b-inner{
-      margin-right:auto;
-      background:rgba(27,102,255,.13);
-    }
-    .b-inner{
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.16);
-    }
-    .privacy-slot{
-      position:fixed;
-      left:14px;
-      bottom:14px;
-      z-index:34;
-    }
-    .ticker{
-      height:48px;
-    }
-    @media (max-width:880px){
-      .ticker{
-        height:42px;
-      }
-    }
+    html,body{height:100%;margin:0;background:#0a1118;color:#eaf2ff;font:500 16px/1.45 ui-sans-serif,system-ui}
+    .stage{position:fixed;inset:0;overflow:hidden}
+    #bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(1) contrast(1.05)}
+    #shape-layer{position:absolute;inset:0;pointer-events:auto}
+
+    /* Chatdock (wird ausgeblendet; Ticker übernimmt die Eingabe) */
+    .chat-dock{position:fixed;right:22px;bottom:22px;z-index:40;background:rgba(12,16,22,.72);
+      border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px);padding:10px;border-radius:18px;display:flex;gap:8px;align-items:center}
+    .chat-dock input{width:min(48vw,360px);max-width:68vw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);
+      color:#eaf2ff;border-radius:999px;padding:10px 14px;outline:none}
+    .chat-dock button{background:#1b66ff;border:0;color:#fff;border-radius:999px;padding:9px 12px;cursor:pointer}
+    .chat-dock .ghost{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);color:#eaf2ff}
+
+    /* Chat-Ausgabe (Spotlight zeigt die Antwort; Chat-Pane bleibt versteckt) */
+    #chat-output{position:fixed;right:22px;bottom:92px;width:min(640px,88vw);max-height:min(58vh,460px);overflow:auto;
+      background:rgba(12,16,22,.62);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(10px);border-radius:18px;padding:12px;display:none;z-index:42}
+    #chat-output.show{display:block}
+
+    /* globales Ausblenden für Spotlight-Modus */
+    .chat-dock{ display:none !important; }
+    #chat-output{ display:none !important; }
+
+    .privacy-slot{position:fixed;left:14px;bottom:14px;z-index:34}
   </style>
+
+  <!-- Neon-Shapes Styles -->
+  <link rel="stylesheet" href="/hero-shapes.css?v=sp2">
 </head>
 <body>
-  <!-- Main stage containing the full‑bleed highway video and the shape layer. -->
+  <!-- Bühne -->
   <main class="stage" aria-label="Highway-Video mit organischen Neon-Shapes">
     <video id="bg-video" autoplay playsinline loop muted>
       <source src="/videos/desert_drive.mp4" type="video/mp4" />
@@ -137,14 +43,9 @@
     <div id="shape-layer"></div>
   </main>
 
-  <!-- Chat output for the assistant responses. Answers show here briefly
-       before being forwarded to the spotlight card; hidden by default. -->
+  <!-- (ausgeblendet) Chat-Ausgabe & Dock, nur für Kompatibilität vorhanden -->
   <div id="chat-output" aria-live="polite"></div>
-
-  <!-- Legacy ChatDock markup remains for ChatDock.js to attach functionality,
-       but the dock is hidden via CSS later because the ticker includes its own
-       input field. -->
-  <div class="chat-dock">
+  <div class="chat-dock" hidden>
     <input id="chat-input" type="text" placeholder="Frage stellen… (KI, EU)" />
     <button id="photo-btn" class="ghost" title="Foto nutzen">Foto</button>
     <button id="chat-send">Senden</button>
@@ -152,110 +53,47 @@
 
   <div class="privacy-slot" id="privacy-slot"></div>
 
-  <!-- Global configuration variables accessible to all scripts. HOHLROCKS_CHAT_BASE
-       points at the Railway backend; WOLF_SYSTEM_PROMPT sets Wolf’s persona. -->
+  <!-- Globale Konfiguration -->
   <script>
     window.HOHLROCKS_CHAT_BASE = 'https://hohlrocks-production.up.railway.app';
     window.WOLF_SYSTEM_PROMPT = [
-      'Du antwortest im Namen von Wolf Hohl – TÜV-zertifizierter KI-Manager.',
-      'Ton: seriös, prägnant, deutsch, winter-klar, freundlich.',
-      'Erstantwort maximal 3 Sätze. Wo sinnvoll: 1 kurzes Beispiel, 1 pragmatischer nächster Schritt.',
-      'Beziehe dich – wenn passend – auf Wolfs Erfahrung (30 Jahre Marketing/Kommunikation, Trailer, >50 Mio Umsatz) und Rolle als KI-Manager.',
-      'Keine Buzzword-Orgel. Falls unsicher: kurz Risiko/Trade-off erwähnen.'
-    ].join(' ');
-  </script>
+      "Du antwortest im Namen von Wolf Hohl – TÜV-zertifizierter KI-Manager.",
+      "Ton: seriös, prägnant, deutsch, winter-klar, freundlich.",
+      "Erstantwort maximal 3 Sätze. Wo sinnvoll: 1 kurzes Beispiel, 1 pragmatischer nächster Schritt.",
+      "Beziehe dich – wenn passend – auf Wolfs Erfahrung (30 Jahre Marketing/Kommunikation, Trailer, >50 Mio Umsatz) und Rolle als KI-Manager.",
+      "Keine Buzzword-Orgel. Falls unsicher: kurz Risiko/Trade-off erwähnen."
+    ].join(" ");
+    // Spotlight-Rendering aktivieren
+    window.__ANSWER_MODE = 'spotlight';
 
-  <!-- Hide the legacy chat dock; the ticker includes its own input field. -->
-  <style>
-    .chat-dock{ display:none !important; }
-    /* Hide the legacy chat output as well. Spotlight mode renders answers in its
-       own card; suppress the built‑in chat bubbles. */
-    #chat-output{ display:none !important; }
-  </style>
-
-  <!-- Load the neon shapes stylesheet and script. hero-shapes.js creates
-       neon‑coloured organic bubbles that drift slowly and use mix-blend-mode
-       'screen' for surprising overlaps. -->
-  <link rel="stylesheet" href="/hero-shapes.css?v=sp2">
-  <script src="/js/hero-shapes.js?v=sp2"></script>
-
-  <!-- Load analytics and ticker data. ticker-items.js must load before
-       ticker.js so that prompts are available immediately when the ticker
-       initialises. -->
-  <script src="/js/analytics-lite.js?v=1"></script>
-  <script src="/js/ticker-items.js?v=melody2"></script>
-  <script src="/js/ticker.js?v=input1"></script>
-
-  <!-- Ensure the ticker animation starts immediately. Although ticker.js
-       initialises itself on page load, calling resume() here provides an
-       extra guarantee that the animation is running from the beginning. -->
-  <script>
-    document.addEventListener('DOMContentLoaded', ()=>{
-      try{ window.Ticker?.resume(); }catch(_){}
-    });
-  </script>
-
-  <!-- Chat streaming: GET /chat-sse with JSON fallback. chatbox-stream.js
-       dispatches chat:send/delta/done events and connects the ticker input
-       with the backend. -->
-  <script src="/js/chatbox-stream.js?v=chat5"></script>
-  <script>
     document.addEventListener('DOMContentLoaded', function(){
-      if (window.ChatDock && typeof ChatDock.initChatDock === 'function'){
-        // Initialise ChatDock with system prompt and chosen model. The chat dock
-        // input field is hidden, but ChatDock still manages the SSE connection.
-        ChatDock.initChatDock({
-          systemPrompt: window.WOLF_SYSTEM_PROMPT,
-          model: 'gpt-4o-mini'
-        });
+      if (window.ChatDock && ChatDock.initChatDock){
+        ChatDock.initChatDock({ systemPrompt: window.WOLF_SYSTEM_PROMPT, model: 'gpt-4o-mini' });
       }
     });
   </script>
 
-  <!-- Spotlight answers and demo modules. These scripts provide the spotlight
-       answer panel on the left, micro demo buttons (Haiku/Story/Palette),
-       photo flows and style switcher. -->
-  <script src="/js/spotlight-card.js?v=1"></script>
+  <!-- Scripts: Shapes, Ticker, Spotlight, Demos -->
+  <script src="/js/hero-shapes.js?v=sp2"></script>
+  <script src="/js/analytics-lite.js?v=1"></script>
+
+  <!-- Reihenfolge wichtig: Ticker-Items vor Ticker -->
+  <script src="/js/ticker-items.js?v=melody2"></script>
+  <script src="/js/ticker.js?v=input1"></script>
+
+  <!-- Antwort-Overlay -->
+  <script src="/js/answers-spotlight.js?v=1"></script>
+
+  <!-- Micro-Demos & Foto-Flows & Style-Switcher -->
   <script src="/js/micro-demos.js?v=1"></script>
   <script src="/js/photo-flows.js?v=1"></script>
   <script src="/js/style-switcher.js?v=1"></script>
 
-  <!-- Load the ambient melody generator. This defines window.WolfMelody
-       which is used by ambient-melody-autostart.js. Without this script,
-       no sound will play. -->
+  <!-- Ambient-Melodie (Objekt: window.WolfMelody) + Autostart nach erster Geste -->
   <script src="/js/ambient-melody.js?v=1"></script>
-
-  <!-- Prime the ambient melody on first user interaction. ambient-melody-
-       autostart.js hooks into pointer/keyboard events and starts the
-       WolfMelody ambient generator with a Hopkins‑like minor pentatonic mood. -->
   <script src="/js/ambient-melody-autostart.js?v=1"></script>
 
-  <!-- Enable spotlight answer mode before loading the answers-spotlight module. -->
-  <script>
-    window.__ANSWER_MODE = 'spotlight';
-  </script>
-  <script src="/js/answers-spotlight.js?v=1"></script>
-
-  <!-- Custom styling to harmonise the chat and spotlight backgrounds with
-       the neon highway theme. This matches the original design and keeps
-       overlays semi‑transparent with a subtle gradient. -->
-  <style>
-    .spotlight-card,
-    .answer-overlay,
-    .answer-marquee,
-    #chat-output{
-      background: linear-gradient(180deg, rgba(10,14,20,.38), rgba(10,14,20,.46)) !important;
-      border: 1px solid rgba(255,255,255,.18) !important;
-      box-shadow: 0 10px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06) !important;
-      backdrop-filter: blur(12px) saturate(115%) !important;
-    }
-    .spotlight-card .b-inner,
-    .answer-overlay .b-inner,
-    .answer-marquee .b-inner,
-    #chat-output .b-inner{
-      background: rgba(255,255,255,.08) !important;
-      border: 1px solid rgba(255,255,255,.12) !important;
-    }
-  </style>
+  <!-- Chat/SSE: gefixte Version (v=chat7 cache bust) -->
+  <script src="/js/chatbox-stream.js?v=chat7"></script>
 </body>
 </html>
