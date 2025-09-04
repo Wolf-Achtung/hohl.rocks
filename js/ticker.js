@@ -92,7 +92,7 @@
   }
 
   // ---------- Hilfen ----------
-  function chatDockRect(){ const c = document.querySelector('.chat-dock'); return c ? c.getBoundingClientRect() : null; }
+  function chatDockRect(){ const c = document.querySelector('.chat-dock'); if(!c) return null; const r = c.getBoundingClientRect(); if((r.width===0 && r.height===0) || getComputedStyle(c).display==='none' || getComputedStyle(c).visibility==='hidden'){ return null; } return r; }
   function answerEl(){
     // häufige Klassen/IDs deines Overlays – erweitere bei Bedarf
     return document.querySelector('.spotlight-card, .answer-overlay, .chat-answer, .chat-output, .answer-marquee');
@@ -109,19 +109,24 @@
 
   // Bottom-Position: zwischen Antwort und Chat-Input, ohne Überschneidung
   function updateBottom(){
-    const chat = chatDockRect();
-    const ans  = answerRect();
-    const tickerH = (inner?.getBoundingClientRect().height) || 48;
+      const chat = chatDockRect();
+      const ans  = answerRect();
+      const tickerH = (inner?.getBoundingClientRect().height) || 48;
 
-    // Standard: oberhalb der Chat-Box
-    let bottom = 76;
-    if (chat) bottom = Math.max(bottom, (window.innerHeight - chat.top) + 12);
+      let bottom = 76; // sane default
+      // Only use chat if it's actually visible
+      if (chat){
+        const candidate = (window.innerHeight - chat.top) + 12;
+        // Clamp to keep banner in view (12..240px)
+        bottom = Math.min(Math.max(bottom, candidate), 240);
+      }
 
-    // Wenn eine Antwort-Card da ist: Ticker UNTER die Card (also näher zum unteren Rand),
-    // so dass die Oberkante des Tickers MINDESTENS 12px unter der Card liegt.
-    if (ans){
-      const maxBottom = Math.max(12, window.innerHeight - ans.bottom - 12 - tickerH);
-      bottom = Math.min(bottom, maxBottom);
+      if (ans){
+        const maxBottom = Math.max(12, window.innerHeight - ans.bottom - 12 - tickerH);
+        bottom = Math.min(bottom, maxBottom);
+      }
+
+      wrap.style.bottom = Math.max(12, bottom) + 'px';
     }
 
     wrap.style.bottom = Math.max(12, bottom) + 'px';
