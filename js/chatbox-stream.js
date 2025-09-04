@@ -1,26 +1,29 @@
 /* chatbox-stream.js — ChatDock with GET SSE streaming and JSON fallback.
  *
- * This module wires up a simple chat interface to a back-end that
- * exposes two endpoints:
- *   GET  /chat-sse?message=...&systemPrompt=...&model=...  — returns a server-sent events stream
- *   POST /chat                                      — returns a JSON response
+ * This module wires up a simple chat interface to a back‑end that exposes
+ * two endpoints:
+ *   GET  /chat-sse?message=...&systemPrompt=...&model=...  — returns a server‑sent
+ *                                                            events stream
+ *   POST /chat                                        — returns a JSON response
  *
  * It exposes a global `ChatDock` object with the following methods:
- *   - initChatDock(opts): configure the system prompt, model and optionally bind an input & button
+ *   - initChatDock(opts): configure the system prompt, model and optionally
+ *                         bind an input & button
  *   - send(prompt): send a prompt immediately and stream the response
  *   - open()/focus(): show the chat output pane
  *   - sendAttachment(opts): currently forwards the prompt to send()
  *
  * The module dispatches DOM events to allow other UI components to react:
  *   - chat:send — emitted when a message starts streaming
- *   - chat:delta — emitted with { detail: { delta: string } } for every chunk of data
+ *   - chat:delta — emitted with { detail: { delta: string } } for every chunk
+ *                  of content
  *   - chat:done — emitted once the stream has finished or on error
  */
 (function(){
   'use strict';
 
   // Determine the API base from the global variable, trimming trailing slashes.
-  const API_BASE = (window.HOHLROCKS_CHAT_BASE || '').replace(/\/+$/, '');
+  const API_BASE = (window.HOHLROCKS_CHAT_BASE || '').replace(/\/+/g, '/').replace(/\/+$/, '');
   const SSE_PATH  = '/chat-sse';
   const JSON_PATH = '/chat';
 
@@ -70,17 +73,42 @@
         buffer = buffer.slice(idx + 1);
         if(!line.trim()) continue;
         const prefix = 'data: ';
-        if(line.startsWith(prefix)){
-          const data = line.slice(prefix.length);
-          if(data === '[DONE]'){
-            try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}
-            return;
+        if(!line.startsWith(prefix)) continue;
+        const dataStr = line.slice(prefix.length);
+        if(dataStr === '[DONE]'){
+          try{ window.dispatchEvent(new CustomEvent('chat:done')); }catch{}
+          return;
+        }
+        // The SSE may deliver either a plain text delta or a JSON object
+        // (as returned by the OpenAI streaming API). Attempt to parse JSON
+        // and extract the delta content. Fall back to raw text on error.
+        let deltaContent = '';
+        try {
+          const json = JSON.parse(dataStr);
+          if(json && json.choices && json.choices.length > 0){
+            const choice = json.choices[0];
+            if(choice.delta && typeof choice.delta.content === 'string'){
+              deltaContent = choice.delta.content;
+            } else if(choice.message && typeof choice.message.content === 'string'){
+              deltaContent = choice.message.content;
+            } else {
+              deltaContent = '';
+            }
+          } else if(typeof json === 'string'){
+            deltaContent = json;
+          } else {
+            deltaContent = '';
           }
-          // Append the new data chunk
-          streamEl.textContent += data;
+        } catch(e){
+          // Not JSON; treat as raw text
+          deltaContent = dataStr;
+        }
+        if(deltaContent){
+          streamEl.textContent += deltaContent;
           pane.scrollTop = pane.scrollHeight;
-          // Notify listeners about the delta
-          try{ window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: data } })); }catch{}
+          try{
+            window.dispatchEvent(new CustomEvent('chat:delta', { detail:{ delta: deltaContent } }));
+          }catch{}
         }
       }
     }
@@ -133,7 +161,8 @@
    * @param {object} opts
    * @param {string} [opts.inputSel]  - selector for the input field
    * @param {string} [opts.buttonSel] - selector for the submit button
-   * @param {string} [opts.systemPrompt] - system prompt to include in every request
+   * @param {string} [opts.systemPrompt] - system prompt to include in every
+   *                                       request
    * @param {string} [opts.model] - model name to pass to the backend
    */
   function initChatDock(opts){
