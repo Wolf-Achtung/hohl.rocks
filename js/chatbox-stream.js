@@ -3,7 +3,7 @@
  * Purpose
  * -------
  *  Frontend helper that streams assistant answers from a backend exposing:
- *    GET  /chat-sse?message=...&systemPrompt=...&model=...   (Server-Sent Events)
+ *    GET  /chat-sse?message=...&systemPrompt=...&model=...   (Server‑Sent Events)
  *    POST /chat                                              (JSON fallback)
  *
  * Key points
@@ -22,7 +22,7 @@
    * ---------------------------------------------------------------------- */
   // Trim ONLY trailing slashes; do not collapse internal double slashes.
   // Collapsing "//" would break "https://".
-  var API_BASE  = String(window.HOHLROCKS_CHAT_BASE || '').replace(/\/+$/, '');
+  var API_BASE  = String(window.HOHLROCKS_CHAT_BASE || '').replace(/\/+\$/, '');
   var SSE_PATH  = '/chat-sse';
   var JSON_PATH = '/chat';
 
