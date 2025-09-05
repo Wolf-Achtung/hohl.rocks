@@ -73,6 +73,9 @@
       try{
         if (prompt && prompt.indexOf('!action:')>-1 && window.WolfFX && WolfFX.run){ WolfFX.run(prompt); return; }
       }catch(_){ }
+      // Verwende das vereinfachte Fetch-Modul für Antworten (JSON-only)
+      try { if (window.fetchAnswer) { window.fetchAnswer(prompt); return; } } catch{}
+      // Fallback: benutze weiterhin ChatDock, falls vorhanden
       try { if (window.ChatDock?.send) { ChatDock.send(prompt); return; } } catch {}
       const input = document.querySelector('#chat-input'); const btn = document.querySelector('#chat-send');
       if (input) {
