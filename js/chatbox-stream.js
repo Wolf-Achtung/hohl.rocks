@@ -70,32 +70,6 @@
           return;
         }
 
-        // JSON event (OpenAI-like SSE)
-        if (payload.startsWith('{')){
-          try{
-            const obj = JSON.parse(payload);
-            const ch  = obj && obj.choices && obj.choices[0];
-            if (ch && ch.delta && typeof ch.delta.content === 'string'){
-              appendText(pane, streamEl, ch.delta.content);
-              continue;
-            }
-            if (ch && ch.message && typeof ch.message.content === 'string'){
-              appendText(pane, streamEl, ch.message.content);
-              continue;
-            }
-            // fallback: known fields
-            const txt = obj.answer || obj.text || obj.message || obj.content || '';
-            if (txt) appendText(pane, streamEl, String(txt));
-          }catch(_){
-            // ignore malformed json lines
-          }
-          continue;
-        }
-
-        // Plain text fallback
-        appendText(pane, streamEl, payload);
-      }
-    }
 
     // Try SSE first
     fetch(`${API_BASE}${SSE_PATH}?${params.toString()}`, { method:'GET', mode:'cors' })

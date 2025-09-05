@@ -195,6 +195,8 @@
     // und resumeTicker startet die Animation direkt
     setDuration();
     resumeTicker();
+    // Wenn der Track noch leer ist, sofort neu aufbauen
+    setTimeout(()=>{ if(!track || !track.querySelector('a')){ build(); setDuration(); resumeTicker(); } }, 500);
 
     // Reagieren auf Layout/Antwort
     window.addEventListener('resize', ()=>{ updateBottom(); updateSafeZone(); topUp(); setDuration(); updateZ(); }, {passive:true});
