@@ -64,7 +64,8 @@
     el.style.width = `${sizePx}px`;
     el.style.height= `${sizePx}px`;
     el.style.zIndex = String(1000 - Math.floor(z*1000));
-    el.style.transition = 'opacity 4.0s ease';
+    // Fade-In und -Out: jeweils ca. 3.5 Sekunden
+    el.style.transition = 'opacity 3.5s ease';
 
     // SVG (statisch) – mehr Punkte, kleinere Varianz
     const ns="http://www.w3.org/2000/svg";
@@ -144,7 +145,8 @@
     // Fade-out & Respawn
     setTimeout(()=>{
       el.style.opacity = '0';
-      setTimeout(()=>{ cancelAnimationFrame(el.__raf); el.remove(); spawn(holder); }, 4000);
+      // Wartezeit für Fade-Out (3.5 s) + kleines Puffer
+      setTimeout(()=>{ cancelAnimationFrame(el.__raf); el.remove(); spawn(holder); }, 3600);
     }, life);
   }
 

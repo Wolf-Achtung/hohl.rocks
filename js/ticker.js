@@ -207,12 +207,21 @@
   function init(){
     mount(); if(!track) return;
     build(); updateBottom(); updateSafeZone(); updateZ();
+    // Pre-Ticker-Message ausblenden, sobald der Track aufgebaut wurde
+    const preMsg = document.getElementById('pre-ticker-message');
+    if (preMsg) preMsg.style.display = 'none';
     // Sofort loslaufen: ein negativer Delay sorgt dafür, dass der Track schon „am Laufen“ ist
     // und resumeTicker startet die Animation direkt
     setDuration();
     resumeTicker();
     // Wenn der Track noch leer ist, sofort neu aufbauen
-    setTimeout(()=>{ if(!track || !track.querySelector('a')){ build(); setDuration(); resumeTicker(); } }, 500);
+    setTimeout(()=>{
+      if(!track || !track.querySelector('a')){
+        build(); setDuration(); resumeTicker();
+      }
+      // Sicherstellen, dass die Pre-Ticker-Message weg ist
+      const pm = document.getElementById('pre-ticker-message'); if(pm) pm.style.display = 'none';
+    }, 500);
 
     // Reagieren auf Layout/Antwort
     window.addEventListener('resize', ()=>{ updateBottom(); updateSafeZone(); topUp(); setDuration(); updateZ(); }, {passive:true});
