@@ -32,11 +32,6 @@
     .ticker-wrap{ z-index: 1200 !important; }   /* Shapes gehen bis ~1000 */
 
     .privacy-slot{position:fixed;left:14px;bottom:14px;z-index:34}
-
-    /* Ticker-Filter-Leiste */
-    .ticker-filters{position:fixed;right:20px;bottom:22px;z-index:1201;display:flex;gap:8px}
-    .ticker-filters button{background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);color:#eaf2ff;border-radius:999px;padding:8px 12px;cursor:pointer;pointer-events:auto;backdrop-filter:blur(6px);font-size:14px}
-    .ticker-filters button.active{background:#1b66ff;color:#fff}
   </style>
 
   <!-- Neon-Shapes Styles -->
@@ -61,46 +56,6 @@
 
   <div class="privacy-slot" id="privacy-slot"></div>
 
-  <!-- Pre‑Ticker‑Nachricht: Überbrückt die Ladezeit des Tickers mit einem KI‑Fakt.
-       Die Nachricht wird beim Laden zufällig aus einer Liste gewählt und
-       bleibt sichtbar, bis der Ticker bereit ist (Ticker.js blendet sie aus)
-       oder bis ein Timeout greift. -->
-  <div id="pre-ticker-message" style="position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:1250;background:rgba(12,16,22,0.70);border:1px solid rgba(255,255,255,0.20);backdrop-filter:blur(8px);color:#eaf2ff;padding:12px 20px;border-radius:16px;font-size:14px;line-height:1.4;pointer-events:none;max-width:90vw;text-align:center;">
-    <!-- Inhalt wird per Script eingesetzt -->
-  </div>
-
-  <script>
-    // Liste von Pre-Ticker-Messages mit Tipps/Fakten zum Überbrücken der Ladezeit.
-    const preMessages = [
-      "🌟 Wussten Sie, dass KI heute ganze Film‑Trailer automatisch schneidet? Probieren Sie es aus – gleich startet der Ticker!",
-      "🎨 Schon ausprobiert? Geben Sie ChatGPT den Prompt ‚Male ein Gemälde im Stil von Vincent van Gogh‘ – beeindruckend! Gleich geht’s los.",
-      "🗒️ KI‑Quicktip: Langes PDF? Nutzen Sie ‚Fasse den Text zusammen: …‘ und ChatGPT liefert die Essenz. Der Ticker startet jeden Moment.",
-      "🎸 Fun Fact: Moderne KI komponiert Songs im Stil Ihrer Lieblingsbands – wie wär’s mit Radiohead? Der Ticker kommt gleich.",
-      "🧠 Wussten Sie? Kleine, lokale KI‑Modelle laufen direkt im Browser – perfekt für Privatsphäre. Gleich startet der Ticker.",
-      "⚙️ Tipp: Lassen Sie ChatGPT Ihren Tagesplan erstellen – sagen Sie ‚Erstelle mir einen strukturierten Plan für heute‘. Bald erscheinen die Ticker‑News."
-    ];
-    document.addEventListener('DOMContentLoaded', function(){
-      const pm = document.getElementById('pre-ticker-message');
-      if(pm && preMessages.length){
-        const idx = Math.floor(Math.random()*preMessages.length);
-        pm.textContent = preMessages[idx];
-      }
-      // Fallback: Verstecke die Nachricht nach 10 Sekunden, falls Ticker sie nicht entfernt
-      setTimeout(function(){
-        if(pm && pm.style.display !== 'none'){ pm.style.display = 'none'; }
-      }, 10000);
-    });
-  </script>
-
-  <!-- Kategorie-Filter für den Ticker -->
-  <div id="ticker-filters" class="ticker-filters">
-    <button data-cat="" class="active">Alle</button>
-    <button data-cat="news">News</button>
-    <button data-cat="tips">Tipps</button>
-    <button data-cat="prompts">Prompts</button>
-    <button data-cat="projects">Projekte</button>
-  </div>
-
   <!-- Globale Konfiguration -->
   <script>
     window.HOHLROCKS_CHAT_BASE = 'https://hohlrocks-production.up.railway.app';
@@ -116,42 +71,42 @@
   </script>
 
   <!-- Scripts: Shapes, Ticker, Spotlight, Demos -->
-  <script src="/js/hero-shapes.js?v=sp3"></script>
+  <script src="/js/hero-shapes.js?v=sp2"></script>
   <script src="/js/analytics-lite.js?v=1"></script>
 
   <!-- Reihenfolge wichtig: Ticker-Items vor Ticker -->
-  <script src="/js/ticker-items.js?v=melody3"></script>
-  <!-- JSON-basierter Chat-Fetch (ersetzt ChatDock/SSE für den Ticker) -->
-  <script src="/js/fetch-chat.js?v=json1"></script>
-  <!-- Ticker-Engine -->
-  <script src="/js/ticker.js?v=loop9"></script>
+  <script src="/js/ticker-items.js?v=usable1"></script>
+  <!-- Ticker: aktualisierte Version mit Safe-Zone-Fix und Clamp (Cache‑Bust: loop7) -->
+  <script src="/js/ticker.js?v=loop8"></script>
 
-  <!-- Kategorie-Filter für den Ticker -->
-  <script src="/js/ticker-filters.js?v=filter1"></script>
+  <!-- Antwort-Overlay -->
+  <script src="/js/answers-spotlight.js?v=1"></script>
 
-  <!-- Antwort-Popup -->
-  <script src="/js/answer-popup.js?v=popup1"></script>
-
-  <!-- Antwort-Overlay entfernt: Wir nutzen jetzt ein eigenes Popup (answer-popup.js) -->
-
-  <!-- Micro-Demos & Foto-Flows & Style-Switcher -->
+  <!-- Micro-Demos & Foto-Flows (Style-Switcher entfernt) -->
   <script src="/js/micro-demos.js?v=1"></script>
   <script src="/js/photo-flows.js?v=1"></script>
-  <script src="/js/style-switcher.js?v=1"></script>
 
   <!-- Ambient-Melodie (Objekt: window.WolfMelody) + Autostart nach erster Geste -->
-  <script src="/js/ambient-melody.js?v=rh2"></script>
-  <script src="/js/ambient-melody-autostart.js?v=rh2"></script>
+  <script src="/js/ambient-melody.js?v=1"></script>
+  <script src="/js/ambient-melody-autostart.js?v=1"></script>
 
-  <!-- Chat/SSE: gefixte Version (chat10 cache bust) -->
-  <!-- Chat/SSE: gefixte Version (chat10 cache bust) -->
-  <script src="/js/chatbox-stream.js?v=chat10"></script>
+  <!-- Chat/SSE: gefixte Version (v=chat7 cache bust) -->
+  <script src="/js/chatbox-stream.js?v=chat8"></script>
 
-  <!-- Notfall: Ticker sofort bauen und starten (zweimal als Fallback) -->
+  <!-- Notfall: Ticker sichtbar & funktionsfähig erzwingen -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      try{ window.Ticker?.rebuild?.(); window.Ticker?.resume?.(); }catch(e){}
-      setTimeout(()=>{ try{ window.Ticker?.rebuild?.(); window.Ticker?.resume?.(); }catch(e){} }, 1000);
+      // Minimale Verzögerung, dann sicherstellen, dass der Ticker läuft
+      setTimeout(()=>{ try{ window.Ticker?.resume?.(); }catch(e){} }, 200);
+
+      // Wenn aus irgendeinem Grund keine Chips gerendert wurden: rebuild
+      setTimeout(()=>{
+        const track = document.querySelector('.ticker-track');
+        const ok = track && track.querySelectorAll('a').length>0;
+        if (!ok){
+          try{ window.Ticker?.rebuild?.(); }catch(e){}
+        }
+      }, 1200);
     });
   </script>
 </body>
