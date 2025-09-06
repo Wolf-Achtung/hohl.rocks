@@ -32,6 +32,11 @@
     .ticker-wrap{ z-index: 1200 !important; }   /* Shapes gehen bis ~1000 */
 
     .privacy-slot{position:fixed;left:14px;bottom:14px;z-index:34}
+
+    /* Ticker-Filter-Leiste */
+    .ticker-filters{position:fixed;right:20px;bottom:22px;z-index:1201;display:flex;gap:8px}
+    .ticker-filters button{background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);color:#eaf2ff;border-radius:999px;padding:8px 12px;cursor:pointer;pointer-events:auto;backdrop-filter:blur(6px);font-size:14px}
+    .ticker-filters button.active{background:#1b66ff;color:#fff}
   </style>
 
   <!-- Neon-Shapes Styles -->
@@ -56,6 +61,15 @@
 
   <div class="privacy-slot" id="privacy-slot"></div>
 
+  <!-- Kategorie-Filter für den Ticker -->
+  <div id="ticker-filters" class="ticker-filters">
+    <button data-cat="" class="active">Alle</button>
+    <button data-cat="news">News</button>
+    <button data-cat="tips">Tipps</button>
+    <button data-cat="prompts">Prompts</button>
+    <button data-cat="projects">Projekte</button>
+  </div>
+
   <!-- Globale Konfiguration -->
   <script>
     window.HOHLROCKS_CHAT_BASE = 'https://hohlrocks-production.up.railway.app';
@@ -75,11 +89,17 @@
   <script src="/js/analytics-lite.js?v=1"></script>
 
   <!-- Reihenfolge wichtig: Ticker-Items vor Ticker -->
-  <script src="/js/ticker-items.js?v=melody2"></script>
+  <script src="/js/ticker-items.js?v=melody3"></script>
   <!-- JSON-basierter Chat-Fetch (ersetzt ChatDock/SSE für den Ticker) -->
   <script src="/js/fetch-chat.js?v=json1"></script>
   <!-- Ticker-Engine -->
   <script src="/js/ticker.js?v=loop9"></script>
+
+  <!-- Kategorie-Filter für den Ticker -->
+  <script src="/js/ticker-filters.js?v=filter1"></script>
+
+  <!-- Antwort-Popup -->
+  <script src="/js/answer-popup.js?v=popup1"></script>
 
   <!-- Antwort-Overlay -->
   <script src="/js/answers-spotlight.js?v=1"></script>
