@@ -207,9 +207,15 @@
   function init(){
     mount(); if(!track) return;
     build(); updateBottom(); updateSafeZone(); updateZ();
-    // Pre-Ticker-Message ausblenden, sobald der Track aufgebaut wurde
-    const preMsg = document.getElementById('pre-ticker-message');
-    if (preMsg) preMsg.style.display = 'none';
+    // Pre-Ticker-Message erst nach kurzer Verzögerung ausblenden.
+    // Dadurch bleibt die Botschaft einige Sekunden sichtbar, bis der Ticker bereit ist.
+    setTimeout(() => {
+      const preMsg = document.getElementById('pre-ticker-message');
+      // Nur verstecken, wenn der Track bereits Elemente hat.
+      if(preMsg && track && track.querySelector('a')){
+        preMsg.style.display = 'none';
+      }
+    }, 3000);
     // Sofort loslaufen: ein negativer Delay sorgt dafür, dass der Track schon „am Laufen“ ist
     // und resumeTicker startet die Animation direkt
     setDuration();
@@ -219,8 +225,13 @@
       if(!track || !track.querySelector('a')){
         build(); setDuration(); resumeTicker();
       }
-      // Sicherstellen, dass die Pre-Ticker-Message weg ist
-      const pm = document.getElementById('pre-ticker-message'); if(pm) pm.style.display = 'none';
+      // Sicherstellen, dass die Pre-Ticker-Message weg ist: nach kurzer Verzögerung prüfen
+      setTimeout(() => {
+        const pm = document.getElementById('pre-ticker-message');
+        if(pm && track && track.querySelector('a')){
+          pm.style.display = 'none';
+        }
+      }, 3000);
     }, 500);
 
     // Reagieren auf Layout/Antwort
