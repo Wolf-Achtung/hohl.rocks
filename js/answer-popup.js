@@ -1,70 +1,31 @@
-/*
- * answer-popup.js — Einfaches Antwort-Popup für KI-Antworten
- *
- *  Dieses Skript erstellt ein modales Overlay, das bei einer neuen
- *  Antwort automatisch geöffnet wird. Es lauscht auf die globalen
- *  Ereignisse `chat:send`, `chat:delta` und `chat:done`, um den Text
- *  zu sammeln und schließlich anzuzeigen. Das Popup kann vom Nutzer
- *  geschlossen werden.
- */
+/* answer-popup.js — transparentes Antwort-Popup */
 (function(){
   'use strict';
-  let answer = '';
-  function ensurePopup(){
-    let pop = document.getElementById('answer-popup');
+  let pop, body, closeBtn, acc='';
+  function ensure(){
     if(pop) return pop;
     pop = document.createElement('div');
-    pop.id = 'answer-popup';
-    pop.style.position = 'fixed';
-    pop.style.left = '50%';
-    pop.style.top = '50%';
-    pop.style.transform = 'translate(-50%, -50%)';
-    pop.style.minWidth = '320px';
-    pop.style.maxWidth = '84vw';
-    pop.style.maxHeight = '70vh';
-    // Fast durchsichtiges Overlay (dunkel, aber deutlich leichter)
-    pop.style.background = 'rgba(12,16,22,0.40)';
-    pop.style.border = '1px solid rgba(255,255,255,0.14)';
-    pop.style.backdropFilter = 'blur(12px)';
-    pop.style.borderRadius = '18px';
-    pop.style.padding = '20px';
-    pop.style.boxSizing = 'border-box';
-    pop.style.zIndex = '1300';
-    pop.style.color = '#eaf2ff';
-    pop.style.display = 'none';
-    pop.style.overflowY = 'auto';
-    // Inhalt
-    const content = document.createElement('div');
-    content.className = 'popup-content';
-    pop.appendChild(content);
-    // Schließen-Button
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Schließen';
-    closeBtn.style.background = '#1b66ff';
-    closeBtn.style.color = '#fff';
-    closeBtn.style.border = '0';
-    closeBtn.style.borderRadius = '999px';
-    closeBtn.style.padding = '8px 16px';
-    closeBtn.style.cursor = 'pointer';
-    closeBtn.style.marginTop = '16px';
-    closeBtn.addEventListener('click', ()=>{ pop.style.display = 'none'; });
-    pop.appendChild(closeBtn);
-    document.body.appendChild(pop);
+    pop.style.position='fixed'; pop.style.inset='0';
+    pop.style.background='rgba(12,16,22,0.40)';
+    pop.style.backdropFilter='blur(6px)';
+    pop.style.zIndex='1400'; pop.style.display='none';
+    const card=document.createElement('div');
+    card.style.position='absolute'; card.style.left='50%'; card.style.top='15%';
+    card.style.transform='translateX(-50%)';
+    card.style.width='min(720px,90vw)';
+    card.style.background='rgba(18,24,32,0.82)';
+    card.style.border='1px solid rgba(255,255,255,.14)';
+    card.style.borderRadius='18px';
+    card.style.color='#eaf2ff';
+    card.style.padding='16px';
+    body=document.createElement('div'); body.style.whiteSpace='pre-wrap'; body.style.maxHeight='60vh'; body.style.overflow='auto';
+    closeBtn=document.createElement('button'); closeBtn.textContent='Schließen'; closeBtn.style.marginTop='12px';
+    closeBtn.style.borderRadius='999px'; closeBtn.style.padding='8px 12px'; closeBtn.style.border='1px solid rgba(255,255,255,.18)';
+    closeBtn.onclick=()=>{ pop.style.display='none'; };
+    card.appendChild(body); card.appendChild(closeBtn); pop.appendChild(card); document.body.appendChild(pop);
     return pop;
   }
-  function openPopup(text){
-    const pop = ensurePopup();
-    const content = pop.querySelector('.popup-content');
-    content.textContent = text;
-    pop.style.display = 'block';
-  }
-  // Ereignisse abfangen
-  window.addEventListener('chat:send', ()=>{ answer = ''; });
-  window.addEventListener('chat:delta', (ev)=>{
-    const delta = (ev.detail && ev.detail.delta) || '';
-    answer += delta;
-  });
-  window.addEventListener('chat:done', ()=>{
-    if(answer && answer.trim()){ openPopup(answer.trim()); }
-  });
+  window.addEventListener('chat:send', ()=>{ acc=''; ensure().style.display='block'; body.textContent='…'; });
+  window.addEventListener('chat:delta', (ev)=>{ acc += (ev.detail && ev.detail.delta) ? ev.detail.delta : ''; body.textContent = acc; });
+  window.addEventListener('chat:done', ()=>{});
 })();
