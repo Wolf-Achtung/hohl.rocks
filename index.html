@@ -61,10 +61,36 @@
 
   <div class="privacy-slot" id="privacy-slot"></div>
 
-  <!-- Pre‑Ticker‑Nachricht: Überbrückt die Ladezeit des Tickers mit einem KI‑Fakt -->
-  <div id="pre-ticker-message" style="position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:1250;background:rgba(12,16,22,0.68);border:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(6px);color:#eaf2ff;padding:10px 18px;border-radius:14px;font-size:14px;line-height:1.3;pointer-events:none;">
-    🌟 Wussten Sie, dass KI heute ganze Film-Trailer automatisch schneidet? Probieren Sie es aus – gleich startet der Ticker!
+  <!-- Pre‑Ticker‑Nachricht: Überbrückt die Ladezeit des Tickers mit einem KI‑Fakt.
+       Die Nachricht wird beim Laden zufällig aus einer Liste gewählt und
+       bleibt sichtbar, bis der Ticker bereit ist (Ticker.js blendet sie aus)
+       oder bis ein Timeout greift. -->
+  <div id="pre-ticker-message" style="position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:1250;background:rgba(12,16,22,0.70);border:1px solid rgba(255,255,255,0.20);backdrop-filter:blur(8px);color:#eaf2ff;padding:12px 20px;border-radius:16px;font-size:14px;line-height:1.4;pointer-events:none;max-width:90vw;text-align:center;">
+    <!-- Inhalt wird per Script eingesetzt -->
   </div>
+
+  <script>
+    // Liste von Pre-Ticker-Messages mit Tipps/Fakten zum Überbrücken der Ladezeit.
+    const preMessages = [
+      "🌟 Wussten Sie, dass KI heute ganze Film‑Trailer automatisch schneidet? Probieren Sie es aus – gleich startet der Ticker!",
+      "🎨 Schon ausprobiert? Geben Sie ChatGPT den Prompt ‚Male ein Gemälde im Stil von Vincent van Gogh‘ – beeindruckend! Gleich geht’s los.",
+      "🗒️ KI‑Quicktip: Langes PDF? Nutzen Sie ‚Fasse den Text zusammen: …‘ und ChatGPT liefert die Essenz. Der Ticker startet jeden Moment.",
+      "🎸 Fun Fact: Moderne KI komponiert Songs im Stil Ihrer Lieblingsbands – wie wär’s mit Radiohead? Der Ticker kommt gleich.",
+      "🧠 Wussten Sie? Kleine, lokale KI‑Modelle laufen direkt im Browser – perfekt für Privatsphäre. Gleich startet der Ticker.",
+      "⚙️ Tipp: Lassen Sie ChatGPT Ihren Tagesplan erstellen – sagen Sie ‚Erstelle mir einen strukturierten Plan für heute‘. Bald erscheinen die Ticker‑News."
+    ];
+    document.addEventListener('DOMContentLoaded', function(){
+      const pm = document.getElementById('pre-ticker-message');
+      if(pm && preMessages.length){
+        const idx = Math.floor(Math.random()*preMessages.length);
+        pm.textContent = preMessages[idx];
+      }
+      // Fallback: Verstecke die Nachricht nach 10 Sekunden, falls Ticker sie nicht entfernt
+      setTimeout(function(){
+        if(pm && pm.style.display !== 'none'){ pm.style.display = 'none'; }
+      }, 10000);
+    });
+  </script>
 
   <!-- Kategorie-Filter für den Ticker -->
   <div id="ticker-filters" class="ticker-filters">
@@ -98,7 +124,7 @@
   <!-- JSON-basierter Chat-Fetch (ersetzt ChatDock/SSE für den Ticker) -->
   <script src="/js/fetch-chat.js?v=json1"></script>
   <!-- Ticker-Engine -->
-  <script src="/js/ticker.js?v=loop9"></script>
+  <script src="/js/ticker.js?v=loop10"></script>
 
   <!-- Kategorie-Filter für den Ticker -->
   <script src="/js/ticker-filters.js?v=filter1"></script>
