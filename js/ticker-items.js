@@ -1,30 +1,34 @@
-/* ticker-items.js — Melody-Sektion + Combos (melody2) */
-(function () {
-  window.__TICKER_ITEMS = [
-    { label: "Überrasch mich 🤯", prompt: "Zeig mir in 3 Sätzen etwas Unerwartetes, das KI heute schon gut kann – inkl. 1 Mini-Beispiel + 1 pragmatischem nächsten Schritt." },
-    { label: "Mini-Story (5 Wörter)", prompt: "Erzeuge eine spannende Mini-Story mit genau 5 Wörtern. Danach 1 kurzer Titel. Stil: smart, knapp, überraschend." },
-    { label: "Haiku zur Fahrt", prompt: "Haiku über nächtliche Highway-Fahrt: Winterluft, Fernlicht, Weite. Ton: ruhig, präzise." },
-    { label: "Prompt-Studio 🎛️", prompt: "!action:promptstudio" },
+/*
+ * ticker-items.js — AI‑lastige Tickerinhalte mit Kategorien
+ *
+ *  Diese Datei definiert das globale Array `window.__TICKER_ITEMS`, das
+ *  vom Ticker-Modul verwendet wird. Jeder Eintrag besteht aus einem
+ *  `label` (wird im Laufband angezeigt), einem `prompt` (wird an die
+ *  KI gesendet) und einer `category`, damit der Ticker gefiltert
+ *  werden kann. Kategorien: news, tips, prompts, projects.
+ */
+window.__TICKER_ITEMS = [
+  { label: "KI‑News: Tagesupdate", prompt: "Fasse die wichtigsten KI‑News des Tages in drei Sätzen zusammen.", category: "news" },
+  { label: "Aktuelle Durchbrüche", prompt: "Nenne einen aktuellen Durchbruch in der KI‑Forschung und beschreibe ihn kurz.", category: "news" },
+  { label: "KI & Nachhaltigkeit", prompt: "Wie kann KI zur Nachhaltigkeit beitragen? Fasse aktuelle Initiativen in zwei Sätzen zusammen.", category: "news" },
+  { label: "KI & Bildung", prompt: "Gibt es neue Entwicklungen beim Einsatz von KI in der Bildung? Fasse kurz zusammen.", category: "news" },
+  { label: "KI‑Ethik", prompt: "Nenne ein aktuelles Beispiel für eine ethische Debatte in der KI und beschreibe sie kurz.", category: "news" },
 
-    { label: "Freeze-Frame 📸", prompt: "!action:freeze" },
-    { label: "Bokeh-Burst ✨",  prompt: "!action:bokeh" },
-    { label: "Neon-Pulse 🔆",   prompt: "!action:ring" },
-    { label: "Palette aus Video", prompt: "!action:palette" },
+  { label: "Prompt‑Tipp des Tages", prompt: "Gib mir einen effektiven Prompt‑Tipp für ChatGPT, der die Antworten verbessert.", category: "tips" },
+  { label: "ChatGPT Hacks", prompt: "Nenne zwei Hacks, um bessere Antworten aus ChatGPT herauszuholen.", category: "tips" },
+  { label: "KI‑Learning Tipps", prompt: "Welche zwei Online‑Ressourcen eignen sich am besten, um KI zu lernen?", category: "tips" },
+  { label: "Creative AI Tools", prompt: "Empfehle zwei spannende Creative‑AI‑Tools (z. B. für Musik, Kunst) mit kurzer Begründung.", category: "tips" },
+  { label: "Datenschutz‑Check", prompt: "Welche zwei Dinge sollte ich beim Datenschutz beachten, wenn ich KI‑Tools nutze?", category: "tips" },
 
-    { label: "Trailer-Teaser 🎬", prompt: "!action:whoosh; gpt:Schreibe eine 12-Sekunden-Trailer-Hookline zur aktuellen Szene. 1 Satz, poetisch-prägnant, deutsch." },
-    { label: "Freeze → Voiceover", prompt: "!action:freeze; gpt:Formuliere einen 12-Sekunden-Voiceover-Text zur eben fixierten Szene. Ton: ruhig, cineastisch, deutsch." },
-    { label: "Palette → 3 UI-Themes", prompt: "!action:palette; gpt:Erzeuge aus 5 HEX-Farben drei UI-Themen (Primary/Secondary/Accent/Surface/Text) mit kurzen Begründungen, deutsch." },
+  { label: "Inspirierender Prompt", prompt: "Erstelle einen inspirierenden Prompt, um ein kreatives Kurzgedicht zu erhalten.", category: "prompts" },
+  { label: "Business‑Prompt", prompt: "Formuliere einen Prompt, der mir hilft, eine KI‑gestützte Marktanalyse für ein Start‑up zu erhalten.", category: "prompts" },
+  { label: "Story‑Starter", prompt: "Gib mir einen Prompt, der den Beginn einer Sci‑Fi‑Story generiert.", category: "prompts" },
+  { label: "Pitch‑Prompt", prompt: "Schreibe einen Prompt, der mir hilft, ein Produkt‑Pitch‑Deck von ChatGPT erstellen zu lassen.", category: "prompts" },
+  { label: "Fragen an ein KI‑Start‑up", prompt: "Formuliere einen Prompt mit fünf Fragen, die ich einem KI‑Start‑up stellen sollte.", category: "prompts" },
 
-    /* 🎵 Melody */
-    { label: "Ambient START (Hopkins)", prompt: "!action:melody=start:hopkins" },
-    { label: "Ambient STOP",            prompt: "!action:melody=stop" },
-    { label: "Tempo +8%",               prompt: "!action:melody=tempo:+8" },
-    { label: "Tempo −10%",              prompt: "!action:melody=tempo:-10" },
-    { label: "Mood: dawn",              prompt: "!action:melody=mood:dawn" },
-    { label: "Mood: drive",             prompt: "!action:melody=mood:drive" },
-    { label: "Seed 7",                  prompt: "!action:melody=seed:7" },
-    { label: "Seed 99",                 prompt: "!action:melody=seed:99" },
-    { label: "Ambient GPT-Plan",        prompt: "!action:melody=gpt:neon winter highway" },
-    { label: "Palette → Ambient + Claim", prompt: "!action:palette; !action:melody=gpt:farben der aktuellen Szene; gpt:Erfinde 3 kurze Claims, die zur generierten Ambient-Stimmung passen (deutsch)." }
-  ];
-})();
+  { label: "Hohl.rocks Roadmap", prompt: "Was sind die nächsten Schritte in der Entwicklung von hohl.rocks?", category: "projects" },
+  { label: "Neue Funktion in Arbeit", prompt: "Teile eine kleine Vorschau auf eine geplante Funktion von hohl.rocks (max. zwei Sätze).", category: "projects" },
+  { label: "Partner & Kooperationen", prompt: "Was ist geplant in Bezug auf Partnerschaften oder Kooperationen für hohl.rocks? Kurzbeschreibung.", category: "projects" },
+  { label: "Users Feedback", prompt: "Warum ist Feedback der Benutzer für hohl.rocks wichtig? Beschreibe in zwei Sätzen.", category: "projects" },
+  { label: "KI‑Workshop", prompt: "Gibt es einen geplanten KI‑Workshop oder ein Webinar? Gib einen Ausblick.", category: "projects" }
+];

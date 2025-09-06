@@ -53,12 +53,25 @@
 
   // ---------- Inhalte ----------
   function getItems(){
-    if (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) return window.__TICKER_ITEMS;
-    return [
-      { label:"Überrasch mich 🤯", prompt:"Zeig mir etwas Unerwartetes, das KI heute schon gut kann – in 3 Sätzen, mit kleinem Beispiel.", preview:"Kleine Demo, große Wirkung." },
-      { label:"Mini-Story (5 Wörter)", prompt:"Erzeuge eine spannende Mini-Story mit genau 5 Wörtern. Danach ein kurzer Titel. Ton: smart, knapp, überraschend.", preview:"Fünf Wörter, ein Plot." },
-      { label:"Haiku zur Fahrt", prompt:"Schreibe ein kurzes Haiku über eine nächtliche Highway-Fahrt, Winterluft, Fernlicht, Weite. Ton: ruhig, präzise.", preview:"Drei Zeilen Highway-Luft." }
-    ];
+    // Hole die globale Item-Liste; wenn keine vorhanden ist, greife auf eine minimale Fallback-Liste zurück
+    let items;
+    if (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) {
+      items = window.__TICKER_ITEMS.slice();
+    } else {
+      items = [
+        { label:"KI-Update", prompt:"Fasse die aktuelle KI-News-Lage kurz zusammen.", category:"news" },
+        { label:"Prompt-Tipp", prompt:"Gib einen kurzen Prompt-Tipp für ChatGPT.", category:"tips" }
+      ];
+    }
+    // Optional: Filter nach Kategorie, wenn gesetzt (über Filter-Chips)
+    const cat = typeof window.currentTickerCategory === 'string' && window.currentTickerCategory.trim() !== ''
+      ? window.currentTickerCategory.trim() : null;
+    if (cat) {
+      items = items.filter(it => it.category === cat);
+      // Wenn keine Items zur Kategorie gefunden werden, alle anzeigen
+      if (items.length === 0) items = window.__TICKER_ITEMS.slice();
+    }
+    return items;
   }
 
   function addChip(dst, label, prompt, preview){

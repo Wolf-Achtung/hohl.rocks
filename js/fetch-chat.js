@@ -33,6 +33,19 @@
     // Basis-URL bereinigen (nur Trailing Slashes entfernen)
     var base = String(window.HOHLROCKS_CHAT_BASE || '').replace(/\/+$/, '');
     var url  = base + '/chat';
+    // Frage im Cache prüfen. Wir nutzen sessionStorage für einfache Caching, damit
+    // wiederholte Prompts innerhalb einer Session schneller beantwortet werden.
+    var cacheKey = 'qaCache:' + encodeURIComponent(String(prompt || ''));
+    try {
+      var cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        // Bereits vorhandene Antwort: sofort dispatchen
+        var cachedAnswer = cached;
+        window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: cachedAnswer } }));
+        window.dispatchEvent(new CustomEvent('chat:done'));
+        return;
+      }
+    } catch(_){ /* ignore cache errors */ }
     var body = { message: prompt || '' };
     // Wenn ein Systemprompt gesetzt ist, anhängen
     if (window.WOLF_SYSTEM_PROMPT) body.systemPrompt = String(window.WOLF_SYSTEM_PROMPT);
@@ -58,6 +71,10 @@
           text = JSON.stringify(json);
         }
       }
+      try {
+        // Im Cache speichern
+        sessionStorage.setItem(cacheKey, text);
+      } catch(_){ /* ignore */ }
       try {
         window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: text } }));
         window.dispatchEvent(new CustomEvent('chat:done'));
