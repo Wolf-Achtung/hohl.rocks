@@ -22,7 +22,8 @@
     pop.style.minWidth = '320px';
     pop.style.maxWidth = '84vw';
     pop.style.maxHeight = '70vh';
-    pop.style.background = 'rgba(12,16,22,0.82)';
+    // Fast durchsichtiges Overlay (dunkel, aber deutlich leichter)
+    pop.style.background = 'rgba(12,16,22,0.40)';
     pop.style.border = '1px solid rgba(255,255,255,0.14)';
     pop.style.backdropFilter = 'blur(12px)';
     pop.style.borderRadius = '18px';

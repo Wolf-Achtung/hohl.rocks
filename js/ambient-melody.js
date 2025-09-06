@@ -93,6 +93,11 @@
       } else if (n.includes('fast') || n.includes('drive')){
         this.scaleName='dorian'; this.setTempo(108);
         this.level = { pad:0.30, pluck:0.22, sub:0.10 };
+      } else if (n.includes('radiohead')){
+        // Melancholische, leicht düsterere Stimmung nach Art von Radiohead
+        this.scaleName = 'aeolian';
+        this.setTempo(78);
+        this.level = { pad:0.42, pluck:0.20, sub:0.12 };
       } else {
         this.scaleName='minor-pent'; this.setTempo(86);
         this.level = { pad:0.35, pluck:0.18, sub:0.08 };

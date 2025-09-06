@@ -8,27 +8,35 @@
  *  werden kann. Kategorien: news, tips, prompts, projects.
  */
 window.__TICKER_ITEMS = [
-  { label: "KI‑News: Tagesupdate", prompt: "Fasse die wichtigsten KI‑News des Tages in drei Sätzen zusammen.", category: "news" },
-  { label: "Aktuelle Durchbrüche", prompt: "Nenne einen aktuellen Durchbruch in der KI‑Forschung und beschreibe ihn kurz.", category: "news" },
-  { label: "KI & Nachhaltigkeit", prompt: "Wie kann KI zur Nachhaltigkeit beitragen? Fasse aktuelle Initiativen in zwei Sätzen zusammen.", category: "news" },
-  { label: "KI & Bildung", prompt: "Gibt es neue Entwicklungen beim Einsatz von KI in der Bildung? Fasse kurz zusammen.", category: "news" },
-  { label: "KI‑Ethik", prompt: "Nenne ein aktuelles Beispiel für eine ethische Debatte in der KI und beschreibe sie kurz.", category: "news" },
+  // Cutting-edge KI-News und Strategiethemen
+  { label: "Trend: Agentic AI", prompt: "Erläutere den Trend Agentic AI (KI-Agenten) in zwei Sätzen und warum er im Jahr 2025 entscheidend wird.", category: "news" },
+  { label: "EU KI-Regulierung", prompt: "Fasse die Kernelemente der aktuellen EU-KI-Verordnung (AI Act) in drei Sätzen zusammen und erläutere die Auswirkungen auf Unternehmen.", category: "news" },
+  { label: "AI Index 2025 Highlights", prompt: "Nenne die wichtigsten Erkenntnisse aus dem AI Index Report 2025 in drei Sätzen (z. B. Effizienz, Open-Source-Modelle).", category: "news" },
+  { label: "Small Language Models", prompt: "Warum gewinnen Small Language Models an Bedeutung? Erkläre kurz den Nutzen und die Grenzen in zwei Sätzen.", category: "news" },
+  { label: "Edge AI 2025", prompt: "Warum wird Edge AI immer wichtiger? Nenne zwei Vorteile dieser Technologie.", category: "news" },
+  { label: "AI & Nachhaltigkeit 2025", prompt: "Wie kann KI zur Energiewende beitragen? Erläutere in zwei Sätzen ein aktuelles Projekt.", category: "news" },
+  { label: "AI & Präzisionsmedizin", prompt: "Wie wird KI im Jahr 2025 in der Präzisionsmedizin eingesetzt? Nenne ein Beispiel mit Mehrwert.", category: "news" },
+  { label: "AI-Kunst 2025", prompt: "Nenne eine aufsehenerregende KI-Kunstinstallation aus 2025 und beschreibe, was daran innovativ ist.", category: "news" },
+  { label: "Next-Gen Modelle", prompt: "Was macht die nächste Generation der KI-Modelle (z. B. GPT-5, Gemini Ultra) so leistungsstark? Fasse in zwei Sätzen zusammen.", category: "news" },
+  { label: "Ethik: Bias Detection", prompt: "Welche neuen Methoden zur Erkennung von Bias in KI-Systemen werden 2025 diskutiert? Kurze Zusammenfassung.", category: "news" },
 
-  { label: "Prompt‑Tipp des Tages", prompt: "Gib mir einen effektiven Prompt‑Tipp für ChatGPT, der die Antworten verbessert.", category: "tips" },
-  { label: "ChatGPT Hacks", prompt: "Nenne zwei Hacks, um bessere Antworten aus ChatGPT herauszuholen.", category: "tips" },
-  { label: "KI‑Learning Tipps", prompt: "Welche zwei Online‑Ressourcen eignen sich am besten, um KI zu lernen?", category: "tips" },
-  { label: "Creative AI Tools", prompt: "Empfehle zwei spannende Creative‑AI‑Tools (z. B. für Musik, Kunst) mit kurzer Begründung.", category: "tips" },
-  { label: "Datenschutz‑Check", prompt: "Welche zwei Dinge sollte ich beim Datenschutz beachten, wenn ich KI‑Tools nutze?", category: "tips" },
+  // Strategien, Skills und Tipps
+  { label: "Top Skills für KI-Manager", prompt: "Welche drei Fähigkeiten braucht ein erfolgreicher KI-Manager im Jahr 2025? Gib kurze Stichpunkte.", category: "tips" },
+  { label: "Prompt Engineering Upgrades", prompt: "Nenne zwei neue Techniken im Prompt Engineering, die 2025 an Bedeutung gewinnen.", category: "tips" },
+  { label: "Data Governance 2025", prompt: "Welche Best Practices gelten 2025 beim Umgang mit Trainingsdaten für KI-Systeme? Kurze Antwort.", category: "tips" },
+  { label: "Tool-Trend: AI Stack", prompt: "Welche Schlüsseltechnologien bilden den KI-Tech-Stack 2025 (LLMs, Retriever, Vektordatenbanken)? Nenne drei.", category: "tips" },
+  { label: "Visionäre KI-Manager", prompt: "Nenne drei Fähigkeiten, die einen visionären KI-Manager auszeichnen (max. 3 Stichwörter).", category: "tips" },
 
-  { label: "Inspirierender Prompt", prompt: "Erstelle einen inspirierenden Prompt, um ein kreatives Kurzgedicht zu erhalten.", category: "prompts" },
-  { label: "Business‑Prompt", prompt: "Formuliere einen Prompt, der mir hilft, eine KI‑gestützte Marktanalyse für ein Start‑up zu erhalten.", category: "prompts" },
-  { label: "Story‑Starter", prompt: "Gib mir einen Prompt, der den Beginn einer Sci‑Fi‑Story generiert.", category: "prompts" },
-  { label: "Pitch‑Prompt", prompt: "Schreibe einen Prompt, der mir hilft, ein Produkt‑Pitch‑Deck von ChatGPT erstellen zu lassen.", category: "prompts" },
-  { label: "Fragen an ein KI‑Start‑up", prompt: "Formuliere einen Prompt mit fünf Fragen, die ich einem KI‑Start‑up stellen sollte.", category: "prompts" },
+  // Kreative und inspirierende Prompts
+  { label: "KI & Musik", prompt: "Wie verändert KI das Komponieren und Produzieren von Musik? Gib ein aktuelles Beispiel (2 Sätze).", category: "prompts" },
+  { label: "AI-Agenten im Support", prompt: "Was sind die Vorteile von KI-Agenten im Kundensupport 2025? Nenne zwei konkrete Effekte.", category: "prompts" },
+  { label: "AI & Marketing Future", prompt: "Wie könnte KI das Marketing bis 2026 weiter revolutionieren? Gib zwei kreative Use Cases.", category: "prompts" },
+  { label: "Inspirierendes KI-Projekt", prompt: "Nenne ein inspirierendes KI-Projekt, das 2025 Social Impact erzeugt (z. B. Umwelt oder Bildung).", category: "prompts" },
+  { label: "Spannende KI-Fragen", prompt: "Formuliere fünf Fragen, die ich einem KI-Start-up im Jahr 2025 stellen sollte.", category: "prompts" },
 
-  { label: "Hohl.rocks Roadmap", prompt: "Was sind die nächsten Schritte in der Entwicklung von hohl.rocks?", category: "projects" },
-  { label: "Neue Funktion in Arbeit", prompt: "Teile eine kleine Vorschau auf eine geplante Funktion von hohl.rocks (max. zwei Sätze).", category: "projects" },
-  { label: "Partner & Kooperationen", prompt: "Was ist geplant in Bezug auf Partnerschaften oder Kooperationen für hohl.rocks? Kurzbeschreibung.", category: "projects" },
-  { label: "Users Feedback", prompt: "Warum ist Feedback der Benutzer für hohl.rocks wichtig? Beschreibe in zwei Sätzen.", category: "projects" },
-  { label: "KI‑Workshop", prompt: "Gibt es einen geplanten KI‑Workshop oder ein Webinar? Gib einen Ausblick.", category: "projects" }
+  // Projekt- und Community-Themen rund um hohl.rocks
+  { label: "hohl.rocks Ausblick", prompt: "Welche spannenden Features sind für hohl.rocks in den kommenden Monaten geplant? Gib einen kurzen Ausblick.", category: "projects" },
+  { label: "Community Feedback", prompt: "Warum ist Feedback der Benutzer für hohl.rocks wichtig? Beschreibe in zwei Sätzen.", category: "projects" },
+  { label: "Partnerschaften 2025", prompt: "Welche neuen Partnerschaften oder Kooperationen sind für hohl.rocks in Planung? Kurzbeschreibung.", category: "projects" },
+  { label: "KI-Workshop Roadmap", prompt: "Gibt es einen geplanten KI-Workshop oder ein Webinar von Wolf? Gib einen kurzen Teaser.", category: "projects" }
 ];

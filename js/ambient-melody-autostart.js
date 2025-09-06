@@ -5,8 +5,8 @@
   function prime(){
     if (primed) return; primed=true;
     try{ const Ctx = window.AudioContext||window.webkitAudioContext; const ctx = window.WolfMelody?.ensureCtx?.(); ctx && ctx.resume(); }catch(_){}
-    // Default: starte sanft im „Hopkins“-Mood
-    window.WolfMelody?.start?.('hopkins');
+    // Default: starte im „Radiohead“-Mood (melancholischer, tiefer)
+    window.WolfMelody?.start?.('radiohead');
     // Entferne Listener nach dem ersten Prime
     window.removeEventListener('pointerdown', prime); window.removeEventListener('keydown', prime); window.removeEventListener('touchstart', prime);
   }
