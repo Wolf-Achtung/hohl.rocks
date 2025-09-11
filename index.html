@@ -31,6 +31,11 @@
     /* --- Ticker sichtbar über Shapes halten --- */
     .ticker-wrap{ z-index: 1200 !important; }   /* Shapes gehen bis ~1000 */
 
+    /* Ticker-Filter-Leiste */
+    #ticker-filters{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);display:flex;gap:8px;z-index:1250;font-size:14px}
+    #ticker-filters button{background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);color:#eaf2ff;padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
+    #ticker-filters button.active{background:#1b66ff;color:#fff}
+
     .privacy-slot{position:fixed;left:14px;bottom:14px;z-index:34}
   </style>
 
@@ -56,6 +61,21 @@
 
   <div class="privacy-slot" id="privacy-slot"></div>
 
+  <!-- Pre-Ticker-Message: Zeigt sofort nach Page-Load einen zufälligen KI-Tipp oder Prompt.
+       Diese Nachricht wird nach dem Start des Tickers automatisch ausgeblendet. -->
+  <div id="pre-ticker-message" style="position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:1250;background:rgba(12,16,22,0.68);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);color:#eaf2ff;padding:10px 18px;border-radius:14px;font-size:14px;line-height:1.3;pointer-events:none;max-width:88vw;text-align:center;">
+    <!-- Inhalt wird per Skript gesetzt -->
+  </div>
+
+  <!-- Filter-Leiste für den Ticker: Kategorien zum Umschalten (Alle, News, Tipps, Prompts, Projekte) -->
+  <div id="ticker-filters">
+    <button data-cat="" class="active">Alle</button>
+    <button data-cat="news">News</button>
+    <button data-cat="tips">Tipps</button>
+    <button data-cat="prompts">Prompts</button>
+    <button data-cat="projects">Projekte</button>
+  </div>
+
   <!-- Globale Konfiguration -->
   <script>
     window.HOHLROCKS_CHAT_BASE = 'https://hohlrocks-production.up.railway.app';
@@ -76,11 +96,12 @@
 
   <!-- Reihenfolge wichtig: Ticker-Items vor Ticker -->
   <script src="/js/ticker-items.js?v=usable1"></script>
-  <!-- Ticker: aktualisierte Version mit Safe-Zone-Fix und Clamp (Cache‑Bust: loop7) -->
-  <script src="/js/ticker.js?v=loop8"></script>
+  <!-- Ticker: aktualisierte Version mit Safe-Zone-Fix, schnellerem Start und dynamischer Geschwindigkeit -->
+  <script src="/js/ticker.js?v=loop9"></script>
 
-  <!-- Antwort-Overlay -->
-  <script src="/js/answers-spotlight.js?v=1"></script>
+  <!-- Antwort-Popup (ersetzt das alte Spotlight) -->
+  <!-- answer-popup zeigt Antworten in einem dezenten Overlay; style-switcher und Spotlight werden nicht mehr geladen -->
+  <script src="/js/answer-popup.js?v=1"></script>
 
   <!-- Micro-Demos & Foto-Flows (Style-Switcher entfernt) -->
   <script src="/js/micro-demos.js?v=1"></script>
@@ -90,8 +111,11 @@
   <script src="/js/ambient-melody.js?v=1"></script>
   <script src="/js/ambient-melody-autostart.js?v=1"></script>
 
-  <!-- Chat/SSE: gefixte Version (v=chat7 cache bust) -->
-  <script src="/js/chatbox-stream.js?v=chat8"></script>
+  <!-- Chat: JSON‑Fetcher statt SSE; holt Antworten über POST /chat und cached sie -->
+  <script src="/js/fetch-chat.js?v=json1"></script>
+
+  <!-- Ticker-Filter-Chips -->
+  <script src="/js/ticker-filters.js?v=1"></script>
 
   <!-- Notfall: Ticker sichtbar & funktionsfähig erzwingen -->
   <script>
@@ -107,6 +131,26 @@
           try{ window.Ticker?.rebuild?.(); }catch(e){}
         }
       }, 1200);
+    });
+  </script>
+
+  <!-- Zufällige Pre-Ticker-Meldung setzen und Fallback-Ausblendung -->
+  <script>
+    // Kurze, sofort nutzbare KI-Tipps/Prompts, die dem Nutzer die Wartezeit versüßen
+    const PRE_MSGS = [
+      '💡 Prompt: „Erkläre ein Thema in 3 Sätzen + 1 Beispiel + 1 nächster Schritt.“',
+      '🧪 Prompt: „Fasse dieses Video in 5 Bulletpoints zusammen:“ + Link einfügen',
+      '✉️ Tipp: „Erzeuge 3 Betreffzeilen + 1 A/B-Test für diese Mail:“ + Mailtext',
+      '📰 News: „Nenne die 3 wichtigsten KI-News des Tages in je 1 Satz.“',
+      '🎨 Kreativ: „Schreibe ein Haiku über die Zukunft der KI – auf Deutsch.“'
+    ];
+    document.addEventListener('DOMContentLoaded', () => {
+      const pm = document.getElementById('pre-ticker-message');
+      if(pm){ pm.textContent = PRE_MSGS[Math.floor(Math.random() * PRE_MSGS.length)]; }
+      // Fallback: Nach 10 Sekunden ausblenden, falls der Ticker ungewöhnlich spät startet
+      setTimeout(() => {
+        if(pm && pm.style.display !== 'none') pm.style.display = 'none';
+      }, 10000);
     });
   </script>
 </body>

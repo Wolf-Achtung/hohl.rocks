@@ -104,6 +104,8 @@
     baseItems = getItems().slice();
     baseItems.forEach(it => addChip(track, it.label, it.prompt, it.preview));
     topUp();
+    // Setze einen großzügigen negativen Delay, damit die Chips sofort sichtbar sind
+    if(track) track.style.setProperty('--delay','-24s');
     setDuration();
   }
 
@@ -183,11 +185,18 @@
   }
 
   // ---------- Laufgeschwindigkeit ----------
-  const SPEED_PX_S = 16; // sehr ruhig (ggf. 14 probieren)
+  // Der Ticker startet schnell und verlangsamt sich nach einigen Sekunden.
+  // Wir verwenden eine dynamische Geschwindigkeit: currentSpeed bestimmt die
+  // Anzahl Pixel pro Sekunde. Nach 2 Sekunden wechseln wir auf den
+  // langsameren Wert. Dadurch wird der Ticker sofort sichtbar.
+  let currentSpeed = 28;      // Startgeschwindigkeit (px/s)
+  const SLOW_SPEED = 16;      // Ruhige Geschwindigkeit (px/s)
   function setDuration(){
+    if(!track) return;
     const vw = Math.max(320, window.innerWidth);
     const px = track.scrollWidth + vw;
-    const dur = Math.max(60, Math.min(260, px / SPEED_PX_S));
+    // Dauer berechnen: begrenzen auf 40–260 s, abhängig von aktueller Geschwindigkeit
+    const dur = Math.max(40, Math.min(260, px / currentSpeed));
     track.style.setProperty('--dur', dur.toFixed(1) + 's');
   }
 
@@ -216,10 +225,12 @@
         preMsg.style.display = 'none';
       }
     }, 3000);
-    // Sofort loslaufen: ein negativer Delay sorgt dafür, dass der Track schon „am Laufen“ ist
-    // und resumeTicker startet die Animation direkt
+    // Sofort loslaufen: negative Delay sorgt dafür, dass der Track schon „am Laufen“ ist
+    // setDuration wählt basierend auf currentSpeed die Animationsdauer.
     setDuration();
     resumeTicker();
+    // Nach 2 Sekunden auf die ruhige Geschwindigkeit umschalten
+    setTimeout(() => { currentSpeed = SLOW_SPEED; setDuration(); }, 2000);
     // Wenn der Track noch leer ist, sofort neu aufbauen
     setTimeout(()=>{
       if(!track || !track.querySelector('a')){
