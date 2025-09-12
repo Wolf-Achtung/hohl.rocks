@@ -36,6 +36,16 @@
     #ticker-filters button{background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);color:#eaf2ff;padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
     #ticker-filters button.active{background:#1b66ff;color:#fff}
 
+    /* Neon-Farben für die individuellen Buttons */
+    #ticker-filters button[data-cat="about"]   {background:#00B0FF; color:#001f3f;}
+    #ticker-filters button[data-cat="news"]    {background:#FFD700; color:#3a2e00;}
+    #ticker-filters button[data-cat="prompts"] {background:#FF4FA3; color:#3c0023;}
+    #ticker-filters button[data-cat="projects"]{background:#00E676; color:#00331a;}
+    /* Hover-Effekt: leichte Aufhellung */
+    #ticker-filters button:hover{filter:brightness(1.25);}    
+    /* Aktiver Button: Schlagschatten für bessere Erkennbarkeit */
+    #ticker-filters button.active{box-shadow:0 0 12px rgba(255,255,255,0.8);} 
+
     .privacy-slot{position:fixed;left:14px;bottom:14px;z-index:34}
   </style>
 
@@ -67,11 +77,12 @@
     <!-- Inhalt wird per Skript gesetzt -->
   </div>
 
-  <!-- Filter-Leiste für den Ticker: Kategorien zum Umschalten (Alle, News, Tipps, Prompts, Projekte) -->
+    <!-- Navigationsleiste für die Bubbles: Kategorien zum Umschalten
+         (Über, News, Prompts, Projekte). Jeder Button hat eine eigene
+         Neonfarbe und öffnet ein schwebendes Infofenster. -->
   <div id="ticker-filters">
-    <button data-cat="" class="active">Alle</button>
+    <button data-cat="about" class="active">Über</button>
     <button data-cat="news">News</button>
-    <button data-cat="tips">Tipps</button>
     <button data-cat="prompts">Prompts</button>
     <button data-cat="projects">Projekte</button>
   </div>
@@ -96,8 +107,7 @@
 
   <!-- Reihenfolge wichtig: Ticker-Items vor Ticker -->
   <script src="/js/ticker-items.js?v=usable1"></script>
-  <!-- Ticker: aktualisierte Version mit Safe-Zone-Fix, schnellerem Start und dynamischer Geschwindigkeit -->
-  <script src="/js/ticker.js?v=loop9"></script>
+  <!-- Hinweis: Der klassische Ticker wurde entfernt. Bubbles übernehmen die Interaktion. -->
 
   <!-- Antwort-Popup (ersetzt das alte Spotlight) -->
   <!-- answer-popup zeigt Antworten in einem dezenten Overlay; style-switcher und Spotlight werden nicht mehr geladen -->
@@ -118,21 +128,7 @@
   <script src="/js/ticker-filters.js?v=1"></script>
 
   <!-- Notfall: Ticker sichtbar & funktionsfähig erzwingen -->
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      // Minimale Verzögerung, dann sicherstellen, dass der Ticker läuft
-      setTimeout(()=>{ try{ window.Ticker?.resume?.(); }catch(e){} }, 200);
-
-      // Wenn aus irgendeinem Grund keine Chips gerendert wurden: rebuild
-      setTimeout(()=>{
-        const track = document.querySelector('.ticker-track');
-        const ok = track && track.querySelectorAll('a').length>0;
-        if (!ok){
-          try{ window.Ticker?.rebuild?.(); }catch(e){}
-        }
-      }, 1200);
-    });
-  </script>
+  <!-- Notfall-Skript entfernt: es gibt keinen Ticker mehr. -->
 
   <!-- Zufällige Pre-Ticker-Meldung setzen und Fallback-Ausblendung -->
   <script>
