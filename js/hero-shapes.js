@@ -75,6 +75,52 @@
     svg.appendChild(fill); svg.appendChild(stroke); el.appendChild(svg);
     const d = blobPath(r, 200, 200, 150, 16, 0.12); fill.setAttribute('d', d); stroke.setAttribute('d', d);
 
+    // --- Interaktive Inhalte für Bubbles ---
+    // Weise jedem Bubble einen Eintrag aus window.__TICKER_ITEMS zu. Dadurch
+    // ersetzen wir das Laufticker-Konzept durch interaktive Neon-Bubbles,
+    // die beim Anklicken KI-Prompts ausführen.
+    if(Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length){
+      // globalen Index initialisieren oder erhöhen
+      if(typeof window.__bubbleIndex !== 'number'){ window.__bubbleIndex = 0; }
+      const idx = window.__bubbleIndex % window.__TICKER_ITEMS.length;
+      window.__bubbleIndex++;
+      const item = window.__TICKER_ITEMS[idx];
+      if(item){
+        // Lege eine Beschriftung auf die Mitte der Bubble
+        const lbl = document.createElement('div');
+        lbl.className = 'bubble-label';
+        lbl.textContent = item.label;
+        lbl.style.position = 'absolute';
+        lbl.style.left = '50%';
+        lbl.style.top  = '50%';
+        lbl.style.transform = 'translate(-50%, -50%)';
+        lbl.style.color = '#eaf2ff';
+        lbl.style.fontSize = '12px';
+        lbl.style.fontWeight = '500';
+        lbl.style.pointerEvents = 'none';
+        lbl.style.textAlign = 'center';
+        el.appendChild(lbl);
+        // Prompt als Datenattribut speichern
+        el.dataset.prompt = item.prompt;
+        // Klick-Handler: sende den Prompt über fetchAnswer oder öffne direkt ein Popup
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const p = el.dataset.prompt;
+          if(!p) return;
+          if(typeof window.fetchAnswer === 'function'){
+            window.fetchAnswer(p);
+          } else if(typeof window.openAnswerPopup === 'function'){
+            window.openAnswerPopup(p);
+          } else {
+            try { window.dispatchEvent(new CustomEvent('chat:send')); } catch(_){ }
+            try { window.dispatchEvent(new CustomEvent('chat:delta', { detail: { delta: p } })); } catch(_){ }
+            try { window.dispatchEvent(new CustomEvent('chat:done')); } catch(_){ }
+          }
+        });
+      }
+    }
+
     // Tiefe & Optik
     const zPx     = lerp(120, -420, z);
     const blurPx  = lerp(0.10, 0.90, z);
@@ -120,7 +166,7 @@
       el.__raf = requestAnimationFrame(draw);
     }
 
-    // Interaktion: auf Startseite nur Sound & Chat-Fokus, keine Navigation
+    // Interaktion: Auf der Startseite starten Klicks den Ambient-Sound (falls verfügbar).
     if(isHome){
       el.addEventListener('click', ()=>{
         try{
@@ -130,8 +176,8 @@
             else if(window.HarleyLite.blip) window.HarleyLite.blip();
           }
         }catch{}
-        try{ if(window.ChatDock && (ChatDock.open || ChatDock.focus)){ (ChatDock.open || ChatDock.focus).call(ChatDock); } }catch{}
       });
+      // Rolle nur zu Deko-Zwecken setzen
       el.setAttribute('role','button'); el.setAttribute('tabindex','0'); el.setAttribute('aria-label','Interaktive Bubble');
       el.addEventListener('keydown', ev=>{ if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); el.click(); } });
     }

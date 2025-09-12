@@ -58,6 +58,8 @@
     content.textContent = text;
     pop.style.display = 'block';
   }
+  // Expose a global helper so that other scripts can open the popup directly.
+  window.openAnswerPopup = openPopup;
   // Ereignisse abfangen
   window.addEventListener('chat:send', ()=>{ answer = ''; });
   window.addEventListener('chat:delta', (ev)=>{
