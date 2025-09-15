@@ -3,57 +3,41 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>hohl.rocks — Wolf Hohl · KI‑Manager</title>
-
+  <title>hohl.rocks — Gold‑Standard</title>
+  <link rel="stylesheet" href="/hero-shapes.css">
   <style>
     html,body{height:100%;margin:0;background:#0a1118;color:#eaf2ff;font:500 16px/1.45 ui-sans-serif,system-ui}
     .stage{position:fixed;inset:0;overflow:hidden}
     #bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(1) contrast(1.05)}
     #shape-layer{position:absolute;inset:0;pointer-events:auto}
-
-    /* Chatdock (wird ausgeblendet; Ticker übernimmt die Eingabe) */
-    .chat-dock{position:fixed;right:22px;bottom:22px;z-index:40;background:rgba(12,16,22,.72);
-      border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px);padding:10px;border-radius:18px;display:flex;gap:8px;align-items:center}
-    .chat-dock input{width:min(48vw,360px);max-width:68vw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);
-      color:#eaf2ff;border-radius:999px;padding:10px 14px;outline:none}
-    .chat-dock button{background:#1b66ff;border:0;color:#fff;border-radius:999px;padding:9px 12px;cursor:pointer}
-    .chat-dock .ghost{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);color:#eaf2ff}
-
-    /* Chat-Ausgabe (Spotlight zeigt die Antwort; Chat-Pane bleibt versteckt) */
-    #chat-output{position:fixed;right:22px;bottom:92px;width:min(640px,88vw);max-height:min(58vh,460px);overflow:auto;
-      background:rgba(12,16,22,.62);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(10px);border-radius:18px;padding:12px;display:none;z-index:42}
-    #chat-output.show{display:block}
-
-    /* globales Ausblenden für Spotlight-Modus */
-    .chat-dock{ display:none !important; }
-    #chat-output{ display:none !important; }
-
-    /* --- Ticker sichtbar über Shapes halten --- */
-    .ticker-wrap{ z-index: 1200 !important; }   /* Shapes gehen bis ~1000 */
-
-    /* Ticker-Filter-Leiste */
-    #ticker-filters{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);display:flex;gap:8px;z-index:1250;font-size:14px}
-    #ticker-filters button{background:rgba(20,28,36,.64);border:1px solid rgba(255,255,255,.16);color:#eaf2ff;padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
-    #ticker-filters button.active{background:#1b66ff;color:#fff}
-
-    /* Neon-Farben für die individuellen Buttons */
-    #ticker-filters button[data-cat="about"]   {background:#00B0FF; color:#001f3f;}
-    #ticker-filters button[data-cat="news"]    {background:#FFD700; color:#3a2e00;}
-    #ticker-filters button[data-cat="prompts"] {background:#FF4FA3; color:#3c0023;}
-    #ticker-filters button[data-cat="projects"]{background:#00E676; color:#00331a;}
-    /* Hover-Effekt: leichte Aufhellung */
-    #ticker-filters button:hover{filter:brightness(1.25);}    
-    /* Aktiver Button: Schlagschatten für bessere Erkennbarkeit */
-    #ticker-filters button.active{box-shadow:0 0 12px rgba(255,255,255,0.8);} 
-
-    .privacy-slot{position:fixed;left:14px;bottom:14px;z-index:34}
+    /* Nav-Buttons */
+    #nav-buttons{position:fixed;left:50%;bottom:52px;transform:translateX(-50%);display:flex;gap:12px;z-index:1250}
+    #nav-buttons button{border-radius:999px;border:1px solid rgba(255,255,255,.16);padding:10px 16px;cursor:pointer;color:#0a1118;
+      font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.25);transition:filter .2s ease}
+    #nav-buttons .about{background:#00B0FF}
+    #nav-buttons .news{background:#FFD400}
+    #nav-buttons .prompts{background:#FF4FA3}
+    #nav-buttons .projects{background:#00E676}
+    #nav-buttons button:hover{filter:brightness(1.12)}
+    /* Personalisierungs-Dock */
+    #personalize{position:fixed;right:22px;bottom:22px;z-index:1260;display:flex;gap:8px;align-items:center;
+      background:rgba(12,16,22,.55);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);
+      padding:8px 10px;border-radius:12px}
+    #personalize input{width:160px;border-radius:8px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#eaf2ff;padding:6px 8px}
+    #personalize label{font-size:12px;opacity:.9}
+    #personalize .toggle{display:flex;gap:6px;align-items:center}
+    #pre-msg{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:1240;background:rgba(12,16,22,0.68);
+      border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);color:#eaf2ff;padding:10px 18px;border-radius:14px;
+      font-size:14px;line-height:1.3;pointer-events:none;max-width:88vw;text-align:center}
+    /* Dock-Editor */
+    #mini-editor{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:1400;display:none;
+      background:rgba(12,16,22,.75);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(10px);padding:10px;border-radius:16px;width:min(820px,92vw)}
+    #mini-editor textarea{width:100%;height:120px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#eaf2ff;padding:8px}
+    #mini-editor .bar{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+    #mini-editor .btn{border-radius:999px;border:1px solid rgba(255,255,255,.18);padding:8px 12px;cursor:pointer}
   </style>
-
-  <!-- Neon-Shapes Styles -->
-  <link rel="stylesheet" href="/hero-shapes.css?v=sp2">
 </head>
 <body>
-  <!-- Bühne -->
   <main class="stage" aria-label="Highway-Video mit organischen Neon-Shapes">
     <video id="bg-video" autoplay playsinline loop muted>
       <source src="/videos/desert_drive.mp4" type="video/mp4" />
@@ -61,93 +45,42 @@
     <div id="shape-layer"></div>
   </main>
 
-  <!-- (ausgeblendet) Chat-Ausgabe & Dock, nur für Kompatibilität vorhanden -->
-  <div id="chat-output" aria-live="polite"></div>
-  <div class="chat-dock" hidden>
-    <input id="chat-input" type="text" placeholder="Frage stellen… (KI, EU)" />
-    <button id="photo-btn" class="ghost" title="Foto nutzen">Foto</button>
-    <button id="chat-send">Senden</button>
+  <div id="pre-msg">💡 Prompt: „Erkläre ein Thema in 3 Sätzen + 1 Beispiel + 1 nächster Schritt.“</div>
+
+  <div id="nav-buttons">
+    <button class="about"   data-cat="about">Über</button>
+    <button class="news"    data-cat="news">News</button>
+    <button class="prompts" data-cat="prompts">Prompts</button>
+    <button class="projects" data-cat="projects">Projekte</button>
   </div>
 
-  <div class="privacy-slot" id="privacy-slot"></div>
-
-  <!-- Pre-Ticker-Message: Zeigt sofort nach Page-Load einen zufälligen KI-Tipp oder Prompt.
-       Diese Nachricht wird nach dem Start des Tickers automatisch ausgeblendet. -->
-  <div id="pre-ticker-message" style="position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:1250;background:rgba(12,16,22,0.68);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);color:#eaf2ff;padding:10px 18px;border-radius:14px;font-size:14px;line-height:1.3;pointer-events:none;max-width:88vw;text-align:center;">
-    <!-- Inhalt wird per Skript gesetzt -->
+  <div id="personalize">
+    <label>Branche:<input id="p-branch" placeholder="z.B. Agentur"></label>
+    <label>Ziel:<input id="p-goal" placeholder="z.B. Leads, Launch, Hiring"></label>
+    <div class="toggle">
+      <input type="checkbox" id="surprise">
+      <label for="surprise">Surprise‑Mode</label>
+    </div>
   </div>
 
-    <!-- Navigationsleiste für die Bubbles: Kategorien zum Umschalten
-         (Über, News, Prompts, Projekte). Jeder Button hat eine eigene
-         Neonfarbe und öffnet ein schwebendes Infofenster. -->
-  <div id="ticker-filters">
-    <button data-cat="about" class="active">Über</button>
-    <button data-cat="news">News</button>
-    <button data-cat="prompts">Prompts</button>
-    <button data-cat="projects">Projekte</button>
+  <div id="mini-editor">
+    <textarea id="mini-editor-text"></textarea>
+    <div class="bar">
+      <button class="btn" id="mini-send">Senden</button>
+      <button class="btn" id="mini-close">Schließen</button>
+    </div>
   </div>
 
-  <!-- Globale Konfiguration -->
   <script>
     window.HOHLROCKS_CHAT_BASE = 'https://hohlrocks-production.up.railway.app';
-    window.WOLF_SYSTEM_PROMPT = [
-      "Du antwortest im Namen von Wolf Hohl – TÜV-zertifizierter KI-Manager.",
-      "Ton: seriös, prägnant, deutsch, winter-klar, freundlich.",
-      "Erstantwort maximal 3 Sätze. Wo sinnvoll: 1 kurzes Beispiel, 1 pragmatischer nächster Schritt.",
-      "Beziehe dich – wenn passend – auf Wolfs Erfahrung (30 Jahre Marketing/Kommunikation, Trailer, >50 Mio Umsatz) und Rolle als KI-Manager.",
-      "Keine Buzzword-Orgel. Falls unsicher: kurz Risiko/Trade-off erwähnen."
-    ].join(" ");
-    // Spotlight-Rendering aktivieren
-    window.__ANSWER_MODE = 'spotlight';
+    window.WOLF_SYSTEM_PROMPT = "Antworte prägnant, deutsch, max. 3 Sätze + 1 Beispiel + 1 nächster Schritt. Wenn relevant: Risiko/Trade-off nennen.";
   </script>
 
-  <!-- Scripts: Shapes, Ticker, Spotlight, Demos -->
-  <script src="/js/hero-shapes.js?v=sp2"></script>
-  <script src="/js/analytics-lite.js?v=1"></script>
-
-  <!-- Reihenfolge wichtig: Ticker-Items vor Ticker -->
-  <script src="/js/ticker-items.js?v=usable1"></script>
-  <!-- Hinweis: Der klassische Ticker wurde entfernt. Bubbles übernehmen die Interaktion. -->
-
-  <!-- Antwort-Popup (ersetzt das alte Spotlight) -->
-  <!-- answer-popup zeigt Antworten in einem dezenten Overlay; style-switcher und Spotlight werden nicht mehr geladen -->
-  <script src="/js/answer-popup.js?v=1"></script>
-
-  <!-- Micro-Demos & Foto-Flows (Style-Switcher entfernt) -->
-  <script src="/js/micro-demos.js?v=1"></script>
-  <script src="/js/photo-flows.js?v=1"></script>
-
-  <!-- Ambient-Melodie (Objekt: window.WolfMelody) + Autostart nach erster Geste -->
-  <script src="/js/ambient-melody.js?v=1"></script>
-  <script src="/js/ambient-melody-autostart.js?v=1"></script>
-
-  <!-- Chat: JSON‑Fetcher statt SSE; holt Antworten über POST /chat und cached sie -->
-  <script src="/js/fetch-chat.js?v=json1"></script>
-
-  <!-- Ticker-Filter-Chips -->
-  <script src="/js/ticker-filters.js?v=1"></script>
-
-  <!-- Notfall: Ticker sichtbar & funktionsfähig erzwingen -->
-  <!-- Notfall-Skript entfernt: es gibt keinen Ticker mehr. -->
-
-  <!-- Zufällige Pre-Ticker-Meldung setzen und Fallback-Ausblendung -->
-  <script>
-    // Kurze, sofort nutzbare KI-Tipps/Prompts, die dem Nutzer die Wartezeit versüßen
-    const PRE_MSGS = [
-      '💡 Prompt: „Erkläre ein Thema in 3 Sätzen + 1 Beispiel + 1 nächster Schritt.“',
-      '🧪 Prompt: „Fasse dieses Video in 5 Bulletpoints zusammen:“ + Link einfügen',
-      '✉️ Tipp: „Erzeuge 3 Betreffzeilen + 1 A/B-Test für diese Mail:“ + Mailtext',
-      '📰 News: „Nenne die 3 wichtigsten KI-News des Tages in je 1 Satz.“',
-      '🎨 Kreativ: „Schreibe ein Haiku über die Zukunft der KI – auf Deutsch.“'
-    ];
-    document.addEventListener('DOMContentLoaded', () => {
-      const pm = document.getElementById('pre-ticker-message');
-      if(pm){ pm.textContent = PRE_MSGS[Math.floor(Math.random() * PRE_MSGS.length)]; }
-      // Fallback: Nach 10 Sekunden ausblenden, falls der Ticker ungewöhnlich spät startet
-      setTimeout(() => {
-        if(pm && pm.style.display !== 'none') pm.style.display = 'none';
-      }, 10000);
-    });
-  </script>
+  <script src="/js/hero-shapes.js?v=r2"></script>
+  <script src="/js/answer-popup.js?v=r2"></script>
+  <script src="/js/daily-feed.js?v=1"></script>
+  <script src="/js/ticker-items.js?v=bubbles3"></script>
+  <script src="/js/nav-filters.js?v=2"></script>
+  <script src="/js/mini-editor.js?v=1"></script>
 </body>
 </html>
