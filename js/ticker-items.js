@@ -1,41 +1,35 @@
-/*
- * ticker-items.js — praxisorientierte AI‑Tickerinhalte
- *
- * Diese Datei definiert das globale Array `window.__TICKER_ITEMS`, das
- * vom Ticker-Modul verwendet wird. Jeder Eintrag besteht aus einem
- * `label` (wird im Laufband angezeigt), einem `prompt` (wird an die
- * KI gesendet) und einer `category`, damit der Ticker gefiltert
- * werden kann. Kategorien: news, tips, prompts, projects.
- *
- * Die Inhalte fokussieren sich auf direkt anwendbare Use Cases,
- * nutzernahe Anleitungen und kreative Experimente rund um KI.
- */
-window.__TICKER_ITEMS = [
-  // Aktuelle und direkt anwendbare KI-News
-  { label: "KI-News: Video-Skripts", prompt: "Stell dir vor, ChatGPT schreibt komplette Video-Skripte. Beschreibe in zwei Sätzen, wie man ChatGPT nutzt, um ein kurzes Produktvideo zu planen, und gib ein konkretes Beispiel.", category: "news" },
-  { label: "KI-News: Lokale Modelle", prompt: "Berichte in zwei Sätzen über die neuesten Fortschritte bei lokalen KI-Modellen (z. B. Llama 3) und wie Nutzer sie privat einsetzen können.", category: "news" },
-  { label: "KI-News: Bildbearbeitung", prompt: "Erkläre in drei Sätzen, wie aktuelle KI-Bildtools Fotos verbessern können, und nenne zwei Beispiele, die du sofort ausprobieren kannst.", category: "news" },
-  { label: "KI-News: Sprachlernen", prompt: "Wie helfen KI-Apps beim Sprachenlernen? Gib zwei praktische Tipps und nenne eine App, die du testen kannst.", category: "news" },
-
-  // Konkrete Tipps und Anwendungsfälle
-  { label: "Tipp: E-Mail-Marketing", prompt: "Zeige, wie man ChatGPT nutzt, um personalisierte E-Mail-Betreffzeilen zu erstellen. Formuliere drei Beispiele.", category: "tips" },
-  { label: "Tipp: Ideengenerator", prompt: "Wie kann ChatGPT im Brainstorming helfen? Zeige zwei Methoden und gib ein kreatives Beispiel.", category: "tips" },
-  { label: "Tipp: Code-Helfer", prompt: "Nenne drei Bereiche, in denen ChatGPT beim Programmieren unterstützt (z. B. Fehlererklärung) und gib kurze Beispiele.", category: "tips" },
-  { label: "Tipp: Präsentationen", prompt: "Wie nutzt man ChatGPT, um schnell eine überzeugende Präsentation zu planen? Gib drei Schritte als Anleitung.", category: "tips" },
-  { label: "Tipp: Zeitmanagement", prompt: "Erkläre, wie ChatGPT dir helfen kann, deine To-Do-Liste zu priorisieren. Nenne zwei konkrete Hinweise.", category: "tips" },
-  { label: "Prompt-Ratgeber", prompt: "Was macht einen starken Prompt aus? Nenne drei Regeln und gib ein Beispiel für einen prägnanten Prompt.", category: "tips" },
-  { label: "Tipp: KI-Sicherheit", prompt: "Nenne drei praktische Maßnahmen zum Schutz sensibler Daten bei der Nutzung von ChatGPT.", category: "tips" },
-
-  // Kreative und inspirierende Prompts, die sofort ausprobiert werden können
-  { label: "Kreativprompt: Haiku", prompt: "Bitte ChatGPT, ein Haiku über die Zukunft der KI zu schreiben. Nur ein Gedicht, auf Deutsch.", category: "prompts" },
-  { label: "Kreativprompt: Story", prompt: "Lass ChatGPT eine Mini-Geschichte (drei Sätze) erzählen, in der KI deinen Alltag erleichtert.", category: "prompts" },
-  { label: "Karriere-Coach", prompt: "Welche drei KI-Fähigkeiten sollte ein Manager 2025 lernen? Bitte als Liste mit kurzen Begründungen.", category: "prompts" },
-  { label: "LinkedIn-Post", prompt: "Fordere ChatGPT auf, einen LinkedIn-Post zu verfassen, der dein neuestes Projekt in drei Sätzen vorstellt.", category: "prompts" },
-  { label: "Mentale Gesundheit", prompt: "Lass ChatGPT drei Tipps für digitale Achtsamkeit nennen, damit der Umgang mit KI gesund bleibt.", category: "prompts" },
-  { label: "Rezeptgenerator", prompt: "Nutze ChatGPT als Kochassistent: Bitte um ein einfaches Rezept aus Tomaten, Knoblauch und Pasta (maximal drei Sätze).", category: "prompts" },
-
-  // Projekt- und Community-Themen rund um hohl.rocks
-  { label: "Projekt-Update: hohl.rocks", prompt: "Gib einen kurzen Stand zu neuen Features bei hohl.rocks und wie sie den Nutzern helfen (maximal drei Sätze).", category: "projects" },
-  { label: "Community-Aufruf", prompt: "Bitte um Feedback von Nutzern: Welche Themen sollen auf hohl.rocks behandelt werden? Formuliere zwei Fragen.", category: "projects" },
-  { label: "Workshop-Tipp", prompt: "Kündige einen kostenlosen Mini-Workshop zu KI-Grundlagen an und nenne ein Key-Learning.", category: "projects" }
-];
+/* ticker-items.js — Bubble-Prompts */
+(function(){
+  window.__TICKER_ITEMS = [
+    { label: "LinkedIn‑Hook", category:"prompts", prompt: "Schreibe einen LinkedIn‑Post mit 1 Hook, 2 Kernpunkten und 1 CTA zu [Branche]/[Ziel]. Max. 3 Sätze." },
+    { label: "30‑Tage‑Plan", category:"prompts", prompt: "Erstelle eine 30‑Tage‑Roadmap für [Ziel], je Woche 3 Tasks, messbar & klein." },
+    { label: "Betreff‑Generator", category:"prompts", prompt: "Erzeuge 5 Betreffzeilen + 1 A/B‑Variante für diese Mail:\n\n[Mail‑Text]." },
+    { label: "Meeting‑Kurzprotokoll", category:"prompts", prompt: "Fasse das Meeting in 5 Bulletpoints + 1 Entscheidung + 1 To‑Do zusammen:\n\n[Transkript]." },
+    { label: "Style‑Transfer", category:"prompts", prompt: "Analysiere den Stil dieses Texts in 3 Regeln und schreibe Absatz X im selben Stil neu:\n\n[Text]." },
+    { label: "Quest‑Briefing", category:"prompts", prompt: "Formuliere eine 3‑Schritte‑Quest, mit der ich [Ziel] heute starte. Nutze Imperative." },
+    { label: "FAQ‑Destillation", category:"prompts", prompt: "Ziehe aus folgendem Text 7 FAQ‑Fragen + knappe Antworten, deutsch:\n\n[Text]." },
+    { label: "Design‑Brief", category:"prompts", prompt: "Erstelle ein Micro‑Briefing für eine Landingpage: Zielgruppe, Value, Proof, CTA – in 6 Zeilen." },
+    { label: "Transkript→Kapitel", category:"prompts", prompt: "Gliedere dieses Video/Audio in Kapitel mit Zeitstempeln + 1‑Satz‑Summary je Kapitel:\n\n[Link/Transkript]." },
+    { label: "Use‑Case‑Ideen", category:"prompts", prompt: "Nenne 10 unkonventionelle KI‑Use‑Cases für [Branche], je 1 Satz + 1 Tool‑Hinweis (ohne Link)." },
+    { label: "Risiko‑Check", category:"tips", prompt: "Liste 5 Risiken bei [Anwendung] + 1 pragmatischen Mitigations‑Schritt je Risiko." },
+    { label: "Prompt‑Linter", category:"tips", prompt: "Verbessere meinen Prompt in 3 Schritten (Ziel, Format, Constraints). Danach optimierte Fassung ausgeben:\n\n[Prompt]." },
+    { label: "PDF‑QA Pipeline", category:"tips", prompt: "Gib mir den Prompt‑Baukasten, um lange PDFs erst zu gliedern, dann kapitelweise Fragen zu stellen." },
+    { label: "RAG‑Mini", category:"tips", prompt: "Beschreibe kurz, wie ich 10 PDFs lokal als RAG nutze (Schritte + Tools), deutsch." },
+    { label: "Agent‑Checkliste", category:"tips", prompt: "Welche 7 Dinge prüfe ich, bevor ich einen KI‑Agenten in den Support lasse? Kurz & praxisnah." },
+    { label: "Redaktionsplan 10×", category:"tips", prompt: "Generiere einen 4‑Wochen‑Plan (2 Posts/Woche) für [Branche]/[Ziel] mit Hook‑Ideen & Post‑Format." },
+    { label: "Evaluation‑Snippets", category:"tips", prompt: "Gib 5 kurze Tests (Input→erwartete Antwort), um Prompts objektiv zu bewerten (Rubrik, Scoring)." },
+    { label: "AI‑Act Quick‑Audit", category:"tips", prompt: "Erzeuge eine 8‑Punkte‑Checkliste (Risiko, Daten, Logging, Oversight, DPIA‑Hinweis) für [Anwendung]." },
+    { label: "Brand‑Voice", category:"tips", prompt: "Extrahiere Tonalitätsregeln aus Beispielen (max. 5 Regeln) und baue 1‑Satz‑Stimm‑Statement:\n\n[Beispiele]." },
+    { label: "Trusted KI‑Check", category:"projects", prompt: "Skizziere 3 Schritte des Trusted KI‑Checks (AI‑Act/DSGVO/ISO 42001) mit jeweils 1 Output." },
+    { label: "Prompt‑Studio", category:"projects", prompt: "Schreibe einen 4‑Satz‑Teaser für ein Prompt‑Studio (Lernen, Testen, Teilen), inkl. 1 klaren CTA." },
+    { label: "KI‑Workshops KMU", category:"projects", prompt: "Formuliere eine Agenda (90 min) mit Output‑Formaten (Prompt‑Deck, Checkliste, Mini‑Plan)." },
+    { label: "KI‑News: Agentic‑AI", category:"news", prompt: "Fasse in 3 Sätzen die wichtigsten Agentic‑AI‑Trends zusammen + 1 Umsetzungsidee für KMU." },
+    { label: "KI‑News: SLM lokal", category:"news", prompt: "Erkläre in 2 Sätzen, wozu Small Language Models taugen + 1 Mini‑Beispiel ohne Cloud." },
+    { label: "KI‑News: Edge‑AI", category:"news", prompt: "Nenne 2 Vorteile von Edge‑AI und 1 Use‑Case, den ich an 1 Tag testen kann." },
+    { label: "AI×Musik", category:"prompts", prompt: "Komponiere 8 Bars „Radiohead‑Ambient“ als Text‑Lead‑Sheet (Akkorde + Leitmelodie) + 1 Visual‑Idee." },
+    { label: "Story‑Seeds", category:"prompts", prompt: "Gib 5 ungewöhnliche Plot‑Seeds (1 Satz), die KI auf der Autobahn symbolisch nutzen." },
+    { label: "Failure‑Prompts", category:"prompts", prompt: "Erzeuge 7 ‚Failure‑Prompts‘, mit denen ich KI‑Schwächen sichtbar mache – inkl. Sicherheits‑Hinweis." },
+    { label: "3‑Min‑Briefing", category:"prompts", prompt: "Schreibe ein 3‑Min‑Briefing zu [Thema], mit: 1 Ziel, 3 Stichpunkten, 1 Risiko, 1 nächster Schritt." },
+    { label: "Micro‑Copy 3×", category:"prompts", prompt: "Konvertiere diese Bullets in 3 Versionen Micro‑Copy (neutral, frech, seriös):\n\n[Bullets]." }
+  ];
+})();

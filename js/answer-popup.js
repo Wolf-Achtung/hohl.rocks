@@ -1,72 +1,29 @@
-/*
- * answer-popup.js — Einfaches Antwort-Popup für KI-Antworten
- *
- *  Dieses Skript erstellt ein modales Overlay, das bei einer neuen
- *  Antwort automatisch geöffnet wird. Es lauscht auf die globalen
- *  Ereignisse `chat:send`, `chat:delta` und `chat:done`, um den Text
- *  zu sammeln und schließlich anzuzeigen. Das Popup kann vom Nutzer
- *  geschlossen werden.
- */
+/* answer-popup.js — Popup mit Copy- & Try-it-Button */
 (function(){
-  'use strict';
-  let answer = '';
-  function ensurePopup(){
-    let pop = document.getElementById('answer-popup');
+  'use strict'; let textAcc='';
+  function ensure(){
+    let pop=document.getElementById('answer-popup');
     if(pop) return pop;
-    pop = document.createElement('div');
-    pop.id = 'answer-popup';
-    pop.style.position = 'fixed';
-    pop.style.left = '50%';
-    pop.style.top = '50%';
-    pop.style.transform = 'translate(-50%, -50%)';
-    pop.style.minWidth = '320px';
-    pop.style.maxWidth = '84vw';
-    pop.style.maxHeight = '70vh';
-    // Fast durchsichtiges Overlay (dunkel, aber deutlich leichter)
-    pop.style.background = 'rgba(12,16,22,0.40)';
-    pop.style.border = '1px solid rgba(255,255,255,0.14)';
-    pop.style.backdropFilter = 'blur(12px)';
-    pop.style.borderRadius = '18px';
-    pop.style.padding = '20px';
-    pop.style.boxSizing = 'border-box';
-    pop.style.zIndex = '1300';
-    pop.style.color = '#eaf2ff';
-    pop.style.display = 'none';
-    pop.style.overflowY = 'auto';
-    // Inhalt
-    const content = document.createElement('div');
-    content.className = 'popup-content';
-    pop.appendChild(content);
-    // Schließen-Button
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Schließen';
-    closeBtn.style.background = '#1b66ff';
-    closeBtn.style.color = '#fff';
-    closeBtn.style.border = '0';
-    closeBtn.style.borderRadius = '999px';
-    closeBtn.style.padding = '8px 16px';
-    closeBtn.style.cursor = 'pointer';
-    closeBtn.style.marginTop = '16px';
-    closeBtn.addEventListener('click', ()=>{ pop.style.display = 'none'; });
-    pop.appendChild(closeBtn);
-    document.body.appendChild(pop);
-    return pop;
+    pop=document.createElement('div'); pop.id='answer-popup';
+    pop.style.position='fixed'; pop.style.left='50%'; pop.style.top='15%'; pop.style.transform='translateX(-50%)';
+    pop.style.width='min(760px,92vw)'; pop.style.maxHeight='70vh';
+    pop.style.background='rgba(12,16,22,.40)'; pop.style.border='1px solid rgba(255,255,255,.14)';
+    pop.style.backdropFilter='blur(12px)'; pop.style.borderRadius='18px'; pop.style.padding='16px'; pop.style.zIndex='1400'; pop.style.color='#eaf2ff'; pop.style.display='none';
+    const content=document.createElement('div'); content.className='popup-content'; content.style.whiteSpace='pre-wrap'; content.style.maxHeight='56vh'; content.style.overflow='auto';
+    const bar=document.createElement('div'); bar.style.display='flex'; bar.style.gap='8px'; bar.style.justifyContent='flex-end'; bar.style.marginTop='10px';
+    const close=document.createElement('button'); close.textContent='Schließen'; styleBtn(close);
+    const copy=document.createElement('button'); copy.textContent='In Zwischenablage'; styleBtn(copy);
+    const tryit=document.createElement('button'); tryit.textContent='Im Editor öffnen'; styleBtn(tryit);
+    close.onclick=()=> pop.style.display='none';
+    copy.onclick=()=>{ navigator.clipboard.writeText(content.textContent||''); copy.textContent='Kopiert!'; setTimeout(()=> copy.textContent='In Zwischenablage', 1200); };
+    tryit.onclick=()=>{ const txt=content.textContent||''; try{ window.dispatchEvent(new CustomEvent('open:editor',{ detail:{ text: txt } })); }catch(_){}};
+    bar.appendChild(copy); bar.appendChild(tryit); bar.appendChild(close);
+    pop.appendChild(content); pop.appendChild(bar); document.body.appendChild(pop); return pop;
+    function styleBtn(b){ b.style.borderRadius='999px'; b.style.border='1px solid rgba(255,255,255,.18)'; b.style.padding='8px 12px'; b.style.cursor='pointer'; }
   }
-  function openPopup(text){
-    const pop = ensurePopup();
-    const content = pop.querySelector('.popup-content');
-    content.textContent = text;
-    pop.style.display = 'block';
-  }
-  // Expose a global helper so that other scripts can open the popup directly.
+  function openPopup(text){ const pop=ensure(); pop.querySelector('.popup-content').textContent=text; pop.style.display='block'; }
+  window.addEventListener('chat:send', ()=>{ textAcc=''; });
+  window.addEventListener('chat:delta', (ev)=>{ textAcc += (ev.detail && ev.detail.delta) ? ev.detail.delta : ''; });
+  window.addEventListener('chat:done', ()=>{ if(textAcc && textAcc.trim()){ openPopup(textAcc.trim()); }});
   window.openAnswerPopup = openPopup;
-  // Ereignisse abfangen
-  window.addEventListener('chat:send', ()=>{ answer = ''; });
-  window.addEventListener('chat:delta', (ev)=>{
-    const delta = (ev.detail && ev.detail.delta) || '';
-    answer += delta;
-  });
-  window.addEventListener('chat:done', ()=>{
-    if(answer && answer.trim()){ openPopup(answer.trim()); }
-  });
 })();
