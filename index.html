@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>hohl.rocks — Neon + Radiohead Ambient</title>
+  <title>hohl.rocks — Neon Gold Lab</title>
   <link rel="stylesheet" href="/hero-shapes.css">
   <style>
     html,body{height:100%;margin:0;background:#0a1118;color:#eaf2ff;font:500 16px/1.45 ui-sans-serif,system-ui}
@@ -35,7 +35,7 @@
     <div id="shape-layer"></div>
   </main>
 
-  <div id="pre-msg">💡 Prompt: „Erkläre ein Thema in 3 Sätzen + 1 Beispiel + 1 nächster Schritt.“</div>
+  <div id="pre-msg">💡 Tipp: Doppelklick auf „News“ → Model‑Picker. Bubble „Research‑Agent“ streamt Recherche. Bubble „Cage‑Match“ vergleicht 2 Modelle.</div>
 
   <div id="nav-buttons">
     <button class="about"   data-cat="about">Über</button>
@@ -44,16 +44,21 @@
     <button class="projects" data-cat="projects">Projekte</button>
   </div>
 
-  <!-- Minimaler Sound-Toggle -->
+  <!-- Minimaler Sound-Toggle (Radiohead only) -->
   <div id="ambient">
     <button data-act="toggle" class="on">Sound an/aus</button>
   </div>
 
-  <script src="/js/hero-shapes.js?v=labelfix3"></script>
+  <!-- Reihenfolge: zuerst Content/Feeds & Items, dann Shapes -->
   <script src="/js/answer-popup.js?v=r2"></script>
   <script src="/js/daily-feed.js?v=1"></script>
-  <script src="/js/ticker-items.js?v=gold2"></script>
+  <script src="/js/ticker-items.js?v=goldlab2"></script>
+  <script src="/js/hero-shapes.js?v=goldlab2"></script>
   <script src="/js/nav-filters.js?v=3"></script>
+  <script src="/js/model-picker.js?v=2"></script>
+  <script src="/js/research-agent.js?v=2"></script>
+  <script src="/js/cage-match.js?v=1"></script>
+  <script src="/js/visual-lab.js?v=2"></script>
   <script src="/js/ambient-sound.js?v=radiohead"></script>
 </body>
 </html>
