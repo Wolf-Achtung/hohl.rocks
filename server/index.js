@@ -1,22 +1,25 @@
 // server/index.js — hardened CORS + graceful SIGTERM
 import express from 'express';
-import { router as research } from './routes/research-agent.js';
-import { router as visual } from './routes/visual-lab.js';
-import { router as compare } from './routes/llm-compare.js';
-import { router as modelsLive } from './routes/models-live.js';
+import { router as research }  from './routes/research-agent.js';
+import { router as newsLive }  from './routes/news-live.js';
+import { router as visual }    from './routes/visual-lab.js';
+import { router as compare }   from './routes/llm-compare.js';
+import { router as modelsLive }from './routes/models-live.js';
 import cors from 'cors';
 import { config } from 'dotenv';
 import fetch from 'node-fetch';
 config();
 
 const app = express();
-app.use(express.json({ limit: '12mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.static(path.join(__dirname, '..')));
+app.use('/api', express.static(path.join(__dirname, '..', 'api')));
+
 app.use(research);
+app.use(newsLive);
 app.use(visual);
 app.use(compare);
 app.use(modelsLive);
-app.use(newsLive);
-app.use('/api', express.static('api'));
 
 // Parse ALLOWED_ORIGINS robustly: split on comma/semicolon + trim
 function parseAllowed(originsStr){
