@@ -1,22 +1,17 @@
-/* hero-shapes.js — smoother, slower, audio‑reactive */
+/* hero-shapes.js — Neon Bubbles with hint subtitle + hover tip */
 (function(){
   const TAU=Math.PI*2, lerp=(a,b,t)=>a+(b-a)*t;
   const NEON=['#00F5D4','#7CF4FF','#FFD400','#FF4FA3','#00E676','#A0FF1A','#9C64FF','#FFA26B'];
   const pick=()=>NEON[(Math.random()*NEON.length)|0];
-  function path(cx,cy,r=150,n=16,v=0.12){
-    const step=TAU/n, pts=[];
-    for(let i=0;i<n;i++){ const ang=i*step, rad=r*(1-v/2+Math.random()*v); pts.push({x:cx+Math.cos(ang)*rad,y:cy+Math.sin(ang)*rad}); }
-    let d=`M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`;
-    for(let i=0;i<n;i++){ const p0=pts[i], p1=pts[(i+1)%pts.length]; const cxp=(p0.x+p1.x)/2, cyp=(p0.y+p1.y)/2; d+=` Q ${p0.x.toFixed(2)} ${p0.y.toFixed(2)}, ${cxp.toFixed(2)} ${cyp.toFixed(2)}`; }
-    return d+' Z';
-  }
+  function path(cx,cy,r=150,n=16,v=0.12){const step=TAU/n, pts=[];for(let i=0;i<n;i++){const ang=i*step, rad=r*(1-v/2+Math.random()*v);pts.push({x:cx+Math.cos(ang)*rad,y:cy+Math.sin(ang)*rad});}
+    let d=`M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`;for(let i=0;i<n;i++){const p0=pts[i], p1=pts[(i+1)%pts.length];const cxp=(p0.x+p1.x)/2,cyp=(p0.y+p1.y)/2;d+=` Q ${p0.x.toFixed(2)} ${p0.y.toFixed(2)}, ${cxp.toFixed(2)} ${cyp.toFixed(2)}`;}return d+' Z';}
   function holder(){ let h=document.getElementById('shapes'); if(!h){ h=document.createElement('div'); h.id='shapes'; document.body.appendChild(h);} return h; }
   function spawn(h){
     const W=innerWidth,H=innerHeight,B=Math.min(W,H);
     const size=B*lerp(0.28,0.56,Math.random());
     const AX=lerp(50,110,Math.random()), AY=lerp(42,96,Math.random());
-    const speed=lerp(0.006,0.018,Math.random()); // slower
-    const TX=lerp(380,560,Math.random()), TY=lerp(420,600,Math.random());
+    const speed=lerp(0.008,0.018,Math.random());
+    const TX=lerp(360,560,Math.random()), TY=lerp(380,600,Math.random());
     const x0=lerp(AX,Math.max(AX,W-size-AX),Math.random()), y0=lerp(AY,Math.max(AY,H-size-AY),Math.random());
     const color=pick();
     const el=document.createElement('div'); el.className='shape';
@@ -29,16 +24,18 @@
     if(Array.isArray(window.__TICKER_ITEMS)&&window.__TICKER_ITEMS.length){
       if(typeof window.__bubbleIndex!=='number') window.__bubbleIndex=0;
       const it=window.__TICKER_ITEMS[ (window.__bubbleIndex++) % window.__TICKER_ITEMS.length ];
-      const lbl=document.createElement('div'); lbl.textContent=it.label;
-      Object.assign(lbl.style,{position:'absolute',left:'50%',top:'50%',transform:'translate(-50%,-50%)',color:'#0a1118',textAlign:'center',pointerEvents:'none',
-        fontSize:'13px',fontWeight:'800',letterSpacing:'0.2px',background:'rgba(255,255,255,.35)',padding:'4px 8px',borderRadius:'10px',textShadow:'0 1px 2px rgba(255,255,255,.6)'});
-      el.appendChild(lbl);
-      el.dataset.prompt=it.prompt||''; if(it.action) el.dataset.action=it.action; el.style.cursor='pointer';
+      const wrap=document.createElement('div'); wrap.style.position='absolute'; wrap.style.left='50%'; wrap.style.top='50%'; wrap.style.transform='translate(-50%,-50%)'; wrap.style.textAlign='center'; wrap.style.pointerEvents='none';
+      const title=document.createElement('div'); title.textContent=it.label; Object.assign(title.style,{color:'#0a1118',fontWeight:'800',fontSize:'13px',background:'rgba(255,255,255,.35)',padding:'4px 8px',borderRadius:'10px',textShadow:'0 1px 2px rgba(255,255,255,.6)'});
+      const hint=document.createElement('div'); hint.textContent=it.hint||'Klick – Ergebnis erscheint im Fenster'; Object.assign(hint.style,{marginTop:'6px',fontSize:'11px',opacity:.9,background:'rgba(12,16,22,.35)',color:'#eaf2ff',padding:'3px 6px',borderRadius:'8px'});
+      wrap.appendChild(title); wrap.appendChild(hint); el.appendChild(wrap);
+      el.dataset.prompt=it.prompt||''; el.dataset.action=it.action||''; el.style.cursor='pointer';
+      el.addEventListener('mouseenter', (ev)=>{ if(window.UXCoach&&UXCoach.tip) UXCoach.tip((it.tooltip||it.hint||it.label), ev.clientX, ev.clientY); });
+      el.addEventListener('mouseleave', ()=>{ if(window.UXCoach&&UXCoach.hide) UXCoach.hide(); });
       el.addEventListener('click',()=>{
         const act=el.dataset.action;
         if(act && window.VisualLab && typeof VisualLab.handle==='function'){ VisualLab.handle(act); return; }
-        if(act==='research'){ if(window.startResearch){ const q=prompt('Thema für Live‑Recherche?'); if(q) startResearch(q); return; } }
-        if(act==='cage-match'){ if(window.openCageMatch){ openCageMatch(); return; } }
+        if(act==='research' && window.startResearch){ const q=prompt('Thema für Live‑Recherche?'); if(q) startResearch(q); return; }
+        if(act==='cage-match' && window.openCageMatch){ openCageMatch(); return; }
         const p=el.dataset.prompt||''; if(window.openAnswerPopup) window.openAnswerPopup(p);
       });
     }
@@ -49,9 +46,8 @@
         const t=(performance.now()*speed)-t0;
         const dx=Math.sin(t/TX)*AX, dy=Math.cos(t/TY)*AY;
         const p=Math.min(1,(performance.now()-t0/speed)/life);
-        const eIn=Math.min(1,p/0.16), eOut=1-Math.min(1,(p-0.84)/0.16), env=Math.min(eIn,eOut);
-        const level=(window.__ambientLevel||0)*0.06; // audio reactive
-        const base=0.98+level, pulse=Math.sin(t/22)*0.002;
+        const eIn=Math.min(1,p/0.2), eOut=1-Math.min(1,(p-0.8)/0.2), env=Math.min(eIn,eOut);
+        const base=0.98, pulse=Math.sin(t/24)*0.002;
         el.style.opacity=(0.94*env).toFixed(2);
         el.style.transform=`translate3d(${dx.toFixed(2)}px,${dy.toFixed(2)}px,0) scale(${(base+pulse).toFixed(3)})`;
       }
@@ -60,7 +56,7 @@
     el.style.opacity='0'; h.appendChild(el); requestAnimationFrame(()=>{ el.style.opacity='0.95'; }); draw();
     setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>{ cancelAnimationFrame(el.__raf); el.remove(); spawn(h); }, 4200); }, life);
   }
-  function init(){ const h=holder(); const n= innerWidth<820 ? 8 : 12; for(let i=0;i<n;i++) setTimeout(()=>spawn(h), 400+i*1600);
+  function init(){ const h=holder(); const n= innerWidth<820 ? 8 : 12; for(let i=0;i<n;i++) setTimeout(()=>spawn(h), 600+i*1600);
     setTimeout(()=>{ const pm=document.getElementById('pre-msg'); if(pm) pm.remove(); }, 10000);
   }
   if(document.readyState!=='loading') init(); else addEventListener('DOMContentLoaded', init);
