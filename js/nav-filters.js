@@ -1,6 +1,5 @@
-/* nav-filters.js — 4 Buttons -> Popup */
+/* nav-filters.js — Popup-Triggers */
 (function(){
-  'use strict';
   const about=[
     "Wolf Hohl ist TÜV‑zertifizierter KI‑Manager mit 30+ Jahren Marketing‑Erfahrung. Fokus: pragmatische, kreative KI‑Lösungen für Medien & Mittelstand.",
     "Ich helfe Teams, KI produktiv zu nutzen: von Quickwins bis Trusted KI‑Check (AI Act/DSGVO/ISO 42001)."
