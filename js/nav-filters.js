@@ -1,4 +1,4 @@
-/* nav-filters.js — 4 Neon-Buttons -> Popup-Panels */
+/* nav-filters.js — 4 Buttons -> Popup */
 (function(){
   'use strict';
   const about=[
