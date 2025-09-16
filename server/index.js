@@ -15,6 +15,7 @@ app.use(research);
 app.use(visual);
 app.use(compare);
 app.use(modelsLive);
+app.use(newsLive);
 app.use('/api', express.static('api'));
 
 // Parse ALLOWED_ORIGINS robustly: split on comma/semicolon + trim
