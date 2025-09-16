@@ -1,4 +1,4 @@
-/* hero-shapes.js — Neon Bubbles (slow & smooth), label pill, action routing, pause offscreen */
+/* hero-shapes.js — smoother, slower, audio‑reactive */
 (function(){
   const TAU=Math.PI*2, lerp=(a,b,t)=>a+(b-a)*t;
   const NEON=['#00F5D4','#7CF4FF','#FFD400','#FF4FA3','#00E676','#A0FF1A','#9C64FF','#FFA26B'];
@@ -13,10 +13,10 @@
   function holder(){ let h=document.getElementById('shapes'); if(!h){ h=document.createElement('div'); h.id='shapes'; document.body.appendChild(h);} return h; }
   function spawn(h){
     const W=innerWidth,H=innerHeight,B=Math.min(W,H);
-    const size=B*lerp(0.24,0.52,Math.random());
-    const AX=lerp(52,120,Math.random()), AY=lerp(46,100,Math.random());
-    const speed=lerp(0.010,0.030,Math.random());
-    const TX=lerp(280,460,Math.random()), TY=lerp(300,480,Math.random());
+    const size=B*lerp(0.28,0.56,Math.random());
+    const AX=lerp(50,110,Math.random()), AY=lerp(42,96,Math.random());
+    const speed=lerp(0.006,0.018,Math.random()); // slower
+    const TX=lerp(380,560,Math.random()), TY=lerp(420,600,Math.random());
     const x0=lerp(AX,Math.max(AX,W-size-AX),Math.random()), y0=lerp(AY,Math.max(AY,H-size-AY),Math.random());
     const color=pick();
     const el=document.createElement('div'); el.className='shape';
@@ -42,25 +42,25 @@
         const p=el.dataset.prompt||''; if(window.openAnswerPopup) window.openAnswerPopup(p);
       });
     }
-    let running=true;
-    const io=new IntersectionObserver((entries)=>{ running = entries[0]?.isIntersecting!==false; });
-    io.observe(el);
-    const t0=performance.now()*speed, PULSE_A=0.0012, PULSE_T=24, life=42000;
+    let running=true; const io=new IntersectionObserver((e)=>{ running=e[0]?.isIntersecting!==false; }); io.observe(el);
+    const t0=performance.now()*speed, life=56000;
     function draw(){
       if(running){
         const t=(performance.now()*speed)-t0;
         const dx=Math.sin(t/TX)*AX, dy=Math.cos(t/TY)*AY;
         const p=Math.min(1,(performance.now()-t0/speed)/life);
         const eIn=Math.min(1,p/0.16), eOut=1-Math.min(1,(p-0.84)/0.16), env=Math.min(eIn,eOut);
-        const grow=1-Math.pow(1-p,2), base=lerp(0.92,1.08,grow), pulse=Math.sin(t/PULSE_T)*PULSE_A;
-        el.style.opacity=(0.94*env).toFixed(2); el.style.transform=`translate3d(${dx.toFixed(2)}px,${dy.toFixed(2)}px,0) scale(${(base+pulse).toFixed(3)})`;
+        const level=(window.__ambientLevel||0)*0.06; // audio reactive
+        const base=0.98+level, pulse=Math.sin(t/22)*0.002;
+        el.style.opacity=(0.94*env).toFixed(2);
+        el.style.transform=`translate3d(${dx.toFixed(2)}px,${dy.toFixed(2)}px,0) scale(${(base+pulse).toFixed(3)})`;
       }
       el.__raf=requestAnimationFrame(draw);
     }
     el.style.opacity='0'; h.appendChild(el); requestAnimationFrame(()=>{ el.style.opacity='0.95'; }); draw();
     setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>{ cancelAnimationFrame(el.__raf); el.remove(); spawn(h); }, 4200); }, life);
   }
-  function init(){ const h=holder(); const n= innerWidth<820 ? 8 : 12; for(let i=0;i<n;i++) setTimeout(()=>spawn(h), 600+i*1400);
+  function init(){ const h=holder(); const n= innerWidth<820 ? 8 : 12; for(let i=0;i<n;i++) setTimeout(()=>spawn(h), 400+i*1600);
     setTimeout(()=>{ const pm=document.getElementById('pre-msg'); if(pm) pm.remove(); }, 10000);
   }
   if(document.readyState!=='loading') init(); else addEventListener('DOMContentLoaded', init);

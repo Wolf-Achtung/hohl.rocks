@@ -1,4 +1,4 @@
-/* nav-filters.js — Popup-Triggers */
+/* nav-filters.js — Über/News/Prompts/Projekte */
 (function(){
   const about=[
     "Wolf Hohl ist TÜV‑zertifizierter KI‑Manager mit 30+ Jahren Marketing‑Erfahrung. Fokus: pragmatische, kreative KI‑Lösungen für Medien & Mittelstand.",
@@ -13,7 +13,16 @@
     const b=e.target.closest('button'); if(!b) return;
     const cat=b.dataset.cat; let msg='';
     if(cat==='about'){ msg = about[Math.floor(Math.random()*about.length)]; }
-    else if(cat==='news'){ const arr=await (window.DailyFeed&&DailyFeed.news?DailyFeed.news():Promise.resolve([])); msg=arr[Math.floor(Math.random()*arr.length)]||"Heute: Fokus auf verantwortungsvolle KI‑Nutzung."; }
+    else if(cat==='news'){
+      try{
+        const live=await fetch('/news/live',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()); 
+        const blk=live.items.map(x=>`• ${x.gist}\n   ${x.url}`).join('\n\n');
+        msg = 'KI‑News (kuratiert) — letzte Aktualisierung: '+live.updated+'\n\n'+blk;
+      }catch(_){
+        const arr=await (window.DailyFeed&&DailyFeed.news?DailyFeed.news():Promise.resolve([]));
+        msg=arr[Math.floor(Math.random()*arr.length)]||"Heute: Fokus auf verantwortungsvolle KI‑Nutzung.";
+      }
+    }
     else if(cat==='prompts'){ const arr=await (window.DailyFeed&&DailyFeed.prompt?DailyFeed.prompt():Promise.resolve([])); msg=arr[0]||"🧠 Prompt: „Schreibe einen 3‑Satz‑Pitch …“"; }
     else if(cat==='projects'){ msg = projects[Math.floor(Math.random()*projects.length)]; }
     if(msg && window.openAnswerPopup) window.openAnswerPopup(msg);
