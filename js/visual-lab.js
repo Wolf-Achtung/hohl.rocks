@@ -1,10 +1,10 @@
-/* visual-lab.js — file hooks & calls to backend visual routes */
-(function(){
+/* visual-lab.js — file hooks & server calls; shows results as HTML */(function(){
   const input = document.createElement('input'); input.type='file'; input.accept='image/*'; input.style.display='none'; document.body.appendChild(input);
   function toB64(file){ return new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(file); }); }
-  async function call(path, body){ const res=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); return res.json(); }
-  async function faceAge(){ input.onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const b64=await toB64(f); const out=await call('/image/face-age',{imageBase64:b64,years:20}); openAnswerPopup('Aging‑Preview (Stub):\n'+(out.imageUrl||'keine Vorschau')); }; input.click(); }
-  async function variations(){ input.onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const b64=await toB64(f); const out=await call('/image/variations',{imageBase64:b64,n:4,style:'cinematic'}); openAnswerPopup('Varianten (Stub): '+(out.images?out.images.join(', '):'keine')); }; input.click(); }
-  async function storyboard(){ const topic=prompt('Storyboard‑Thema?'); if(!topic) return; const out=await call('/video/storyboard',{topic,shots:6}); openAnswerPopup('Storyboard (Stub):\n'+(out.frames?out.frames.join('\n'):'keine Frames')); }
+  async function call(path, body){ const res=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!res.ok) throw new Error(await res.text()); return res.json(); }
+  function img(html){ openAnswerPopup(html, true); }
+  async function faceAge(){ input.onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const b64=await toB64(f); const out=await call('/image/face-age',{imageBase64:b64,years:20}); img(`<div style="display:grid;gap:10px;justify-items:center"><img src="${out.imageUrl}" style="max-width:92%;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35)"><small>${out.note||''}</small></div>`); }; input.click(); }
+  async function variations(){ input.onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const b64=await toB64(f); const out=await call('/image/variations',{imageBase64:b64}); const grid=(out.images||[]).map(u=>`<img src="${u}" style="width:100%;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.32)">`).join(''); img(`<div style="display:grid;gap:10px;grid-template-columns:repeat(2,1fr);">${grid}</div>`); }; input.click(); }
+  async function storyboard(){ const topic=prompt('Storyboard‑Thema?'); if(!topic) return; const out=await call('/video/storyboard',{topic,shots:6}); const list=(out.frames||[]).map(s=>`<li>${s}</li>`).join(''); img(`<ol style="padding-left:18px">${list}</ol>`); }
   window.VisualLab={ handle:(act)=>{ if(act==='face-age') faceAge(); else if(act==='variations') variations(); else if(act==='storyboard') storyboard(); } };
 })();

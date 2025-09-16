@@ -1,4 +1,4 @@
-/* hero-shapes.js — Neon Bubbles (slow), label pill, optional action */
+/* hero-shapes.js — Neon Bubbles (slow & smooth), label pill, action routing */
 (function(){
   const TAU=Math.PI*2, lerp=(a,b,t)=>a+(b-a)*t;
   const NEON=['#00F5D4','#7CF4FF','#FFD400','#FF4FA3','#00E676','#A0FF1A','#9C64FF','#FFA26B'];
@@ -13,10 +13,10 @@
   function holder(){ let h=document.getElementById('shapes'); if(!h){ h=document.createElement('div'); h.id='shapes'; document.body.appendChild(h);} return h; }
   function spawn(h){
     const W=innerWidth,H=innerHeight,B=Math.min(W,H);
-    const size=B*lerp(0.22,0.48,Math.random());
-    const AX=lerp(48,110,Math.random()), AY=lerp(42,95,Math.random());
-    const speed=lerp(0.012,0.040,Math.random()); // slower
-    const TX=lerp(260,420,Math.random()), TY=lerp(280,440,Math.random());
+    const size=B*lerp(0.24,0.52,Math.random());
+    const AX=lerp(52,120,Math.random()), AY=lerp(46,100,Math.random());
+    const speed=lerp(0.010,0.030,Math.random()); // extra smooth
+    const TX=lerp(280,460,Math.random()), TY=lerp(300,480,Math.random());
     const x0=lerp(AX,Math.max(AX,W-size-AX),Math.random()), y0=lerp(AY,Math.max(AY,H-size-AY),Math.random());
     const color=pick();
     const el=document.createElement('div'); el.className='shape';
@@ -26,7 +26,6 @@
     const fill=document.createElementNS(ns,'path'); fill.setAttribute('fill',color); fill.setAttribute('opacity','0.78');
     const stroke=document.createElementNS(ns,'path'); stroke.setAttribute('stroke',color); stroke.setAttribute('fill','none'); stroke.setAttribute('opacity','0.55');
     const d=path(200,200,150,16,0.12); fill.setAttribute('d',d); stroke.setAttribute('d',d); svg.appendChild(fill); svg.appendChild(stroke); el.appendChild(svg);
-    // label + action/prompt
     if(Array.isArray(window.__TICKER_ITEMS)&&window.__TICKER_ITEMS.length){
       if(typeof window.__bubbleIndex!=='number') window.__bubbleIndex=0;
       const it=window.__TICKER_ITEMS[ (window.__bubbleIndex++) % window.__TICKER_ITEMS.length ];
@@ -43,18 +42,18 @@
         const p=el.dataset.prompt||''; if(window.openAnswerPopup) window.openAnswerPopup(p);
       });
     }
-    const t0=performance.now()*speed, PULSE_A=0.0015, PULSE_T=22;
+    const t0=performance.now()*speed, PULSE_A=0.0012, PULSE_T=24;
     function draw(){
       const t=(performance.now()*speed)-t0;
       const dx=Math.sin(t/TX)*AX, dy=Math.cos(t/TY)*AY;
-      const life=38000; const p=Math.min(1,(performance.now()-t0/speed)/life);
-      const eIn=Math.min(1,p/0.14), eOut=1-Math.min(1,(p-0.86)/0.14), env=Math.min(eIn,eOut);
-      const grow=1-Math.pow(1-p,2), base=lerp(0.92,1.10,grow), pulse=Math.sin(t/PULSE_T)*PULSE_A;
-      el.style.opacity=(0.92*env).toFixed(2); el.style.transform=`translate3d(${dx.toFixed(2)}px,${dy.toFixed(2)}px,0) scale(${(base+pulse).toFixed(3)})`;
+      const life=42000; const p=Math.min(1,(performance.now()-t0/speed)/life);
+      const eIn=Math.min(1,p/0.16), eOut=1-Math.min(1,(p-0.84)/0.16), env=Math.min(eIn,eOut);
+      const grow=1-Math.pow(1-p,2), base=lerp(0.92,1.08,grow), pulse=Math.sin(t/PULSE_T)*PULSE_A;
+      el.style.opacity=(0.94*env).toFixed(2); el.style.transform=`translate3d(${dx.toFixed(2)}px,${dy.toFixed(2)}px,0) scale(${(base+pulse).toFixed(3)})`;
       el.__raf=requestAnimationFrame(draw);
     }
     el.style.opacity='0'; h.appendChild(el); requestAnimationFrame(()=>{ el.style.opacity='0.95'; }); draw();
-    setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>{ cancelAnimationFrame(el.__raf); el.remove(); spawn(h); }, 4200); }, 38000);
+    setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>{ cancelAnimationFrame(el.__raf); el.remove(); spawn(h); }, 4200); }, 42000);
   }
   function init(){ const h=holder(); const n= innerWidth<820 ? 8 : 12; for(let i=0;i<n;i++) setTimeout(()=>spawn(h), 600+i*1400);
     setTimeout(()=>{ const pm=document.getElementById('pre-msg'); if(pm) pm.remove(); }, 10000);
