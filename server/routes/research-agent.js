@@ -37,8 +37,8 @@ async function tavilySearch(query){
     query,
     search_depth: 'advanced',
     max_results: 10,
-    include_images: False,
-    include_answer: False
+    include_images: false,
+    include_answer: false
   };
   const r = await fetch('https://api.tavily.com/search', {
     method: 'POST',
@@ -52,7 +52,6 @@ async function tavilySearch(query){
 }
 
 async function openaiSynthesis(items, query){
-  // if no OpenAI key, return trimmed list
   if(!process.env.OPENAI_API_KEY){
     return {
       text: 'OPENAI_API_KEY fehlt – zeige nur triagierte Quellen.',
@@ -84,14 +83,12 @@ async function openaiSynthesis(items, query){
 }
 
 async function runPipeline(query){
-  // cache
   const hit = cache.get(query);
   const now = Date.now();
   if(hit && (now - hit.t) < TTL_MS){
     return hit;
   }
 
-  // 1) Plan
   const plan = [
     'Absicht klären und Suchpfad festlegen',
     'Seriöse, aktuelle Quellen suchen (Tavily)',
@@ -99,7 +96,6 @@ async function runPipeline(query){
     'Synthese (OpenAI) mit erzwungenen Quellen'
   ];
 
-  // 2) Suche
   const raw = await tavilySearch(query);
   const triage = (raw.results || [])
     .filter(r => r && r.url && filterDomains(r.url))
@@ -110,7 +106,6 @@ async function runPipeline(query){
       content: r.content || ''
     }));
 
-  // 3) Synthese
   const synth = await openaiSynthesis(triage, query);
 
   const out = { t: now, plan, triage, synth };
@@ -128,11 +123,9 @@ router.get('/research-sse', async (req, res) => {
   res.setHeader('Cache-Control','no-cache');
   res.setHeader('Connection', 'keep-alive');
 
-  // Initial ping
   sendSSE(res, { chunk:{ phase:'start', query:q }});
 
   try{
-    // Plan (client zeigt Steps an)
     const plan = [
       'Absicht & Suchpfad',
       'Seriöse Quellen',
