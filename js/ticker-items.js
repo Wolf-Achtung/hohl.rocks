@@ -1,35 +1,15 @@
-/* ticker-items.js — Bubble-Prompts */
+/* ticker-items.js — Bubble-Prompts (Kurz & produktiv) */
 (function(){
   window.__TICKER_ITEMS = [
-    { label: "LinkedIn‑Hook", category:"prompts", prompt: "Schreibe einen LinkedIn‑Post mit 1 Hook, 2 Kernpunkten und 1 CTA zu [Branche]/[Ziel]. Max. 3 Sätze." },
-    { label: "30‑Tage‑Plan", category:"prompts", prompt: "Erstelle eine 30‑Tage‑Roadmap für [Ziel], je Woche 3 Tasks, messbar & klein." },
-    { label: "Betreff‑Generator", category:"prompts", prompt: "Erzeuge 5 Betreffzeilen + 1 A/B‑Variante für diese Mail:\n\n[Mail‑Text]." },
-    { label: "Meeting‑Kurzprotokoll", category:"prompts", prompt: "Fasse das Meeting in 5 Bulletpoints + 1 Entscheidung + 1 To‑Do zusammen:\n\n[Transkript]." },
-    { label: "Style‑Transfer", category:"prompts", prompt: "Analysiere den Stil dieses Texts in 3 Regeln und schreibe Absatz X im selben Stil neu:\n\n[Text]." },
-    { label: "Quest‑Briefing", category:"prompts", prompt: "Formuliere eine 3‑Schritte‑Quest, mit der ich [Ziel] heute starte. Nutze Imperative." },
-    { label: "FAQ‑Destillation", category:"prompts", prompt: "Ziehe aus folgendem Text 7 FAQ‑Fragen + knappe Antworten, deutsch:\n\n[Text]." },
-    { label: "Design‑Brief", category:"prompts", prompt: "Erstelle ein Micro‑Briefing für eine Landingpage: Zielgruppe, Value, Proof, CTA – in 6 Zeilen." },
-    { label: "Transkript→Kapitel", category:"prompts", prompt: "Gliedere dieses Video/Audio in Kapitel mit Zeitstempeln + 1‑Satz‑Summary je Kapitel:\n\n[Link/Transkript]." },
-    { label: "Use‑Case‑Ideen", category:"prompts", prompt: "Nenne 10 unkonventionelle KI‑Use‑Cases für [Branche], je 1 Satz + 1 Tool‑Hinweis (ohne Link)." },
-    { label: "Risiko‑Check", category:"tips", prompt: "Liste 5 Risiken bei [Anwendung] + 1 pragmatischen Mitigations‑Schritt je Risiko." },
-    { label: "Prompt‑Linter", category:"tips", prompt: "Verbessere meinen Prompt in 3 Schritten (Ziel, Format, Constraints). Danach optimierte Fassung ausgeben:\n\n[Prompt]." },
-    { label: "PDF‑QA Pipeline", category:"tips", prompt: "Gib mir den Prompt‑Baukasten, um lange PDFs erst zu gliedern, dann kapitelweise Fragen zu stellen." },
-    { label: "RAG‑Mini", category:"tips", prompt: "Beschreibe kurz, wie ich 10 PDFs lokal als RAG nutze (Schritte + Tools), deutsch." },
-    { label: "Agent‑Checkliste", category:"tips", prompt: "Welche 7 Dinge prüfe ich, bevor ich einen KI‑Agenten in den Support lasse? Kurz & praxisnah." },
-    { label: "Redaktionsplan 10×", category:"tips", prompt: "Generiere einen 4‑Wochen‑Plan (2 Posts/Woche) für [Branche]/[Ziel] mit Hook‑Ideen & Post‑Format." },
-    { label: "Evaluation‑Snippets", category:"tips", prompt: "Gib 5 kurze Tests (Input→erwartete Antwort), um Prompts objektiv zu bewerten (Rubrik, Scoring)." },
-    { label: "AI‑Act Quick‑Audit", category:"tips", prompt: "Erzeuge eine 8‑Punkte‑Checkliste (Risiko, Daten, Logging, Oversight, DPIA‑Hinweis) für [Anwendung]." },
-    { label: "Brand‑Voice", category:"tips", prompt: "Extrahiere Tonalitätsregeln aus Beispielen (max. 5 Regeln) und baue 1‑Satz‑Stimm‑Statement:\n\n[Beispiele]." },
-    { label: "Trusted KI‑Check", category:"projects", prompt: "Skizziere 3 Schritte des Trusted KI‑Checks (AI‑Act/DSGVO/ISO 42001) mit jeweils 1 Output." },
-    { label: "Prompt‑Studio", category:"projects", prompt: "Schreibe einen 4‑Satz‑Teaser für ein Prompt‑Studio (Lernen, Testen, Teilen), inkl. 1 klaren CTA." },
-    { label: "KI‑Workshops KMU", category:"projects", prompt: "Formuliere eine Agenda (90 min) mit Output‑Formaten (Prompt‑Deck, Checkliste, Mini‑Plan)." },
-    { label: "KI‑News: Agentic‑AI", category:"news", prompt: "Fasse in 3 Sätzen die wichtigsten Agentic‑AI‑Trends zusammen + 1 Umsetzungsidee für KMU." },
-    { label: "KI‑News: SLM lokal", category:"news", prompt: "Erkläre in 2 Sätzen, wozu Small Language Models taugen + 1 Mini‑Beispiel ohne Cloud." },
-    { label: "KI‑News: Edge‑AI", category:"news", prompt: "Nenne 2 Vorteile von Edge‑AI und 1 Use‑Case, den ich an 1 Tag testen kann." },
-    { label: "AI×Musik", category:"prompts", prompt: "Komponiere 8 Bars „Radiohead‑Ambient“ als Text‑Lead‑Sheet (Akkorde + Leitmelodie) + 1 Visual‑Idee." },
-    { label: "Story‑Seeds", category:"prompts", prompt: "Gib 5 ungewöhnliche Plot‑Seeds (1 Satz), die KI auf der Autobahn symbolisch nutzen." },
-    { label: "Failure‑Prompts", category:"prompts", prompt: "Erzeuge 7 ‚Failure‑Prompts‘, mit denen ich KI‑Schwächen sichtbar mache – inkl. Sicherheits‑Hinweis." },
-    { label: "3‑Min‑Briefing", category:"prompts", prompt: "Schreibe ein 3‑Min‑Briefing zu [Thema], mit: 1 Ziel, 3 Stichpunkten, 1 Risiko, 1 nächster Schritt." },
-    { label: "Micro‑Copy 3×", category:"prompts", prompt: "Konvertiere diese Bullets in 3 Versionen Micro‑Copy (neutral, frech, seriös):\n\n[Bullets]." }
+    { label:"LinkedIn‑Hook", category:"prompts", prompt:"Schreibe einen LinkedIn‑Post mit 1 Hook, 2 Kernpunkten und 1 CTA zu [Branche]/[Ziel]. Max. 3 Sätze." },
+    { label:"30‑Tage‑Plan", category:"prompts", prompt:"Erstelle eine 30‑Tage‑Roadmap für [Ziel], je Woche 3 Tasks, messbar & klein." },
+    { label:"Betreff‑Generator", category:"prompts", prompt:"Erzeuge 5 Betreffzeilen + 1 A/B‑Variante für diese Mail:\n\n[Mail‑Text]." },
+    { label:"Meeting‑Kurzprotokoll", category:"prompts", prompt:"Fasse das Meeting in 5 Bulletpoints + 1 Entscheidung + 1 To‑Do zusammen:\n\n[Transkript]." },
+    { label:"Style‑Transfer", category:"prompts", prompt:"Analysiere den Stil dieses Texts in 3 Regeln und schreibe Absatz X im selben Stil neu:\n\n[Text]." },
+    { label:"Quest‑Briefing", category:"prompts", prompt:"Formuliere eine 3‑Schritte‑Quest, mit der ich [Ziel] heute starte. Nutze Imperative." },
+    { label:"FAQ‑Destillation", category:"prompts", prompt:"Ziehe aus folgendem Text 7 FAQ‑Fragen + knappe Antworten, deutsch:\n\n[Text]." },
+    { label:"Design‑Brief", category:"prompts", prompt:"Erstelle ein Micro‑Briefing für eine Landingpage: Zielgruppe, Value, Proof, CTA – in 6 Zeilen." },
+    { label:"Transkript→Kapitel", category:"prompts", prompt:"Gliedere dieses Video/Audio in Kapitel mit Zeitstempeln + 1‑Satz‑Summary je Kapitel:\n\n[Link/Transkript]." },
+    { label:"Use‑Case‑Ideen", category:"prompts", prompt:"Nenne 10 unkonventionelle KI‑Use‑Cases für [Branche], je 1 Satz + 1 Tool‑Hinweis (ohne Link)." }
   ];
 })();
