@@ -3,6 +3,7 @@ import express from 'express';
 import { router as research } from './routes/research-agent.js';
 import { router as visual } from './routes/visual-lab.js';
 import { router as compare } from './routes/llm-compare.js';
+import { router as modelsLive } from './routes/models-live.js';
 import cors from 'cors';
 import { config } from 'dotenv';
 import fetch from 'node-fetch';
@@ -13,6 +14,7 @@ app.use(express.json({ limit: '12mb' }));
 app.use(research);
 app.use(visual);
 app.use(compare);
+app.use(modelsLive);
 app.use('/api', express.static('api'));
 
 // Parse ALLOWED_ORIGINS robustly: split on comma/semicolon + trim
