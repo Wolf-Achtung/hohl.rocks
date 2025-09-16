@@ -2,9 +2,9 @@
 (function(){
   function ensure(){ let p=document.getElementById('answer-popup'); if(p) return p;
     p=document.createElement('div'); p.id='answer-popup';
-    Object.assign(p.style,{position:'fixed',left:'50%',top:'15%',transform:'translateX(-50%)',width:'min(760px,92vw)',maxHeight:'70vh',
+    Object.assign(p.style,{position:'fixed',left:'50%',top:'15%',transform:'translateX(-50%)',width:'min(860px,92vw)',maxHeight:'72vh',
       background:'rgba(12,16,22,.40)',border:'1px solid rgba(255,255,255,.14)',backdropFilter:'blur(12px)',borderRadius:'18px',padding:'16px',zIndex:'1400',color:'#eaf2ff',display:'none'});
-    const content=document.createElement('div'); content.className='popup-content'; Object.assign(content.style,{whiteSpace:'pre-wrap',maxHeight:'56vh',overflow:'auto'});
+    const content=document.createElement('div'); content.className='popup-content'; Object.assign(content.style,{whiteSpace:'pre-wrap',maxHeight:'58vh',overflow:'auto'});
     const bar=document.createElement('div'); Object.assign(bar.style,{display:'flex',gap:'8px',justifyContent:'flex-end',marginTop:'10px'});
     const copy=document.createElement('button'); copy.textContent='Kopieren'; style(copy);
     const close=document.createElement('button'); close.textContent='Schließen'; style(close);

@@ -1,0 +1,17 @@
+/* model-picker.js — loads /api/models.json and shows a popup */
+(function(){
+  async function fetchModels(){
+    try{ const res=await fetch('/api/models.json',{cache:'no-store'}); return await res.json(); }catch(e){ return []; }
+  }
+  async function openModelPicker(){
+    const arr = await fetchModels();
+    if(!arr.length){ openAnswerPopup('Model‑Picker: keine Daten in /api/models.json gefunden.'); return; }
+    const lines = arr.map(m=>`• ${m.name} — ${m.tier}\n  Stärken: ${m.strengths.join(', ')}\n  Bestens für: ${m.best_for.join(', ')}\n  Beispiel: ${m.sample_prompt}`).join('\n\n');
+    openAnswerPopup('Model‑Picker\n\n'+lines);
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const newsBtn=document.querySelector('#nav-buttons .news');
+    if(newsBtn){ newsBtn.addEventListener('dblclick', openModelPicker); }
+    window.openModelPicker=openModelPicker;
+  });
+})();
