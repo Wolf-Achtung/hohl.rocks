@@ -1,4 +1,4 @@
-/* ux-coach.js — First-run coach, rotating tips, hover tooltip */
+/* public/js/ux-coach.js — first-run coach + help button */
 (function(){
   const key='ux_seen_v1';
   function coach(){
@@ -18,30 +18,15 @@
   }
   if(!localStorage.getItem(key)) window.addEventListener('DOMContentLoaded', coach, {once:true});
 
-  // Rotierende Tipps im pre-msg
-  const TIPS=[
-    '💡 Tipp: Klicke eine farbige Bubble — Ergebnis erscheint im Fenster.',
-    '🧠 Cmd/Ctrl+R: Research‑Agent mit Quellen‑Stream.',
-    '⚔️ „Cage‑Match“: zwei Modelle vergleichen – mit Gewichtung.',
-    '🖼️ Face‑Aging & Variationen: lade ein Foto und staune.'
-  ];
-  window.addEventListener('DOMContentLoaded', ()=>{
-    const pm=document.getElementById('pre-msg'); if(!pm) return;
-    let i=0; setInterval(()=>{ i=(i+1)%TIPS.length; pm.textContent=TIPS[i]; }, 7000);
-  });
-
-  // Hover‑Tooltip für Bubbles
   const tip=document.createElement('div'); Object.assign(tip.style,{position:'fixed',zIndex:1600,background:'rgba(12,16,22,.9)',border:'1px solid rgba(255,255,255,.18)',color:'#eaf2ff',padding:'6px 8px',borderRadius:'8px',fontSize:'12px',pointerEvents:'none',display:'none'}); document.body.appendChild(tip);
   window.UXCoach={ tip:(text,x,y)=>{ tip.textContent=text; tip.style.display='block'; tip.style.left=(x+12)+'px'; tip.style.top=(y+12)+'px'; }, hide:()=>{ tip.style.display='none'; } };
 
-  // Help-Button
   window.addEventListener('DOMContentLoaded', ()=>{
-    const btn=document.getElementById('help'); if(!btn) return;
-    btn.onclick=()=>{
-      openAnswerPopup(`<b>Was kann ich hier tun?</b><br><br>
-        • <b>Bubble klicken</b>: sofort Ergebnis (Recherche, Cage‑Match, Face‑Aging …)<br>
-        • <b>Buttons unten</b>: Über / News / Prompts / Projekte<br>
-        • <b>Shortcuts</b>: Doppelklick „News“ → Model‑Picker · Cmd/Ctrl+R → Recherche` , true);
+    const help=document.createElement('div'); help.id='help'; help.style.cssText='position:fixed;right:20px;bottom:80px;z-index:1400;background:rgba(12,16,22,.55);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:8px 10px;border-radius:999px;cursor:pointer';
+    help.innerHTML='<span style="display:inline-block;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;background:#00B0FF;color:#06221b;font-weight:800;margin-right:6px">?</span>Was kann ich hier tun?';
+    document.body.appendChild(help);
+    help.onclick=()=>{
+      if(window.openAnswerPopup) openAnswerPopup('<b>Was kann ich hier tun?</b><br><br>• <b>Bubble klicken</b>: Ergebnis im Fenster (Recherche, Cage‑Match, Face‑Aging …)<br>• <b>Buttons unten</b>: Über / News / Prompts / Projekte<br>• <b>Shortcuts</b>: Doppelklick „News“ → Model‑Picker · Cmd/Ctrl+R → Recherche', true);
     };
   });
 })();

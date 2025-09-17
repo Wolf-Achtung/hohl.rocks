@@ -1,4 +1,4 @@
-/* answer-popup.js — Popup mit Kopieren & HTML */
+/* public/js/answer-popup.js — translucent popup with copy */
 (function(){
   function styleBtn(b){ Object.assign(b.style,{borderRadius:'999px',border:'1px solid rgba(255,255,255,.18)',padding:'8px 12px',cursor:'pointer'}); }
   function ensure(){ let p=document.getElementById('answer-popup'); if(p) return p;
