@@ -4,25 +4,35 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>hohl.rocks — Neon Gold UX+</title>
-  <link rel="stylesheet" href="/hero-shapes.css">
+  <link rel="stylesheet" href="/hero-shapes.css" />
   <style>
     html,body{height:100%;margin:0;background:#0a1118;color:#eaf2ff;font:500 16px/1.45 ui-sans-serif,system-ui}
     .stage{position:fixed;inset:0;overflow:hidden}
     #bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(1) contrast(1.05)}
     #shape-layer{position:absolute;inset:0;pointer-events:auto}
+
+    /* Nav */
     #nav-buttons{position:fixed;left:50%;bottom:52px;transform:translateX(-50%);display:flex;gap:12px;z-index:1250}
-    #nav-buttons button{border-radius:999px;border:1px solid rgba(255,255,255,.16);padding:10px 16px;cursor:pointer;color:#0a1118;
-      font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.25);transition:filter .2s ease}
+    #nav-buttons button{
+      border-radius:999px;border:1px solid rgba(255,255,255,.16);padding:10px 16px;cursor:pointer;color:#0a1118;
+      font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.25);transition:filter .2s ease
+    }
     #nav-buttons .about{background:#00B0FF}
     #nav-buttons .news{background:#FFD400}
     #nav-buttons .prompts{background:#FF4FA3}
     #nav-buttons .projects{background:#00E676}
     #nav-buttons button:hover{filter:brightness(1.12)}
-    #pre-msg{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:1240;background:rgba(12,16,22,0.68);
+
+    /* Pre‑Message (verschwindet automatisch) */
+    #pre-msg{
+      position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:1240;background:rgba(12,16,22,0.68);
       border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);color:#eaf2ff;padding:10px 18px;border-radius:14px;
-      font-size:14px;line-height:1.3;pointer-events:none;max-width:88vw;text-align:center}
-    /* Help button */
-    #help{position:fixed;right:20px;bottom:80px;z-index:1400;background:rgba(12,16,22,.55);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:8px 10px;border-radius:999px;cursor:pointer}
+      font-size:14px;line-height:1.3;pointer-events:none;max-width:88vw;text-align:center
+    }
+
+    /* Hilfe-Button */
+    #help{position:fixed;right:20px;bottom:80px;z-index:1400;background:rgba(12,16,22,.55);
+      border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:8px 10px;border-radius:999px;cursor:pointer}
     #help span{display:inline-block;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;background:#00B0FF;color:#06221b;font-weight:800;margin-right:6px}
   </style>
 </head>
@@ -34,27 +44,40 @@
     <div id="shape-layer"></div>
   </main>
 
-  <div id="pre-msg">💡 Tipp: Klicke eine farbige Bubble — im Fenster bekommst du eine *fertige Aktion* (z. B. Live‑Recherche, Face‑Aging, Cage‑Match).</div>
+  <div id="pre-msg">
+    💡 Tipp: Klicke eine farbige Bubble — wir senden den Prompt direkt an <b>Claude</b> und streamen die Antwort live.
+    Im Fenster kannst du <b>Kopieren</b> und mit <b>Kürzer/Beispiel/Checkliste</b> blitzschnell Varianten erzeugen.
+  </div>
 
   <div id="nav-buttons">
-    <button class="about"   data-cat="about">Über</button>
-    <button class="news"    data-cat="news">News</button>
-    <button class="prompts" data-cat="prompts">Prompts</button>
+    <button class="about"    data-cat="about">Über</button>
+    <button class="news"     data-cat="news">News</button>
+    <button class="prompts"  data-cat="prompts">Prompts</button>
     <button class="projects" data-cat="projects">Projekte</button>
   </div>
 
   <div id="help"><span>?</span>Was kann ich hier tun?</div>
 
-  <!-- Scripts -->
+  <!-- Scripts: Reihenfolge wichtig -->
+  <!-- Popup + Klang -->
   <script src="/public/js/answer-popup.js" defer></script>
   <script src="/public/js/ambient-radiohead.js" defer></script>
+
+  <!-- Claude-Streaming (SSE) -->
+  <script src="/public/js/claude-stream.js" defer></script>
+
+  <!-- Inhalte & Bubbles -->
   <script src="/public/js/ticker-items.js" defer></script>
   <script src="/public/js/hero-shapes.js" defer></script>
+
+  <!-- Deine existierenden Module (falls genutzt) -->
   <script src="/js/nav-filters.js?v=4"></script>
   <script src="/js/model-picker.js?v=4"></script>
   <script src="/js/research-agent.js?v=5"></script>
   <script src="/js/cage-match.js?v=4"></script>
   <script src="/js/visual-lab.js?v=5"></script>
-  <script src="/js/ux-coach.js?v=1"></script>
+
+  <!-- Mini‑Coach (Onboarding) -->
+  <script src="/public/js/ux-coach.js" defer></script>
 </body>
 </html>
