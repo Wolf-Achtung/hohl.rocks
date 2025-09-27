@@ -1,25 +1,24 @@
 /* public/js/claude-stream.js
- * Auto-Base SSE + Fallback-Client für Claude
- * Reihenfolge: window.HOHL_CHAT_BASE, <meta hohl-chat-base>, '', '/api'
- * Routen:  /claude-sse + /claude (primär), Fallback auf /chat-sse + /chat
- * Thread-IDs werden durchgereicht (opts.thread).
+ * Auto-Base SSE + Fallback-Client für Claude/Anthropic
+ * Quellen: window.HOHL_CHAT_BASE -> <meta hohl-chat-base> -> '' -> '/api'
+ * Routen:  /claude-sse + /claude (primär), Fallback /chat-sse + /chat
+ * Thread-IDs (opts.thread) werden durchgereicht.
  */
-
 (function (w, d) {
   'use strict';
 
-  // ---- Basis-Hosts ermitteln ----
+  // --- Basis-Host ermitteln ---
   const metaBase = (d.querySelector('meta[name="hohl-chat-base"]')?.content || '').trim();
   const envBase  = (w.HOHL_CHAT_BASE || '').trim();
   const BASES = Array.from(new Set([envBase, metaBase, '', '/api'])).filter(Boolean);
 
-  // Beide möglichen Routen-Namensräume abklopfen:
+  // Zwei mögliche Routenfamilien (neu + kompatibel)
   const ROUTE_SETS = [
     { sse: '/claude-sse', post: '/claude', json: '/claude-json' },
-    { sse: '/chat-sse',   post: '/chat',   json: '/claude-json' } // abwärtskompatibel
+    { sse: '/chat-sse',   post: '/chat',   json: '/claude-json' }
   ];
 
-  // ---- Minimal-Popup für den Notfall (falls AnswerPopup nicht vorhanden) ----
+  // Notfall-Popup, falls dein AnswerPopup nicht geladen ist
   function fallbackPopup(title) {
     let wrap = d.getElementById('fallback-answer-popup');
     if (!wrap) {
@@ -60,7 +59,7 @@
     };
   }
 
-  // Öffne standardisiertes Popup (bevorzugt dein schönes AnswerPopup)
+  // Bevorzugt dein schönes AnswerPopup
   function openPopup(title, subtitle) {
     if (w.AnswerPopup && typeof w.AnswerPopup.open === 'function') {
       return w.AnswerPopup.open({ title, subtitle });
@@ -68,7 +67,7 @@
     return fallbackPopup(title);
   }
 
-  // ---- Kern: Streamen zu Popup (Auto-Base + Auto-Route) ----
+  // ---- Stream-to-Popup (mit Auto-Base + Auto-Route) ----
   async function runToPopup(title, prompt, opts = {}) {
     const { system, model, thread, subtitle } = opts || {};
     const ui = openPopup(title, subtitle);
@@ -78,14 +77,12 @@
       routeIdx++;
       if (routeIdx >= ROUTE_SETS.length) { routeIdx = 0; baseIdx++; }
       if (baseIdx >= BASES.length) { ui.error('Netzwerkfehler / API nicht erreichbar.'); return false; }
-      start();
-      return true;
+      start(); return true;
     };
 
     function start() {
       const base   = BASES[baseIdx] || '';
       const routes = ROUTE_SETS[routeIdx];
-
       const q = new URLSearchParams({ prompt: prompt || '' });
       if (system) q.set('system', system);
       if (model)  q.set('model',  model);
@@ -98,7 +95,6 @@
       catch { if (!tryNext()) return; else return; }
 
       es.onmessage = (ev) => {
-        // Erwartet serverseitig normalisiertes {delta}; fällt sonst unkritisch auf Rohdaten zurück
         try {
           const j = JSON.parse(ev.data);
           if (j.delta) ui.write(j.delta);
@@ -124,11 +120,10 @@
         });
       };
     }
-
     start();
   }
 
-  // Optional: strukturierte JSON-Antworten (für Generate&Show)
+  // JSON-Artefakt (für Generate&Show)
   async function runJSON(title, instruction, opts = {}) {
     const { model, thread } = opts || {};
     const ui = openPopup(title, opts.subtitle);
@@ -157,5 +152,4 @@
   // Exporte
   w.HohlChat = { runToPopup, runJSON, setBase: (b)=>{ if (b) BASES.unshift(b); } };
   w.runClaudeToPopup = runToPopup; // Alias
-
 })(window, document);
