@@ -1,108 +1,132 @@
 /* public/js/ticker-items.js */
 (function(){ window.__TICKER_ITEMS = [
   {
+    "id": "weeks-app",
     "label": "Lebenswochen‑App",
     "tag": "App",
     "hint": "Klick → Wochen‑Grid + Stats",
-    "prompt": "Baue eine minimalistische App: Geburtsdatum eingeben → Lebenswochen als Grid (90×52), mit Statistiken (gelebte Wochen, % der „aktiven Lebenszeit“ etc.). Rams‑Style, Satzschreibweise, responsive, nachdenklich. (Claude: plane Komponenten + UI-Zustände, dann generiere Code in zwei Schritten: UI → Logik.)",
+    "prompt": "Baue eine minimalistische App: ... Rams‑Style, Satzschreibweise, responsive.",
     "action": "claude"
   },
   {
+    "id": "editor-fix",
     "label": "Texteditor (Korrektur)",
     "tag": "Writing",
     "hint": "Klick → Claude‑Korrekturen",
-    "prompt": "Interaktiver Editor: Claude verbessert Grammatik/Rechtschreibung/Stil. UI: Editor links, Vorschläge rechts (inline-Apply + „alle übernehmen“). Design: professionell/poliert.",
+    "prompt": "Interaktiver Editor: Claude verbessert Grammatik ...",
     "action": "claude"
   },
   {
+    "id": "attachment",
     "label": "Bindungsstil‑Test",
     "tag": "App",
     "hint": "Klick → Fragefluss + Auswertung",
-    "prompt": "React‑Artefakt mit Fragebogen → Bindungsstil (sicher, ängstlich-ambivalent, vermeidend, desorganisiert). Visuell herausragend. Buttons navigieren sauber; geringe Latenz; keine Fehler.",
+    "prompt": "React‑Artefakt ... Bindungsstil ...",
     "action": "claude"
   },
   {
+    "id": "mail-assist",
     "label": "E‑Mail‑Assistent",
     "tag": "Writing",
     "hint": "Klick → Ton wählen & generieren",
-    "prompt": "Kurzbeschreibung eintippen + Ton (prägnant/warm/formell …) wählen → fertige E‑Mail. Optional: Original‑Mail einfügen (Reply‑Kontext). UI in Blau/Weiß/Grau, Copy‑Button.",
+    "prompt": "Kurzbeschreibung eintippen + Ton ...",
     "action": "claude"
   },
   {
+    "id": "platformer",
     "label": "KI‑Plattformer",
     "tag": "Game",
     "hint": "Klick → Level aus Thema",
-    "prompt": "Plattform‑Game: vor jedem Level Thema abfragen → Claude generiert Levelvarianten, Schwierigkeit steigt. Poliertes Gameplay ohne KI-Schlamperei.",
+    "prompt": "Plattform‑Game: ...",
     "action": "claude"
   },
   {
+    "id": "prd-onepager",
     "label": "PRD‑Generator (1‑Pager)",
     "tag": "Ops",
     "hint": "Klick → PRD‑Vorlage",
-    "prompt": "3 Fragen → Claude erzeugt 1‑Seiten‑PRD: TL;DR · Ziele · User Stories · Anforderungen (priorisiert) · UX (Stichpunkte) · Narrativ · Metriken · Meilensteine & Ablauf.",
+    "prompt": "3 Fragen → PRD ...",
     "action": "claude"
   },
   {
+    "id": "origin-orch",
     "label": "Entstehungsgeschichte",
     "tag": "Writing",
     "hint": "Klick → Orchestrierter Multi‑Call",
-    "prompt": "Artefakt fragt ein Thema ab, plant Struktur (Plan‑Call), schreibt Kapitel (mehrere Calls), führt Konsistenz‑Pass aus; UI wie ein schönes Buch (Papier‑Look).",
+    "prompt": "Artefakt ... mehrere Calls ...",
     "action": "claude"
   },
   {
+    "id": "five-whys",
     "label": "5‑Warum‑Coach",
     "tag": "Ops",
     "hint": "Klick → Root‑Cause + Lösungen",
-    "prompt": "Eine Frage pro Schritt, Antworten klappen ein. Am Ende Claude‑Analyse: Grundursache + Lösungsvorschläge. Farben: #CBCADB Hintergrund, #3F3F47 primär, Font: Inter.",
+    "prompt": "Eine Frage pro Schritt ...",
     "action": "claude"
   },
   {
+    "id": "sakura3d",
     "label": "Sakura Explorer 3D",
     "tag": "Visuals",
     "hint": "Klick → Endlos‑Teegarten",
-    "prompt": "Endloser 3D‑Kirschblüten‑Explorer in einem japanischen Teegarten (Fullscreen).",
+    "prompt": "Endloser 3D‑Kirschblüten‑Explorer ...",
     "action": "claude"
   },
   {
+    "id": "syna",
     "label": "Synästhesie‑Symphonie",
     "tag": "Visuals",
     "hint": "Klick → Tippen = Audio/Visual",
-    "prompt": "Vollbild‑Synästhesie: Schreiben → audiovisuelle Reaktion, Performance‑optimiert, die Symphonie ist das Highlight.",
+    "prompt": "Vollbild‑Synästhesie ...",
     "action": "claude"
   },
   {
+    "id": "mood-art",
     "label": "Gefühls‑Kunst",
     "tag": "Visuals",
     "hint": "Klick → Algorithmik + Stimmung",
-    "prompt": "Fullscreen‑Kunst: Nutzer gibt Gefühl ein → Claude analysiert und steuert Parameter; Muster bleibt wiedererkennbar, variiert je Stimmung.",
-    "action": "claude"
+    "prompt": "Liefere JSON‑Parameter für eine Echtzeit‑Canvas‑Visualisierung. Felder: {\"palette\":[\"#RRGGBB\"...],\"speed\":0..1,\"algorithm\":\"flow|rays|orbits\",\"seed\":Int}. Wähle passende Palette & speed zur Stimmung \"ruhig, winter‑klar, neonig\".",
+    "schemaHint": "Schema: {\"palette\":[\"#hex\"...],\"speed\":0.1-1.0,\"algorithm\":\"flow|rays|orbits\",\"seed\":Int}",
+    "action": "claude-json"
   },
   {
+    "id": "perfect-circle",
     "label": "Perfekter Kreis",
     "tag": "Game",
     "hint": "Klick → Whiteboard‑Game",
-    "prompt": "Whiteboard im Vollbild: Kreis zeichnen → Claude bewertet „Perfektheit“ und gibt Feedback + Scores.",
+    "prompt": "Whiteboard im Vollbild ...",
     "action": "claude"
   },
   {
+    "id": "better-than-very",
     "label": "Besser‑als‑sehr",
     "tag": "Writing",
     "hint": "Klick → Ein Wort statt „sehr …“",
-    "prompt": "Minimal‑App: „Sehr ____“ → Claude schlägt ein stärkeres Wort vor. EB Garamond, Hell-/Dunkel‑Modus, Tipp‑Animation, Refresh ohne Wiederholungen.",
+    "prompt": "Minimal‑App: „Sehr ____“ ...",
     "action": "claude"
   },
   {
+    "id": "brainstorm",
     "label": "KI‑Brainstormer",
     "tag": "Ops",
     "hint": "Klick → 6 kontextuelle Ideen",
-    "prompt": "Fragt Firma/Produkt/Zeitrahmen/Ziele/Session‑Typ ab → Claude versteht Kontext und liefert 6 Ideen mit Priorität, Aufwand, Impact + Verständnis‑Zusammenfassung & Fallback.",
+    "prompt": "Fragt Firma/Produkt/Zeitrahmen/Ziele/Session‑Typ ab ...",
     "action": "claude"
   },
   {
+    "id": "daily-news",
     "label": "KI‑News heute",
     "tag": "News",
     "hint": "Klick → 2 Sätze + Quellen",
     "prompt": "",
     "action": "daily-news"
+  },
+  {
+    "id": "today-new",
+    "label": "Heute neu",
+    "tag": "Neu",
+    "hint": "Klick → Kurzformat",
+    "prompt": "",
+    "action": "daily-idea"
   }
 ]; })();
