@@ -1,5 +1,4 @@
-
-// server/routes/research-agent.js — SSE + JSON fallback (Tavily + OpenAI)
+// server/routes/research-agent.js – SSE + JSON fallback (Tavily + Claude)
 // ESM, Node >= 18
 import express from 'express';
 
@@ -51,16 +50,61 @@ async function tavilySearch(query){
   return await r.json();
 }
 
-async function openaiSynthesis(items, query){
-  if(!process.env.OPENAI_API_KEY){
+async function claudeSynthesis(items, query){
+  if(!process.env.ANTHROPIC_API_KEY){
     return {
-      text: 'OPENAI_API_KEY fehlt – zeige nur triagierte Quellen.',
+      text: 'ANTHROPIC_API_KEY fehlt – zeige nur triagierte Quellen.',
       cites: items.slice(0,5).map(x=>x.url)
     };
   }
+  
+  const model = process.env.RESEARCH_MODEL || 'claude-3-5-sonnet-20241022';
+  const bullets = items.slice(0,6).map((x,i)=>`[${i+1}] ${x.title} – ${x.url} – ${x.content?.slice(0,220)||''}`).join('\n');
+  
+  const systemPrompt = 'Deutsch, prägnant, faktenbasiert. Antworte mit 1 Absatz TL;DR und danach 4–6 Bulletpoints mit **konkreten Zahlen**/Belegen. Gib am Ende eine Liste „Quellen:" mit den URLs, exakt so wie verwendet. Keine Foren/SEO-Seiten.';
+  const userPrompt = `Thema: ${query}\nMaterial:\n${bullets}`;
+  
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 
+      'content-type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 2048,
+      temperature: 0.3,
+      system: systemPrompt,
+      messages: [
+        { role: 'user', content: userPrompt }
+      ]
+    })
+  });
+  
+  if(!r.ok){
+    const errorText = await r.text();
+    console.error('Claude API error:', errorText);
+    throw new Error(`Claude API ${r.status}: ${errorText}`);
+  }
+  
+  const j = await r.json().catch(()=>({}));
+  const text = j?.content?.[0]?.text || '(keine Antwort)';
+  const cites = Array.from(new Set(
+    (text.match(/https?:\/\/[^\s)\]]+/g) || [])
+      .filter(filterDomains)
+  ));
+  return { text, cites };
+}
+
+// Fallback to keep OpenAI compatibility if needed
+async function openaiSynthesis(items, query){
+  if(!process.env.OPENAI_API_KEY){
+    return claudeSynthesis(items, query); // Fallback to Claude
+  }
   const model = process.env.RESEARCH_MODEL || 'gpt-4o-mini-2024-07-18';
-  const bullets = items.slice(0,6).map((x,i)=>`[${i+1}] ${x.title} — ${x.url} — ${x.content?.slice(0,220)||''}`).join('\n');
-  const sys = 'Deutsch, prägnant, faktenbasiert. Antworte mit 1 Absatz TL;DR und danach 4–6 Bulletpoints mit **konkreten Zahlen**/Belegen. Gib am Ende eine Liste „Quellen:“ mit den URLs, exakt so wie verwendet. Keine Foren/SEO-Seiten.';
+  const bullets = items.slice(0,6).map((x,i)=>`[${i+1}] ${x.title} – ${x.url} – ${x.content?.slice(0,220)||''}`).join('\n');
+  const sys = 'Deutsch, prägnant, faktenbasiert. Antworte mit 1 Absatz TL;DR und danach 4–6 Bulletpoints mit **konkreten Zahlen**/Belegen. Gib am Ende eine Liste „Quellen:" mit den URLs, exakt so wie verwendet. Keine Foren/SEO-Seiten.';
   const user = `Thema: ${query}\nMaterial:\n${bullets}`;
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -93,7 +137,7 @@ async function runPipeline(query){
     'Absicht klären und Suchpfad festlegen',
     'Seriöse, aktuelle Quellen suchen (Tavily)',
     'Triage über Whitelist/Blocklist filtern',
-    'Synthese (OpenAI) mit erzwungenen Quellen'
+    'Synthese (Claude/OpenAI) mit erzwungenen Quellen'
   ];
 
   const raw = await tavilySearch(query);
@@ -106,7 +150,13 @@ async function runPipeline(query){
       content: r.content || ''
     }));
 
-  const synth = await openaiSynthesis(triage, query);
+  // Use Claude for synthesis, fallback to OpenAI if Claude key not available
+  let synth;
+  if(process.env.ANTHROPIC_API_KEY) {
+    synth = await claudeSynthesis(triage, query);
+  } else {
+    synth = await openaiSynthesis(triage, query);
+  }
 
   const out = { t: now, plan, triage, synth };
   cache.set(query, out);
