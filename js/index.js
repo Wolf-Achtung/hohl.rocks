@@ -1,4 +1,4 @@
-// server/index.js — Railway mini-patch with SSE + Vision JSON
+// server/index.js – Railway mini-patch with SSE + Vision JSON (Claude API)
 import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
@@ -21,17 +21,68 @@ app.use(cors({
 // Health
 app.get('/healthz', (req,res)=> res.send('ok'));
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022';
 
-async function openaiChat(messages, stream=false){
-  const url = 'https://api.openai.com/v1/chat/completions';
-  const body = { model: OPENAI_MODEL, messages, stream };
+async function claudeChat(messages, stream=false){
+  const url = 'https://api.anthropic.com/v1/messages';
+  
+  // Convert messages format for Claude
+  const claudeMessages = messages.map(msg => {
+    if(msg.role === 'system') {
+      return null; // Will be handled separately
+    }
+    // Handle vision messages
+    if(Array.isArray(msg.content)) {
+      const claudeContent = msg.content.map(item => {
+        if(item.type === 'input_text' || item.type === 'text') {
+          return { type: 'text', text: item.text || item.content };
+        }
+        if(item.type === 'input_image' && item.image_url) {
+          // Extract base64 data from data URL
+          const base64Match = item.image_url.match(/^data:image\/(.*?);base64,(.*)$/);
+          if(base64Match) {
+            return {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: `image/${base64Match[1]}`,
+                data: base64Match[2]
+              }
+            };
+          }
+        }
+        return item;
+      });
+      return { role: msg.role === 'user' ? 'user' : 'assistant', content: claudeContent };
+    }
+    return { role: msg.role === 'user' ? 'user' : 'assistant', content: msg.content };
+  }).filter(Boolean);
+
+  // Extract system message
+  const systemMsg = messages.find(m => m.role === 'system');
+  
+  const body = { 
+    model: CLAUDE_MODEL, 
+    messages: claudeMessages,
+    max_tokens: 4096,
+    stream 
+  };
+  
+  if(systemMsg) {
+    body.system = systemMsg.content;
+  }
+
   const r = await fetch(url, {
     method:'POST',
-    headers:{ 'Authorization':`Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
+    headers:{ 
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json'
+    },
     body: JSON.stringify(body)
   });
+  
   if(!stream){
     if(!r.ok){ throw new Error(await r.text()); }
     return await r.json();
@@ -54,8 +105,8 @@ app.post('/chat', async (req,res)=>{
     }else{
       msgs.push({ role:'user', content: message||'' });
     }
-    const data = await openaiChat(msgs, false);
-    const text = data?.choices?.[0]?.message?.content || '';
+    const data = await claudeChat(msgs, false);
+    const text = data?.content?.[0]?.text || '';
     res.json({ answer: text });
   }catch(e){
     res.status(500).json({ error: String(e) });
@@ -70,7 +121,7 @@ app.get('/chat-sse', async (req,res)=>{
     const messages = [];
     if(systemPrompt) messages.push({ role:'system', content: systemPrompt });
     messages.push({ role:'user', content: message });
-    const r = await openaiChat(messages, true);
+    const r = await claudeChat(messages, true);
 
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -82,19 +133,19 @@ app.get('/chat-sse', async (req,res)=>{
     const decoder = new TextDecoder();
     for await (const chunk of r.body){
       const str = decoder.decode(chunk);
-      const lines = str.split('\\n');
+      const lines = str.split('\n');
       for(const line of lines){
         if(!line.trim()) continue;
-        res.write(`data: ${line}\\n\\n`);
+        res.write(`data: ${line}\n\n`);
       }
     }
-    res.write('event: done\\n');
-    res.write('data: [DONE]\\n\\n');
+    res.write('event: done\n');
+    res.write('data: [DONE]\n\n');
     res.end();
   }catch(e){
     res.writeHead(500, {'Content-Type':'text/event-stream'});
-    res.write(`event: error\\n`);
-    res.write(`data: ${String(e)}\\n\\n`);
+    res.write(`event: error\n`);
+    res.write(`data: ${String(e)}\n\n`);
     res.end();
   }
 });
