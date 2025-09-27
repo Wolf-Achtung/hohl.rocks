@@ -1,195 +1,228 @@
+// server.mjs – Chat-Backend mit Claude API (JSON + SSE)
 import express from 'express';
 import cors from 'cors';
+import { config } from 'dotenv';
+import fetch from 'node-fetch';
+config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+app.use(express.json({limit:'12mb'}));
 
 // CORS
-const parseOrigins = (str) => (str || '')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
-
-const ALLOWED = parseOrigins(process.env.ALLOWED_ORIGINS);
-
-const corsMiddleware = (req, res, next) => {
-  const origin = req.headers.origin;
-  if (!origin) return next();
-  if (!ALLOWED.length) {
-    // Dev mode: allow all
-    res.header('Access-Control-Allow-Origin', '*');
-  } else if (ALLOWED.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Vary', 'Origin');
-  } else {
-    // Not allowed: short-circuit with 403 to avoid confusing 502s
-    return res.status(403).json({ error: 'Origin not allowed', origin });
+const allowed = (process.env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean);
+app.use(cors({
+  origin: (origin, cb)=>{
+    if(!origin) return cb(null, true);
+    if(allowed.length===0 || allowed.includes(origin)) return cb(null,true);
+    return cb(new Error('Not allowed by CORS'), false);
   }
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
-};
+}));
 
-app.use(corsMiddleware);
-app.use(express.json({ limit: '1mb' }));
+// Health
+app.get('/healthz', (req,res)=> res.send('ok'));
 
-app.get('/healthz', (req, res) => res.type('text/plain').send('ok'));
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022';
 
-// Utility: OpenAI fetch
-async function openAIChat({ message, systemPrompt, model = MODEL, stream = false }) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('Missing OPENAI_API_KEY');
+async function claudeChat(messages, stream=false){
+  const url = 'https://api.anthropic.com/v1/messages';
+  
+  // Convert OpenAI format to Claude format if needed
+  const claudeMessages = messages.map(msg => {
+    if(msg.role === 'system') {
+      // Claude doesn't have system role, move to user message
+      return { role: 'user', content: msg.content };
+    }
+    // Handle vision messages
+    if(Array.isArray(msg.content)) {
+      const claudeContent = msg.content.map(item => {
+        if(item.type === 'input_text' || item.type === 'text') {
+          return { type: 'text', text: item.text || item.content };
+        }
+        if(item.type === 'input_image' && item.image_url) {
+          // Claude expects base64 data
+          const base64Match = item.image_url.match(/^data:image\/(.*?);base64,(.*)$/);
+          if(base64Match) {
+            return {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: `image/${base64Match[1]}`,
+                data: base64Match[2]
+              }
+            };
+          }
+        }
+        return item;
+      });
+      return { role: msg.role === 'user' ? 'user' : 'assistant', content: claudeContent };
+    }
+    return { role: msg.role === 'user' ? 'user' : 'assistant', content: msg.content };
+  });
 
-  const body = {
-    model,
-    messages: [
-      ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
-      { role: 'user', content: message }
-    ],
-    temperature: 0.3,
+  // Extract system message if exists
+  let systemPrompt = '';
+  const userMessages = [];
+  for(const msg of claudeMessages) {
+    if(messages.find(m => m.role === 'system' && m.content === msg.content)) {
+      systemPrompt = msg.content;
+    } else {
+      userMessages.push(msg);
+    }
+  }
+
+  const body = { 
+    model: CLAUDE_MODEL, 
+    messages: userMessages,
+    max_tokens: 4096,
     stream
   };
+  
+  if(systemPrompt) {
+    body.system = systemPrompt;
+  }
 
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
+  const r = await fetch(url, {
+    method:'POST',
+    headers:{ 
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json'
     },
     body: JSON.stringify(body)
   });
-
-  if (!resp.ok) {
-    const text = await resp.text().catch(()=>''); 
-    throw new Error(`OpenAI ${resp.status}: ${text}`);
+  
+  if(!stream){
+    if(!r.ok){ throw new Error(await r.text()); }
+    return await r.json();
   }
-  return resp;
+  if(!r.ok){ throw new Error(await r.text()); }
+  return r;
 }
 
-// JSON endpoint (non-streaming)
-app.post('/chat', async (req, res) => {
-  try {
-    const { message, systemPrompt, model } = req.body || {};
-    if (!message) return res.status(400).json({ error: 'message missing' });
-
-    const resp = await openAIChat({ message, systemPrompt, model, stream: false });
-    const data = await resp.json();
-    const answer = data?.choices?.[0]?.message?.content || '';
-
-    // CORS echo for some proxies
-    const origin = req.headers.origin;
-    if (ALLOWED.length && ALLOWED.includes(origin)) {
-      res.header('Access-Control-Allow-Origin', origin);
-    } else if (!ALLOWED.length) {
-      res.header('Access-Control-Allow-Origin', '*');
+// JSON chat (supports image as data URL)
+app.post('/chat', async (req,res)=>{
+  try{
+    const { message, systemPrompt, model, image } = req.body||{};
+    const msgs = [];
+    if(systemPrompt) msgs.push({ role:'system', content: systemPrompt });
+    
+    if(image){
+      msgs.push({ role:'user', content: [
+        { type:'input_text', text: message||'Bitte analysiere das Bild im Kontext.' },
+        { type:'input_image', image_url: image }
+      ]});
+    }else{
+      msgs.push({ role:'user', content: message||'' });
     }
-
-    res.json({ answer, model: data?.model, usage: data?.usage });
-  } catch (err) {
-    console.error('[chat] error', err);
-    res.status(500).json({ error: String(err.message || err) });
+    
+    const data = await claudeChat(msgs, false);
+    const text = data?.content?.[0]?.text || '';
+    res.json({ answer: text });
+  }catch(e){
+    console.error('Chat error:', e);
+    res.status(500).json({ error: String(e) });
   }
 });
 
-// SSE endpoint (streaming)
-app.post('/chat-sse', async (req, res) => {
-  try {
-    const { message, systemPrompt, model } = req.body || {};
-    if (!message) return res.status(400).json({ error: 'message missing' });
+// SSE (text only)
+app.get('/chat-sse', async (req,res)=>{
+  try{
+    const message = req.query.message || '';
+    const systemPrompt = req.query.systemPrompt || '';
+    const messages = [];
+    if(systemPrompt) messages.push({ role:'system', content: systemPrompt });
+    messages.push({ role:'user', content: message });
+    
+    const r = await claudeChat(messages, true);
 
-    // SSE headers
-    // Nginx-friendly + no buffering
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    const origin = req.headers.origin;
-    if (ALLOWED.length && ALLOWED.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-      res.setHeader('Vary', 'Origin');
-    } else if (!ALLOWED.length) {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-    }
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
 
-    // Open channel (optional event)
-    res.write('event: open\n');
-    res.write('data: {"ok": true}\n\n');
-
-    // Heartbeat to keep connections alive behind proxies
-    const heart = setInterval(() => {
-      res.write(': ping\n\n');
-    }, 15000);
-
-    const upstream = await openAIChat({ message, systemPrompt, model, stream: true });
-
-    // OpenAI streams its own SSE. We parse each `data:` JSON and forward
-    const reader = upstream.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-
-    function flushLines() {
-      let idx;
-      while ((idx = buffer.indexOf('\n')) >= 0) {
-        const line = buffer.slice(0, idx);
-        buffer = buffer.slice(idx + 1);
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        if (!trimmed.startsWith('data:')) continue;
-        const payload = trimmed.slice(5).trim();
-        if (payload === '[DONE]') {
-          res.write('data: {"done": true}\n\n');
-          res.end();
-          return true;
-        }
-        try {
-          const json = JSON.parse(payload);
-          // Chat Completions delta path
-          const delta = json?.choices?.[0]?.delta?.content ?? '';
-          if (delta) {
-            res.write('data: ' + JSON.stringify({ delta }) + '\n\n');
+    const decoder = new TextDecoder();
+    for await (const chunk of r.body){
+      const str = decoder.decode(chunk);
+      const lines = str.split('\n');
+      
+      for(const line of lines){
+        if(!line.trim()) continue;
+        
+        // Claude SSE format handling
+        if(line.startsWith('data: ')) {
+          const data = line.substring(6);
+          if(data === '[DONE]') {
+            res.write('event: done\n');
+            res.write('data: [DONE]\n\n');
+          } else {
+            try {
+              const parsed = JSON.parse(data);
+              // Forward Claude's streaming format
+              res.write(`data: ${JSON.stringify(parsed)}\n\n`);
+            } catch(e) {
+              // If not JSON, forward as-is
+              res.write(`${line}\n\n`);
+            }
           }
-        } catch (e) {
-          // Forward raw payload for debugging
-          res.write('event: upstream\n');
-          res.write('data: ' + JSON.stringify({ raw: payload }) + '\n\n');
+        } else {
+          res.write(`${line}\n\n`);
         }
       }
-      return false;
     }
-
-    // Stream loop
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const finished = flushLines();
-      if (finished) break;
-    }
-    // Flush any remainder (shouldn't happen for SSE)
-    flushLines();
-
-    clearInterval(heart);
-  } catch (err) {
-    console.error('[chat-sse] error', err);
-    try {
-      // Attempt to send as SSE error
-      res.write('event: error\n');
-      res.write('data: ' + JSON.stringify({ message: String(err.message || err) }) + '\n\n');
-      res.end();
-    } catch {}
+    res.end();
+  }catch(e){
+    console.error('SSE error:', e);
+    res.writeHead(500, {'Content-Type':'text/event-stream'});
+    res.write(`event: error\n`);
+    res.write(`data: ${String(e)}\n\n`);
+    res.end();
   }
 });
 
-// Simple 404 for clarity
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
+// Alternative POST endpoint for SSE
+app.post('/chat-sse', async (req,res)=>{
+  try{
+    const { message, systemPrompt } = req.body || {};
+    const messages = [];
+    if(systemPrompt) messages.push({ role:'system', content: systemPrompt });
+    messages.push({ role:'user', content: message || '' });
+    
+    const r = await claudeChat(messages, true);
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+
+    const decoder = new TextDecoder();
+    for await (const chunk of r.body){
+      const str = decoder.decode(chunk);
+      const lines = str.split('\n');
+      
+      for(const line of lines){
+        if(!line.trim()) continue;
+        if(line.startsWith('data: ')) {
+          res.write(`${line}\n\n`);
+        }
+      }
+    }
+    res.write('event: done\n');
+    res.write('data: [DONE]\n\n');
+    res.end();
+  }catch(e){
+    console.error('POST SSE error:', e);
+    res.writeHead(500, {'Content-Type':'text/event-stream'});
+    res.write(`event: error\n`);
+    res.write(`data: ${String(e)}\n\n`);
+    res.end();
+  }
 });
 
-// Start
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[hohlrocks-chat] listening on :${PORT}`);
-  console.log('Allowed origins:', ALLOWED.length ? ALLOWED : ['* (dev)']);
-});
+app.get('/', (req,res)=> res.send('ok'));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, ()=> console.log('server up on', PORT));
