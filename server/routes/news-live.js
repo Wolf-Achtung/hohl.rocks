@@ -1,4 +1,4 @@
-// server/routes/news-live.js — Tavily AI news + Claude summarizer
+// server/routes/news-live.js — Tavily AI news + Claude summarizer (12h cache)
 import express from 'express';
 
 export const router = express.Router();
@@ -7,8 +7,16 @@ const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
 const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-latest';
 
+const CACHE = { item:null, ts:0 };
+const TTL = 12 * 60 * 60 * 1000;
+
 router.get('/news/today', async (req,res)=>{
   try{
+    const now = Date.now();
+    if(CACHE.item && (now - CACHE.ts) < TTL){
+      return res.json({ ...CACHE.item, cachedAt: new Date(CACHE.ts).toISOString(), cached: true });
+    }
+
     if(!TAVILY_API_KEY) return res.status(500).json({error:'Missing TAVILY_API_KEY'});
     const q = req.query.q || 'AI AND (model OR research OR regulation) from:24h';
     const tav = await fetch('https://api.tavily.com/search', {
@@ -24,7 +32,7 @@ router.get('/news/today', async (req,res)=>{
     });
     const tr = await tav.json();
     const items = (tr?.results||[]).slice(0,5).map(r=>({title:r.title, url:r.url}));
-    let summary=''; let title='KI‑News'; let links=items.map(i=>i.url);
+    let summary='KI‑News konnten nicht verdichtet werden.'; let title='KI‑News'; let links=items.map(i=>i.url);
 
     if(ANTHROPIC_API_KEY){
       const prompt = `Fasse die wichtigsten KI‑News der letzten 24h in 2 prägnanten Sätzen zusammen. 
@@ -46,9 +54,9 @@ Liefere danach eine Zeile "Quellen:" und liste genau zwei der folgenden Links (r
       const j = await r.json();
       summary = (j?.content||[]).map(c=>c.text||'').join('');
       title = 'KI‑News heute';
-    }else{
-      summary = 'Aktuelle KI‑News konnten nicht verdichtet werden (kein Claude‑Key).';
     }
-    res.json({ title, summary, links });
+    const item = { title, summary, links };
+    CACHE.item = item; CACHE.ts = now;
+    res.json({ ...item, cachedAt: new Date(CACHE.ts).toISOString(), cached:false });
   }catch(e){ res.status(500).json({error:String(e)}) }
 });
