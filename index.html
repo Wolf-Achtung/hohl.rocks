@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
+  <!-- API-Basis (Railway) -->
   <meta name="hohl-chat-base" content="https://hohlrocks-production.up.railway.app">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>hohl.rocks — Neon Gold UX+</title>
@@ -24,7 +25,7 @@
     #nav-buttons .projects{background:#00E676}
     #nav-buttons button:hover{filter:brightness(1.12)}
 
-    /* Pre‑Message */
+    /* Pre-Message */
     #pre-msg{
       position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:1240;background:rgba(12,16,22,0.68);
       border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);color:#eaf2ff;padding:10px 18px;border-radius:14px;
@@ -60,14 +61,17 @@
   <div id="help"><span>?</span>Was kann ich hier tun?</div>
 
   <!-- Scripts: Reihenfolge wichtig -->
-  <!-- Popup + Klang (Radiohead) -->
+  <!-- Popup + Klang -->
   <script src="/public/js/answer-popup.js" defer></script>
   <script src="/public/js/ambient-radiohead.js" defer></script>
 
   <!-- Claude-Streaming (SSE) + JSON -->
   <script src="/public/js/claude-stream.js" defer></script>
 
-  <!-- Inhalte & Bubbles (mit Daily-News / Heute-neu / Threads / Generate&Show) -->
+  <!-- Formular-Helper für Input-Bubbles (NEU) -->
+  <script src="/public/js/bubble-forms.js" defer></script>
+
+  <!-- Inhalte & Bubbles -->
   <script src="/public/js/ticker-items.js" defer></script>
   <script src="/public/js/hero-shapes.js" defer></script>
 
@@ -78,7 +82,7 @@
   <script src="/js/cage-match.js?v=4"></script>
   <script src="/js/visual-lab.js?v=5"></script>
 
-  <!-- Mini‑Coach (Onboarding) -->
+  <!-- Mini-Coach -->
   <script src="/public/js/ux-coach.js" defer></script>
 </body>
 </html>
