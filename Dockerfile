@@ -1,9 +1,8 @@
-# Optional: Dockerfile (Railway kann auch ohne)
 FROM node:20-alpine
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install --omit=dev || true
-COPY . .
 ENV NODE_ENV=production
-EXPOSE 3000
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY . .
+EXPOSE 8080
 CMD ["npm","start"]
