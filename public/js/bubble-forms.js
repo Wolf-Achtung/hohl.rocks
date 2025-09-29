@@ -1,131 +1,98 @@
 // public/js/bubble-forms.js
-// Einfaches Formular-Popup für "claude-input": Nutzertext eingeben -> Stream in dasselbe Modal.
+// Input-Popup mit großem Textfeld. Sendet zu Claude (SSE) und streamt die Antwort.
 
-(function () {
-  const CSS = `
-    .bf-modal{position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:1600;
-      width:min(1100px,92vw);background:rgba(22,28,36,.68);border:1px solid rgba(255,255,255,.18);
-      backdrop-filter:blur(10px);color:#eaf2ff;border-radius:18px;box-shadow:0 14px 44px rgba(0,0,0,.45)}
-    .bf-hd{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 16px 8px 16px}
-    .bf-hd h3{margin:0;font-size:20px;line-height:1.2}
-    .bf-hd .explain{margin:.25rem 0 0;color:#cfe5ff;opacity:.9;font-size:13px}
-    .bf-body{padding:10px 16px 8px 16px}
-    .bf-txa{width:100%;min-height:160px;border-radius:10px;border:1px solid rgba(255,255,255,.24);
-      background:rgba(10,17,24,.45);color:#eaf2ff;padding:12px;font:500 14px/1.45 ui-sans-serif,system-ui;resize:vertical}
-    .bf-actions{display:flex;gap:10px;justify-content:flex-end;padding:6px 16px 12px 16px}
-    .bf-actions button{border-radius:999px;border:1px solid rgba(255,255,255,.16);padding:8px 12px;cursor:pointer;background:rgba(240,247,255,.12);color:#eaf2ff}
-    .bf-out{padding:0 16px 12px 16px;max-height:min(56vh,520px);overflow:auto}
-    .bf-pre{white-space:pre-wrap;font:500 14px/1.45 ui-sans-serif,system-ui}
-    .bf-bar{height:6px;border-radius:8px;background:rgba(255,255,255,.18);margin:0 16px 14px 16px;overflow:hidden}
-    .bf-bar>i{display:block;width:0;height:100%;background:#00B0FF;transition:width .12s ease}
-  `;
-  if (!document.getElementById('bf-css')) {
-    const st = document.createElement('style'); st.id = 'bf-css'; st.textContent = CSS; document.head.appendChild(st);
-  }
-
-  function resolveBase() {
-    const meta = document.querySelector('meta[name="hohl-chat-base"]')?.content?.trim() || '';
-    return meta.replace(/\/$/, '');
-  }
-
-  async function streamClaude({ prompt, threadId }, onToken, onDone, onError) {
-    const base = resolveBase();
-    const endpoints = [`${base}/api/claude-sse`, `${base}/claude-sse`, `/api/claude-sse`, `/claude-sse`];
-    const qs = new URLSearchParams({ prompt, thread: threadId || '' }).toString();
-
-    let res = null;
-    for (const u of endpoints) {
-      try {
-        const r = await fetch(`${u}?${qs}`, { method: 'GET' });
-        if (r.ok && r.headers.get('content-type')?.includes('text/event-stream')) { res = r; break; }
-      } catch (_) {}
-    }
-    if (!res) return onError?.(new Error('SSE-Endpunkt nicht erreichbar'));
-
-    const reader = res.body.getReader(), decoder = new TextDecoder();
-    let buf = '';
-    try {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const parts = buf.split('\n\n'); buf = parts.pop() || '';
-        for (const chunk of parts) {
-          const line = chunk.split('\n').find(l => l.startsWith('data:'));
-          if (!line) continue;
-          const data = line.slice(5).trim();
-          let token = '';
-          try {
-            const j = JSON.parse(data);
-            token = j?.delta?.text ?? j?.delta?.content ?? j?.text ?? j?.content ?? '';
-          } catch { token = data; }
-          if (token) onToken?.(token);
-        }
-      }
-      onDone?.();
-    } catch (e) { onError?.(e); }
-  }
-
-  function buildModal() {
-    const m = document.createElement('div'); m.className = 'bf-modal';
-    m.innerHTML = `
-      <div class="bf-hd">
-        <div>
-          <h3 id="bf-title">Eingabe</h3>
-          <p class="explain" id="bf-explain" style="display:none"></p>
-        </div>
-        <div class="bf-actions">
-          <button id="bf-copy">Kopieren</button>
-          <button id="bf-close">Schließen</button>
-        </div>
-      </div>
-      <div class="bf-body">
-        <textarea id="bf-text" class="bf-txa" placeholder="Text hier einfügen …"></textarea>
-      </div>
-      <div class="bf-actions">
-        <button id="bf-send">Senden</button>
-      </div>
-      <div class="bf-out"><div class="bf-pre" id="bf-out"></div></div>
-      <div class="bf-bar"><i id="bf-bar"></i></div>
+(() => {
+  if (!document.getElementById("bubble-forms-css")) {
+    const css = document.createElement("style");
+    css.id = "bubble-forms-css";
+    css.textContent = `
+      .bf-box{position:fixed;left:50%;top:4%;transform:translateX(-50%);width:min(1100px,94vw);
+        background:rgba(12,16,22,.68);border:1px solid rgba(255,255,255,.18);border-radius:16px;color:#eaf2ff;z-index:1750}
+      .bf-hd{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px 8px 16px}
+      .bf-hd h3{margin:0;font-size:20px}
+      .bf-hd .explain{margin:.25rem 0 0 0;font-size:13px;opacity:.9}
+      .bf-tools{display:flex;gap:8px}
+      .bf-btn{border-radius:999px;border:1px solid rgba(255,255,255,.18);background:#eaf2ff;color:#0a1118;font-weight:700;padding:6px 12px;cursor:pointer}
+      .bf-body{padding:12px 16px 16px 16px}
+      .bf-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+      .bf-textarea{width:100%;min-height:210px;border-radius:10px;border:1px solid rgba(255,255,255,.18);padding:12px;background:#0b1219;color:#eaf2ff}
+      .bf-send{border-radius:999px;background:#1ee0a5;color:#072019;border:0;padding:10px 16px;font-weight:900;cursor:pointer}
+      .bf-out{margin-top:12px;background:#0b1219;border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:12px;min-height:120px;white-space:pre-wrap}
+      .bf-backdrop{position:fixed;inset:0;background:rgba(6,10,14,.35);backdrop-filter:blur(6px);z-index:1700}
     `;
-    document.body.appendChild(m);
-    m.querySelector('#bf-close').onclick = () => m.remove();
-    m.querySelector('#bf-copy').onclick = () => {
-      navigator.clipboard.writeText(m.querySelector('#bf-out').textContent || '');
-    };
-    return m;
+    document.head.appendChild(css);
   }
 
-  function setHdr(m, t, e) {
-    m.querySelector('#bf-title').textContent = t || 'Eingabe';
-    const ex = m.querySelector('#bf-explain');
-    if (e) { ex.textContent = e; ex.style.display = ''; } else ex.style.display = 'none';
+  function close(node) {
+    node?.parentElement?.removeChild(node);
+    document.querySelector(".bf-backdrop")?.remove();
   }
-  function progress(m, pct) { m.querySelector('#bf-bar').style.width = `${pct}%`; }
 
-  // Öffentliche API
-  window.openInputBubble = function openInputBubble(title, systemPrompt, opts = {}) {
-    const placeholder = opts.placeholder || 'Stichpunkte oder Rohfassung …';
-    const explain     = opts.explain || '';
-    const threadId    = opts.threadId || undefined;
+  function openInputBubble(title, basePrompt = "", options = {}) {
+    const backdrop = document.createElement("div"); backdrop.className = "bf-backdrop";
+    backdrop.addEventListener("click", () => close(box));
+    document.body.appendChild(backdrop);
 
-    const m = buildModal();
-    setHdr(m, title || 'Eingabe', explain);
-    const tx = m.querySelector('#bf-text'); tx.placeholder = placeholder;
-    const out = m.querySelector('#bf-out');
+    const box = document.createElement("div"); box.className = "bf-box";
 
-    m.querySelector('#bf-send').onclick = async () => {
-      const user = tx.value.trim();
-      if (!user) { tx.focus(); return; }
-      out.textContent = ''; progress(m, 8);
+    // Header
+    const hd = document.createElement("div"); hd.className = "bf-hd";
+    const left = document.createElement("div");
+    const h3 = document.createElement("h3"); h3.textContent = title || "Eingabe";
+    left.appendChild(h3);
 
-      const prompt = `${systemPrompt || ''}\n\n### Nutzerinhalt\n${user}`;
+    if (options?.explain) {
+      const p = document.createElement("p");
+      p.className = "explain";
+      p.textContent = options.explain;
+      left.appendChild(p);
+    }
 
-      await streamClaude({ prompt, threadId },
-        tok => { out.textContent += tok; },
-        ()  => { progress(m, 100); },
-        err => { out.textContent = `[Fehler] ${err?.message || err}`; progress(m, 100); }
-      );
-    };
-  };
+    const tools = document.createElement("div"); tools.className = "bf-tools";
+    const bCopy  = document.createElement("button"); bCopy.className = "bf-btn"; bCopy.textContent = "Kopieren";
+    const bClose = document.createElement("button"); bClose.className = "bf-btn"; bClose.textContent = "Schließen";
+    bCopy.addEventListener("click", () => navigator.clipboard.writeText(out.innerText || out.textContent || ""));
+    bClose.addEventListener("click", () => close(box));
+    tools.appendChild(bCopy); tools.appendChild(bClose);
+
+    hd.appendChild(left); hd.appendChild(tools);
+
+    // Body
+    const body = document.createElement("div"); body.className = "bf-body";
+
+    const ta = document.createElement("textarea");
+    ta.className = "bf-textarea";
+    ta.placeholder = options?.placeholder || "Stichpunkte oder Rohfassung …";
+
+    const send = document.createElement("button");
+    send.className = "bf-send";
+    send.textContent = "Senden";
+
+    const row = document.createElement("div"); row.className = "bf-row";
+    row.appendChild(ta); row.appendChild(send);
+
+    const out = document.createElement("div"); out.className = "bf-out";
+
+    body.appendChild(row);
+    body.appendChild(out);
+
+    box.appendChild(hd);
+    box.appendChild(body);
+    document.body.appendChild(box);
+
+    // Aktion
+    send.addEventListener("click", async () => {
+      const user = (ta.value || "").trim();
+      const prompt = user ? `${basePrompt}\n\nNutzereingabe:\n${user}` : basePrompt;
+      out.textContent = "";
+      await window.Claude.stream(prompt, {
+        threadId: options?.threadId,
+        system: options?.system,
+        onDelta: t => { out.textContent += t; },
+        onError: e => { out.textContent = `[Fehler] ${e}`; }
+      });
+    });
+  }
+
+  window.openInputBubble = openInputBubble;
 })();
