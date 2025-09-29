@@ -1,27 +1,29 @@
-/* Neon organic blobs (SVG) — smooth, slow, non-hectic */
-#shapes{
-  position:fixed; inset:0; z-index:5; pointer-events:none;
-  perspective: 900px;
-}
-.shape{
-  position:absolute; width: 22vmin; height: 22vmin;
-  will-change: transform, opacity;
-  transition: opacity 1.2s ease;
-  filter: drop-shadow(0 12px 28px rgba(0,0,0,.45)) drop-shadow(0 0 22px currentColor);
-  mix-blend-mode: screen;
-  pointer-events:auto; cursor:pointer; opacity:.0;
-  transform: translate3d(0,0,0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.96);
-  transform-style: preserve-3d;
-  border-radius: 999px; /* just in case */
-}
-.shape svg{ width:100%; height:100%; display:block; }
-.shape path.blob-fill{ fill: currentColor; opacity:.38 }
-.shape path.blob-stroke{ fill:none; stroke: currentColor; stroke-opacity:.85; stroke-width:1.5 }
+/* /hero-shapes.css — Neon Gold UX+ */
 
-/* subtle entrance */
-.shape.show{ opacity: .95; }
+#shapes{position:fixed;inset:0;pointer-events:auto}
+.shape{user-select:none}
+.shape svg{width:100%;height:100%;display:block;mix-blend-mode:screen}
+.shape path{stroke-linecap:round;stroke-linejoin:round;shape-rendering:geometricPrecision}
 
-/* Reduced motion accessibility */
+.shape [data-label]{pointer-events:none}
+.shape:focus-visible{outline:2px solid #9cf; outline-offset:4px; border-radius:12px}
+
+/* Label/Hints (zentriert) – robust über Video */
+.shape .title{
+  color:#081218;font-weight:800;font-size:14px;background:rgba(255,255,255,.38);
+  padding:6px 10px;border-radius:10px;text-shadow:0 1px 2px rgba(255,255,255,.6)
+}
+.shape .hint{
+  margin-top:6px;font-size:11px;opacity:.95;background:rgba(12,16,22,.35);
+  color:#eaf2ff;padding:4px 8px;border-radius:8px
+}
+
+/* Hilfe / Buttons */
+#nav-buttons button{transition:filter .2s ease, transform .06s ease}
+#nav-buttons button:active{transform:translateY(1px)}
+
+/* A11y: weniger Bewegung */
 @media (prefers-reduced-motion: reduce){
-  #shapes, .shape{ animation:none !important; transition:none !important }
+  .shape{transition:none !important}
+  .shape svg{animation:none !important}
 }
