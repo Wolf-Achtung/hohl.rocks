@@ -1,73 +1,58 @@
-/* public/js/hero-shapes.js — Neon Jellyfish v2
+/* public/js/hero-shapes.js — Jellyfish Edition + explain + stable thread + life-extend-on-click
+ * Kompatibel zu __TICKER_ITEMS (label, hint, action, prompt, placeholder, explain)
  * - wenige gleichzeitige Bubbles (Desktop 6, Mobile 4)
- * - langsames Ein-/Ausblenden (3s / 3.6s)
+ * - sehr langsames Ein-/Ausblenden (3s / 3.6s)
  * - elegantes Nachspawnen (alle 4–9s 1 Bubble, manchmal 2)
- * - sehr sanfte, quallenartige Bewegung (Lissajous + Atmung)
- * - Kollision-Vermeidung beim Spawn
- * - Klick: Fokus + Lebensdauer-Verlängerung
- * - Stateful Session je Bubble (threadId pro label)
- * - kompatibel mit __TICKER_ITEMS (label, hint, prompt, action, placeholder, explain)
+ * - sanfte Drift (Lissajous + „Atmung“)
+ * - Fokus beim Klick + Lebensdauer-Verlängerung
  */
-(function () {
-  // ────────────────────────────────────────────────────────────────────────────
-  // Konfiguration
-  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+(function () {
+  // ──────────────────────────────────────────────────────────────────────────
   const CFG = {
-    MAX: (innerWidth < 820) ? 4 : 6,            // max sichtbare Bubbles
-    SPAWN_MIN: 4000,                             // min Wartezeit bis zur nächsten Bubble (ms)
-    SPAWN_MAX: 9000,                             // max Wartezeit bis zur nächsten Bubble (ms)
-    FADE_IN: 3000,                               // Einblendung
-    FADE_OUT: 3600,                              // Ausblendung
-    LIFE_MIN: 65000,                             // Lebensdauer
+    MAX: (innerWidth < 820) ? 4 : 6,
+    SPAWN_MIN: 4000,
+    SPAWN_MAX: 9000,
+    FADE_IN: 3000,
+    FADE_OUT: 3600,
+    LIFE_MIN: 65000,
     LIFE_MAX: 98000,
-    LIFE_EXTEND_CLICK: 55000,                    // Verlängerung nach Klick
-    MAX_EXTENDS: 1,                              // wie oft verlängern?
-    PAD: 60,                                     // Abstand zum Rand
-    SAFE: 36,                                    // Abstand zwischen Bubbles
-    SIZE: [0.26, 0.50],                          // min/max relativ zur kleineren Screen-Kante
-    DRIFT: {                                     // langsamer Drift
-      ax: [22, 58],                              // Amplitude X
-      ay: [20, 52],                              // Amplitude Y
-      tx: [900, 1500],                           // Perioden X (ms)
-      ty: [980, 1600],                           // Perioden Y (ms)
-      speed: [0.0015, 0.0035],                   // globale Tempovariation
-      breatheAmp: [0.006, 0.016],                // Atmung (Scale)
-      breatheT: [18, 28]                         // Atmungsperiode (s)
+    LIFE_EXTEND_CLICK: 55000,   // ⟵ Verlängerung nach Klick
+    MAX_EXTENDS: 1,             // ⟵ wie oft verlängern?
+    PAD: 60,
+    SAFE: 36,
+    SIZE: [0.26, 0.50],
+    DRIFT: {
+      ax: [22, 58],
+      ay: [20, 52],
+      tx: [900, 1500],
+      ty: [980, 1600],
+      speed: [0.0015, 0.0035],
+      breatheAmp: [0.006, 0.016],
+      breatheT: [18, 28]
     }
   };
 
-  if (reduceMotion) {
-    // ruhiger, barriereärmer
-    CFG.DRIFT.ax = [8, 14];
-    CFG.DRIFT.ay = [8, 14];
-    CFG.DRIFT.speed = [0.0004, 0.0007];
-    CFG.FADE_IN = 1200;
-    CFG.FADE_OUT = 1200;
-  }
-
-  // Farben & Utilities
-  const NEON = ['#00F5D4', '#7CF4FF', '#FFD400', '#FF4FA3', '#00E676', '#A0FF1A', '#9C64FF', '#FFA26B'];
+  const NEON = ['#00F5D4','#7CF4FF','#FFD400','#FF4FA3','#00E676','#A0FF1A','#9C64FF','#FFA26B'];
   const pick = () => NEON[(Math.random() * NEON.length) | 0];
-  const rnd = (min, max) => min + Math.random() * (max - min);
+  const rnd  = (a, b) => a + Math.random() * (b - a);
 
-  const BUBBLES = [];     // aktive Bubbles (für Kollisionsprüfung)
-  let running = false;
-  let spawnTimer = null;
-
-  // Persistente Threads je Label
-  const threadStore = (window.__threadByLabel = window.__threadByLabel || {});
-  const mkThread = (label) => threadStore[label] || (threadStore[label] = 't_' + (crypto?.getRandomValues
-    ? [...crypto.getRandomValues(new Uint8Array(6))].map(b => b.toString(16).padStart(2, '0')).join('')
-    : Math.random().toString(36).slice(2, 10)));
+  const BUBBLES = [];
+  let running = false, spawnTimer = null;
 
   function holder() {
     let h = document.getElementById('shapes');
-    if (!h) { h = document.createElement('div'); h.id = 'shapes'; document.body.appendChild(h); }
+    if (!h) { h = document.createElement('div'); h.id = 'shapes'; document.getElementById('shape-layer')?.appendChild(h) || document.body.appendChild(h); }
     return h;
   }
 
-  // einfache Kollisionsprüfung (Kreis zu Kreis)
+  // stabile Thread-ID pro Label
+  function mkThread(label) {
+    return 'thr-' + String(label || 'bubble').toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+  }
+
+  // Kreis-Kollision (grob) zur Spawn-Vermeidung
   function collides(cx, cy, r) {
     for (const b of BUBBLES) {
       const dx = cx - b.cx, dy = cy - b.cy;
@@ -76,7 +61,7 @@
     return false;
   }
 
-  // Organische Kontur
+  // organische Kontur
   function blobPath(cx, cy, r = 150, points = 16, variance = 0.12) {
     const TAU = Math.PI * 2, step = TAU / points, pts = [];
     for (let i = 0; i < points; i++) {
@@ -100,7 +85,7 @@
     const size = B * rnd(CFG.SIZE[0], CFG.SIZE[1]);
     const r = size / 2;
 
-    // Position suchen (max 24 Versuche)
+    // Position finden
     let cx, cy, ok = false, tries = 24;
     while (tries--) {
       cx = rnd(CFG.PAD, W - CFG.PAD);
@@ -113,8 +98,6 @@
     const color = pick();
     const el = document.createElement('div');
     el.className = 'shape';
-    el.setAttribute('role', 'button');
-    el.setAttribute('aria-label', 'Interaktive Bubble');
     Object.assign(el.style, {
       position: 'absolute',
       left: `${(cx - r) | 0}px`,
@@ -133,83 +116,84 @@
     svg.style.mixBlendMode = 'screen';
     const fill = document.createElementNS(ns, 'path');
     const stroke = document.createElementNS(ns, 'path');
+    const d = blobPath(200, 200, 150, 16, 0.12);
+    fill.setAttribute('d', d); stroke.setAttribute('d', d);
     fill.setAttribute('fill', color); fill.setAttribute('opacity', '0.78');
     stroke.setAttribute('stroke', color); stroke.setAttribute('fill', 'none'); stroke.setAttribute('opacity', '0.55');
-    const d = blobPath(200, 200, 150, 16, 0.12); fill.setAttribute('d', d); stroke.setAttribute('d', d);
     svg.appendChild(fill); svg.appendChild(stroke); el.appendChild(svg);
 
-    // Label/Hint/Aktion aus __TICKER_ITEMS
+    // Label/Hints/Aktionen
     if (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) {
       if (typeof window.__bubbleIndex !== 'number') window.__bubbleIndex = 0;
       const it = window.__TICKER_ITEMS[(window.__bubbleIndex++) % window.__TICKER_ITEMS.length];
 
+      // Titel/Hinweis
       const wrap = document.createElement('div');
       wrap.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;';
-      const title = document.createElement('div'); title.textContent = it.label;
+      const title = document.createElement('div'); title.textContent = it.label || 'Prompt';
       Object.assign(title.style, { color: '#0a1118', fontWeight: '800', fontSize: '14px', background: 'rgba(255,255,255,.35)', padding: '6px 10px', borderRadius: '10px', textShadow: '0 1px 2px rgba(255,255,255,.6)' });
       const hint = document.createElement('div'); hint.textContent = it.hint || 'Klick – Ergebnis im Fenster';
       Object.assign(hint.style, { marginTop: '6px', fontSize: '11px', opacity: .9, background: 'rgba(12,16,22,.35)', color: '#eaf2ff', padding: '4px 8px', borderRadius: '8px' });
       wrap.appendChild(title); wrap.appendChild(hint); el.appendChild(wrap);
 
-      // Daten an Bubble hängen
-      el.dataset.prompt = it.prompt || '';
-      el.dataset.action = it.action || '';
+      // Daten an Popup weitergeben
+      el.dataset.label       = it.label || '';
+      el.dataset.prompt      = it.prompt || '';
+      el.dataset.action      = it.action || '';
       el.dataset.placeholder = it.placeholder || '';
-      el.dataset.explain = it.explain || '';     // ⟵ neu: Kurz-Erklärung
-      el.dataset.threadId = mkThread(it.label);  // ⟵ neu: stabile Thread-ID je Label
+      el.dataset.explain     = it.explain || '';       // ⟵ neu: Kurz-Erklärung
+      el.dataset.threadId    = mkThread(it.label);     // ⟵ neu: stabile Thread-ID
+
       el.style.cursor = 'pointer';
-
       el.addEventListener('click', () => {
-        try { window.Ambient && Ambient.ensureStart && Ambient.ensureStart(); } catch (e) { }
+        try { window.Ambient && Ambient.ensureStart && Ambient.ensureStart(); } catch (e) {}
 
-        // Fokus: andere Bubbles abdunkeln, diese betonen
-        document.querySelectorAll('.shape').forEach(s => { if (s !== el) s.style.opacity = '0.18'; });
+        // Fokus
+        document.querySelectorAll('.shape').forEach(s => { if (s !== el) s.style.opacity = '0.15'; });
         setTimeout(() => { document.querySelectorAll('.shape').forEach(s => { if (s !== el) s.style.opacity = '0.28'; }); }, 1200);
 
-        // Lebensdauer verlängern (nur begrenzt oft)
-        if (entry.extends < CFG.MAX_EXTENDS) {
-          entry.extends++;
-          if (entry.fadeTimer) { clearTimeout(entry.fadeTimer); entry.fadeTimer = null; }
-          scheduleFade(entry, CFG.LIFE_EXTEND_CLICK); // neu planen
+        // Lebensdauer verlängern (begrenzt)
+        const ent = BUBBLES.find(x => x.el === el);
+        if (ent && ent.extends < CFG.MAX_EXTENDS) {
+          ent.extends++;
+          if (ent.fadeTimer) { clearTimeout(ent.fadeTimer); ent.fadeTimer = null; }
+          scheduleFade(ent, CFG.LIFE_EXTEND_CLICK);
         }
 
         // Aktionen routen
-        const act = el.dataset.action;
-        const label = it.label;
-        const p = el.dataset.prompt || '';
-        const options = {
-          placeholder: el.dataset.placeholder || 'Text hier einfügen…',
-          explain: el.dataset.explain || '',
-          threadId: el.dataset.threadId || mkThread(it.label)
-        };
+        const act   = el.dataset.action;
+        const label = el.dataset.label;
+        const p     = el.dataset.prompt || '';
 
-        if (act === 'research' && typeof window.startResearch === 'function') {
-          const q = prompt('Thema für Live-Recherche?');
-          if (q) startResearch(q, { threadId: options.threadId, explain: options.explain });
+        if (act === 'research' && window.startResearch) {
+          const q = prompt('Thema für Live‑Recherche?');
+          if (q) startResearch(q);
           return;
         }
-        if (act === 'cage-match' && typeof window.openCageMatch === 'function') {
-          return openCageMatch({ threadId: options.threadId, explain: options.explain });
-        }
-        if (act === 'claude-input' && typeof window.openInputBubble === 'function') {
-          return openInputBubble(label, p, options); // ⟵ explain + threadId kommen im Popup an
-        }
-        if (act && window.VisualLab && typeof VisualLab.handle === 'function') {
-          return VisualLab.handle(act, options);
-        }
+        if (act === 'cage-match' && window.openCageMatch) return openCageMatch();
 
-        // Fallback: Antwort-Popup
-        if (typeof window.openAnswerPopup === 'function') {
-          return openAnswerPopup(p, false, label, options);
+        if (act === 'claude-input' && window.openInputBubble) {
+          return openInputBubble(label, p, {
+            placeholder: el.dataset.placeholder || 'Text hier einfügen…',
+            explain:     el.dataset.explain || '',
+            threadId:    el.dataset.threadId
+          });
+        }
+        if (window.openAnswerPopup) {
+          return openAnswerPopup(p, {
+            title:    label,
+            explain:  el.dataset.explain || '',
+            threadId: el.dataset.threadId
+          });
         }
       });
     }
 
-    // zur Seite hinzufügen & weich einblenden
+    // einblenden
     h.appendChild(el);
     requestAnimationFrame(() => { el.style.opacity = '0.96'; });
 
-    // Bewegungs-Parameter (sehr langsam + Atmung)
+    // sehr langsame Drift + „Atmung“
     const drift = {
       ax: rnd(CFG.DRIFT.ax[0], CFG.DRIFT.ax[1]),
       ay: rnd(CFG.DRIFT.ay[0], CFG.DRIFT.ay[1]),
@@ -245,7 +229,7 @@
         ent.el.style.transition = `opacity ${CFG.FADE_OUT}ms ease`;
         ent.el.style.opacity = '0';
         setTimeout(() => {
-          try { cancelAnimationFrame(ent.raf); } catch (e) { }
+          try { cancelAnimationFrame(ent.raf); } catch (e) {}
           const i = BUBBLES.indexOf(ent);
           if (i >= 0) BUBBLES.splice(i, 1);
           ent.el.remove();
@@ -254,19 +238,15 @@
     }
   }
 
-  // Spawner: alle 4–9 s eine neue Bubble (mit 25 % Chance auf 2)
+  // Spawner
   function schedule() {
     if (!running) return;
     const h = holder();
-    const toSpawn = (BUBBLES.length < CFG.MAX) ? 1 + (Math.random() < 0.25 ? 1 : 0) : 0;
-    for (let i = 0; i < toSpawn; i++) {
-      if (BUBBLES.length < CFG.MAX) spawnOne(h);
-    }
-    const wait = rnd(CFG.SPAWN_MIN, CFG.SPAWN_MAX);
-    spawnTimer = setTimeout(schedule, wait);
+    const toSpawn = (BUBBLES.length < CFG.MAX) ? (1 + (Math.random() < 0.25 ? 1 : 0)) : 0;
+    for (let i = 0; i < toSpawn; i++) if (BUBBLES.length < CFG.MAX) spawnOne(h);
+    spawnTimer = setTimeout(schedule, rnd(CFG.SPAWN_MIN, CFG.SPAWN_MAX));
   }
 
-  // Start: mit 1–2 initialen Bubbles loslegen
   function init() {
     if (running) return;
     running = true;
@@ -274,19 +254,15 @@
     const initial = (innerWidth < 820) ? 1 : 2;
     for (let i = 0; i < initial; i++) spawnOne(h);
     schedule();
-
-    // Pre-Msg nach kurzer Zeit ausblenden (falls vorhanden)
-    setTimeout(() => { const pm = document.getElementById('pre-msg'); if (pm) pm.remove(); }, 9000);
+    // Pre‑Msg sanft entfernen
+    setTimeout(() => { document.getElementById('pre-msg')?.remove(); }, 9000);
   }
 
-  // Stop (bei Bedarf)
   function stop() {
-    running = false;
-    clearTimeout(spawnTimer);
+    running = false; clearTimeout(spawnTimer);
     BUBBLES.slice().forEach(b => {
-      try { cancelAnimationFrame(b.raf); } catch (e) { }
-      clearTimeout(b.fadeTimer);
-      b.el.remove();
+      try { cancelAnimationFrame(b.raf); } catch (e) {}
+      clearTimeout(b.fadeTimer); b.el.remove();
     });
     BUBBLES.length = 0;
   }
@@ -294,6 +270,5 @@
   if (document.readyState !== 'loading') init();
   else window.addEventListener('DOMContentLoaded', init);
 
-  // optional global
   window.Bubbles = { init, stop, state: () => ({ count: BUBBLES.length }) };
 })();

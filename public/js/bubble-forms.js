@@ -1,173 +1,131 @@
-/* public/js/bubble-forms.js
- * Form-Popup (Textarea) mit Explain-Zeile & Streaming zu Claude.
- * -> openInputBubble(label, template, { placeholder, explain, thread, model })
- *    template darf {{text}} enthalten (wird durch Eingabe ersetzt)
- */
+// public/js/bubble-forms.js
+// Einfaches Formular-Popup für "claude-input": Nutzertext eingeben -> Stream in dasselbe Modal.
+
 (function () {
-  'use strict';
-
-  // ---- Auto-Base & Endpoints ---------------------------------------------
-  function getBase() {
-    const tag = document.querySelector('meta[name="hohl-chat-base"]');
-    return tag ? (tag.content || '').trim().replace(/\/+$/,'') : '';
+  const CSS = `
+    .bf-modal{position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:1600;
+      width:min(1100px,92vw);background:rgba(22,28,36,.68);border:1px solid rgba(255,255,255,.18);
+      backdrop-filter:blur(10px);color:#eaf2ff;border-radius:18px;box-shadow:0 14px 44px rgba(0,0,0,.45)}
+    .bf-hd{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 16px 8px 16px}
+    .bf-hd h3{margin:0;font-size:20px;line-height:1.2}
+    .bf-hd .explain{margin:.25rem 0 0;color:#cfe5ff;opacity:.9;font-size:13px}
+    .bf-body{padding:10px 16px 8px 16px}
+    .bf-txa{width:100%;min-height:160px;border-radius:10px;border:1px solid rgba(255,255,255,.24);
+      background:rgba(10,17,24,.45);color:#eaf2ff;padding:12px;font:500 14px/1.45 ui-sans-serif,system-ui;resize:vertical}
+    .bf-actions{display:flex;gap:10px;justify-content:flex-end;padding:6px 16px 12px 16px}
+    .bf-actions button{border-radius:999px;border:1px solid rgba(255,255,255,.16);padding:8px 12px;cursor:pointer;background:rgba(240,247,255,.12);color:#eaf2ff}
+    .bf-out{padding:0 16px 12px 16px;max-height:min(56vh,520px);overflow:auto}
+    .bf-pre{white-space:pre-wrap;font:500 14px/1.45 ui-sans-serif,system-ui}
+    .bf-bar{height:6px;border-radius:8px;background:rgba(255,255,255,.18);margin:0 16px 14px 16px;overflow:hidden}
+    .bf-bar>i{display:block;width:0;height:100%;background:#00B0FF;transition:width .12s ease}
+  `;
+  if (!document.getElementById('bf-css')) {
+    const st = document.createElement('style'); st.id = 'bf-css'; st.textContent = CSS; document.head.appendChild(st);
   }
-  const BASE = getBase();
-  const URL_SSE = (path) => (BASE ? `${BASE}${path}` : path);
-  const ENDPOINT_SSE = URL_SSE('/claude-sse');
-  const ENDPOINT_JSON = URL_SSE('/claude');
 
-  function esc(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-  const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
+  function resolveBase() {
+    const meta = document.querySelector('meta[name="hohl-chat-base"]')?.content?.trim() || '';
+    return meta.replace(/\/$/, '');
+  }
 
-  // ---- Fallback-Streaming (wenn kein runClaudeToPopup existiert) ----------
-  async function streamClaudeToBody({ prompt, thread, model, onChunk, onDone, onError }) {
-    try {
-      // 1) SSE probieren
-      const sseUrl = `${ENDPOINT_SSE}?prompt=${encodeURIComponent(prompt)}${thread?`&thread=${encodeURIComponent(thread)}`:''}${model?`&model=${encodeURIComponent(model)}`:''}`;
-      const res = await fetch(sseUrl, { method: 'GET' });
-      if (res.ok && res.headers.get('content-type')?.includes('text/event-stream')) {
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let buf = '';
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buf += decoder.decode(value, { stream: true });
-          // Primitive SSE-Parser
-          const lines = buf.split(/\r?\n/);
-          buf = lines.pop() || '';
-          for (const line of lines) {
-            if (!line.startsWith('data:')) continue;
-            const data = line.slice(5).trim();
-            if (!data) continue;
-            try {
-              const j = JSON.parse(data);
-              if (j.delta) onChunk(j.delta);
-              if (j.done) { onDone && onDone(j); return; }
-            } catch {
-              onChunk(data);
-            }
-          }
-        }
-        onDone && onDone({});
-        return;
-      }
-      // 2) JSON-Fallback
-      const jRes = await fetch(ENDPOINT_JSON, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, thread, model })
-      });
-      if (!jRes.ok) throw new Error(`HTTP ${jRes.status}`);
-      const j = await jRes.json();
-      const text = j.text || j.output || j.answer || '';
-      if (text) onChunk(text);
-      onDone && onDone(j);
-    } catch (e) {
-      onError && onError(e);
+  async function streamClaude({ prompt, threadId }, onToken, onDone, onError) {
+    const base = resolveBase();
+    const endpoints = [`${base}/api/claude-sse`, `${base}/claude-sse`, `/api/claude-sse`, `/claude-sse`];
+    const qs = new URLSearchParams({ prompt, thread: threadId || '' }).toString();
+
+    let res = null;
+    for (const u of endpoints) {
+      try {
+        const r = await fetch(`${u}?${qs}`, { method: 'GET' });
+        if (r.ok && r.headers.get('content-type')?.includes('text/event-stream')) { res = r; break; }
+      } catch (_) {}
     }
+    if (!res) return onError?.(new Error('SSE-Endpunkt nicht erreichbar'));
+
+    const reader = res.body.getReader(), decoder = new TextDecoder();
+    let buf = '';
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const parts = buf.split('\n\n'); buf = parts.pop() || '';
+        for (const chunk of parts) {
+          const line = chunk.split('\n').find(l => l.startsWith('data:'));
+          if (!line) continue;
+          const data = line.slice(5).trim();
+          let token = '';
+          try {
+            const j = JSON.parse(data);
+            token = j?.delta?.text ?? j?.delta?.content ?? j?.text ?? j?.content ?? '';
+          } catch { token = data; }
+          if (token) onToken?.(token);
+        }
+      }
+      onDone?.();
+    } catch (e) { onError?.(e); }
   }
 
-  // ---- UI: Formular in Answer-Popup einbetten -----------------------------
-  window.openInputBubble = function (label, template, options = {}) {
-    const thread   = options.thread || (label ? label.toLowerCase().replace(/\s+/g,'-') : '');
-    const model    = options.model || undefined;
-    const placeholder = options.placeholder || 'Text hier einfügen…';
-    const explain  = options.explain || '';
-
-    // Header + Explain via AnswerPopup
-    window.openAnswerPopup('', false, label || 'Eingabe', { explain });
-
-    const p   = document.getElementById('answer-popup');
-    const body = p.querySelector('.popup-body');
-    body.innerHTML = `
-      <div style="display:grid;gap:10px">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:2px">
-          <button class="chip chip-shorter">Kürzer</button>
-          <button class="chip chip-example">Beispiel</button>
-          <button class="chip chip-check">Checkliste</button>
+  function buildModal() {
+    const m = document.createElement('div'); m.className = 'bf-modal';
+    m.innerHTML = `
+      <div class="bf-hd">
+        <div>
+          <h3 id="bf-title">Eingabe</h3>
+          <p class="explain" id="bf-explain" style="display:none"></p>
         </div>
-        <textarea id="bf-text" rows="10" style="width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.18);padding:10px;background:rgba(255,255,255,.06);color:#eaf2ff" placeholder="${esc(placeholder)}"></textarea>
-        <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
-          <button id="bf-send" style="border-radius:999px;border:1px solid rgba(255,255,255,.18);padding:10px 16px;cursor:pointer;background:#00b0ff;color:#04202a;font-weight:800">Senden</button>
+        <div class="bf-actions">
+          <button id="bf-copy">Kopieren</button>
+          <button id="bf-close">Schließen</button>
         </div>
       </div>
+      <div class="bf-body">
+        <textarea id="bf-text" class="bf-txa" placeholder="Text hier einfügen …"></textarea>
+      </div>
+      <div class="bf-actions">
+        <button id="bf-send">Senden</button>
+      </div>
+      <div class="bf-out"><div class="bf-pre" id="bf-out"></div></div>
+      <div class="bf-bar"><i id="bf-bar"></i></div>
     `;
+    document.body.appendChild(m);
+    m.querySelector('#bf-close').onclick = () => m.remove();
+    m.querySelector('#bf-copy').onclick = () => {
+      navigator.clipboard.writeText(m.querySelector('#bf-out').textContent || '');
+    };
+    return m;
+  }
 
-    // Chip-Styles
-    body.querySelectorAll('.chip').forEach(ch => Object.assign(ch.style, {
-      borderRadius:'999px', padding:'6px 10px', border:'1px solid rgba(255,255,255,.18)',
-      background:'rgba(255,255,255,.06)', color:'#eaf2ff', cursor:'pointer'
-    }));
+  function setHdr(m, t, e) {
+    m.querySelector('#bf-title').textContent = t || 'Eingabe';
+    const ex = m.querySelector('#bf-explain');
+    if (e) { ex.textContent = e; ex.style.display = ''; } else ex.style.display = 'none';
+  }
+  function progress(m, pct) { m.querySelector('#bf-bar').style.width = `${pct}%`; }
 
-    const ta   = body.querySelector('#bf-text');
-    const send = body.querySelector('#bf-send');
-    if (ta && ta.focus) setTimeout(()=> ta.focus(), 0);
+  // Öffentliche API
+  window.openInputBubble = function openInputBubble(title, systemPrompt, opts = {}) {
+    const placeholder = opts.placeholder || 'Stichpunkte oder Rohfassung …';
+    const explain     = opts.explain || '';
+    const threadId    = opts.threadId || undefined;
 
-    // Chips (Demo-Funktionen – gern bedarfsgerecht erweitern)
-    body.querySelector('.chip-shorter')?.addEventListener('click', ()=>{
-      ta.value = (ta.value||'').trim() ? ta.value + '\n\nBitte kürzer, prägnanter, aktiver formulieren.' : 'Bitte folgende Passage kürzer, prägnanter, aktiver formulieren: {{text}}';
-    });
-    body.querySelector('.chip-example')?.addEventListener('click', ()=>{
-      ta.value = (ta.value||'').trim() ? ta.value + '\n\nGib mir 1 gutes Beispiel.' : 'Gib mir 1 gutes Beispiel zu: {{text}}';
-    });
-    body.querySelector('.chip-check')?.addEventListener('click', ()=>{
-      ta.value = (ta.value||'').trim() ? ta.value + '\n\nErstelle mir eine kurze Prüfliste mit 5 Punkten.' : 'Erstelle eine kurze Prüfliste (5 Punkte) zu: {{text}}';
-    });
+    const m = buildModal();
+    setHdr(m, title || 'Eingabe', explain);
+    const tx = m.querySelector('#bf-text'); tx.placeholder = placeholder;
+    const out = m.querySelector('#bf-out');
 
-    function finalPromptFromTemplate(userText) {
-      const txt = (userText || '').trim();
-      const tpl = String(template || '').trim() || '{{text}}';
-      return tpl.replace(/\{\{\s*text\s*\}\}/gi, txt);
-    }
+    m.querySelector('#bf-send').onclick = async () => {
+      const user = tx.value.trim();
+      if (!user) { tx.focus(); return; }
+      out.textContent = ''; progress(m, 8);
 
-    function submit() {
-      const userText = (ta?.value || '').trim();
-      if (!userText) { ta && ta.focus(); return; }
+      const prompt = `${systemPrompt || ''}\n\n### Nutzerinhalt\n${user}`;
 
-      const prompt = finalPromptFromTemplate(userText);
-      // Umschalten auf Streaming-Ansicht (Titel + explain bleiben erhalten)
-      window.openAnswerPopup('', false, label || 'Ergebnis', { explain });
-
-      // 1) Wenn ein globaler Runner existiert → verwenden
-      if (typeof window.runClaudeToPopup === 'function') {
-        window.runClaudeToPopup(label || 'Bubble', prompt, { thread, model });
-        return;
-      }
-
-      // 2) Fallback: SSE/JSON selbst streamen
-      const pBody = document.getElementById('answer-popup').querySelector('.popup-body');
-      pBody.textContent = '';
-      let buffer = '';
-      let sinceChunk = 0;
-
-      streamClaudeToBody({
-        prompt, thread, model,
-        onChunk: (delta) => {
-          buffer += delta;
-          sinceChunk += delta.length;
-          if (sinceChunk > 60) {
-            pBody.textContent = buffer;
-            sinceChunk = 0;
-          }
-        },
-        onDone: () => {
-          pBody.textContent = buffer;
-          window.setAnswerPopupProgress(1);
-        },
-        onError: (e) => {
-          pBody.textContent = `[Fehler] Netzwerk/API: ${e && e.message ? e.message : e}`;
-        }
-      });
-
-      (async ()=>{ // simple „fortschreitender Balken“
-        for (let i=0;i<30;i++){ window.setAnswerPopupProgress(i/30); await sleep(120); }
-      })();
-    }
-
-    send?.addEventListener('click', submit);
-    ta?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit();
-    });
+      await streamClaude({ prompt, threadId },
+        tok => { out.textContent += tok; },
+        ()  => { progress(m, 100); },
+        err => { out.textContent = `[Fehler] ${err?.message || err}`; progress(m, 100); }
+      );
+    };
   };
 })();
