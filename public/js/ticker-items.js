@@ -1,172 +1,336 @@
-/* public/js/ticker-items.js — curated, short & actionable */
+// public/js/ticker-items.js
+// Kurze, produktive „Mini-Apps“ für die Bubbles. Jede hat:
+// label, hint, explain, action ('claude-input' | 'research' | 'cage-match' | ''),
+// prompt (an Claude), optional placeholder (nur bei 'claude-input').
+
 window.__TICKER_ITEMS = [
-  // ───────────────────── Writing / Editing
+
+  // ──────────────────────────────────────────────── Writing / Edit
   {
-    label: "Texteditor (Korrektur)",
-    hint: "Klick → Text einfügen & prüfen",
-    action: "claude-input",
-    placeholder: "Stichpunkte oder Rohfassung …",
-    explain: "Du fügst Text ein – Claude korrigiert Grammatik, Stil und erklärt kurz die Änderungen.",
-    prompt:
-`Du bist mein deutscher Grammatik- und Stil-Editor.
-Bitte:
-1) korrigiere Rechtschreibung, Zeichensetzung, Grammatik
-2) glätte Stil (klar, prägnant, aktiv)
-3) zeige wichtige Änderungen kurz begründet.
-Antworte in Markdown mit den Blöcken:
-- **Korrigierter Text**
-- **Wesentliche Änderungen** (Bullets)`
+    label: 'Texteditor (Korrektur)',
+    hint: 'Klick → Text einfügen',
+    explain: 'Korrigiert Grammatik/Stil und erklärt die wichtigsten Änderungen.',
+    action: 'claude-input',
+    placeholder: 'Rohtext oder Absatz hier einfügen …',
+    prompt: `Du bist ein präziser deutschsprachiger Lektor.
+Analysiere den folgenden Text und liefere:
+1) KORREKTUR (verbesserter Text, gleiche Intention)
+2) HINWEISE (stichpunktartig: Grammatik, Stil, Wortwahl; max. 6 Punkte)
+3) OPTION (wenn sinnvoll: knackigere Alternative, 1–2 Sätze)
+Nur deutsch.`
   },
   {
-    label: "GIST→FACT→CITE",
-    hint: "Klick → Text reinkopieren",
-    action: "claude-input",
-    placeholder: "Artikel/Auszug einfügen …",
-    explain: "Ein Satz Kern, 3 Fakten mit Zahlen, danach Quellen-URLs.",
-    prompt:
-`Fasse den Text in **1 Satz (GIST)** zusammen.
-Gib danach **3 FACT-Bullets** mit Zahlen/Daten.
-Füge **CITE** mit den exakten URLs an (wenn vorhanden).`
+    label: 'One‑Minute‑Plan',
+    hint: 'Klick → 5 Schritte',
+    explain: 'Formt ein Ziel in 5 konkrete, kleine Schritte (≈1 Minute je Schritt).',
+    action: 'claude-input',
+    placeholder: 'Ziel oder Aufgabe (z. B. „Landingpage verbessern“) …',
+    prompt: `Erstelle einen 5‑Schritte‑Plan, der in ≈5–7 Minuten umsetzbar ist.
+Format:
+• Ziel (1 Satz)
+• Schritte (5 kurze, klare ToDos; jeweils 1 Minute)
+• Mini‑Check (3 Erfolgskriterien)`
   },
   {
-    label: "Prompt‑Linter",
-    hint: "Klick → Prompt einfügen",
-    action: "claude-input",
-    placeholder: "Eigener Prompt …",
-    explain: "Diagnose + Verbesserungsvorschlag zu Ziel, Format, Constraints, Negativliste.",
-    prompt:
-`Analysiere diesen Prompt:
-- Ziel, Output-Format, Constraints, Negativliste
-- Risiken/Ambiguitäten
-- eine verbesserte Version (kompakt)`
+    label: 'GIST → FACT → CITE',
+    hint: 'Klick → komprimieren',
+    explain: 'Ein Satz Kernaussage, 5 Fakten, Quellen/URLs am Ende.',
+    action: 'claude-input',
+    placeholder: 'Thema/Absatz/URL …',
+    prompt: `Erzeuge
+• GIST: 1 Satz Kernaussage
+• FACT: 5 kurze Bullet‑Fakten
+• CITE: verlässliche Quellen/Links (wenn vorhanden)
+Nur präzise, ohne Füllwörter.`
+  },
+  {
+    label: 'Meeting‑Kurzprotokoll',
+    hint: 'Klick → Stichpunkte rein',
+    explain: 'Dreht Notizen in Entscheidungen, Aufgaben, Nächste Schritte.',
+    action: 'claude-input',
+    placeholder: 'Stichpunkte oder Transkript‑Ausschnitt …',
+    prompt: `Fasse als Kurzprotokoll:
+• Entscheidungen (max. 5)
+• Aufgaben (Wer → Was → Bis wann)
+• Risiken/Offene Punkte (max. 5)
+• Nächste Schritte (3) – sehr konkret`
+  },
+  {
+    label: 'Prompt‑Linter',
+    hint: 'Klick → Prompt verbessern',
+    explain: 'Diagnose + 2 überarbeitete Varianten (präzise & belastbar).',
+    action: 'claude-input',
+    placeholder: 'Dein aktueller Prompt …',
+    prompt: `Analysiere den Prompt nach Ziel, Format, Constraints, Negativliste.
+Liefere:
+1) Diagnose (max. 6 Bullet‑Findings)
+2) V1 (klar & kurz)
+3) V2 (robust, mit Qualitäts-Checks)
+4) Testfrage, um die Qualität vor dem Senden zu prüfen`
+  },
+  {
+    label: 'Kontrast‑Paar',
+    hint: 'Klick → 2 Wege + Kriterien',
+    explain: 'Zwei gegensätzliche Ansätze inkl. Auswahl‑Kriterien.',
+    action: 'claude-input',
+    placeholder: 'These/Problem (z. B. „Blog vs. YouTube starten?“) …',
+    prompt: `Erstelle ein Kontrast‑Paar:
+• Weg A (Vorteile, Risiken)
+• Weg B (Vorteile, Risiken)
+• Kriterien‑Tabelle (5 Kriterien, Bewertung A/B)
+• Empfehlung (1–2 Sätze, begründet)`
   },
 
-  // ───────────────────── Thinking / Planning
+  // ──────────────────────────────────────────────── Growth / Comm
   {
-    label: "One‑Minute‑Plan",
-    hint: "Klick → 5 konkrete Schritte",
-    action: "claude-input",
-    placeholder: "Ziel / Aufgabe …",
-    explain: "Erzeuge in 60 Sek. einen schlanken 5‑Schritte‑Plan + 1 Start‑Schritt.",
-    prompt:
-`Erstelle einen knackigen Plan in 5 Schritten.
-Jeder Schritt: 1 Zeile, messbar.
-Schließe mit **Erster Schritt heute (15 min)**.`
+    label: 'Betreff‑Generator',
+    hint: 'Klick → 10 Varianten',
+    explain: '10 E‑Mail‑Betreffs in 3 Stilen: Nutzen, Frage, Neugier.',
+    action: 'claude-input',
+    placeholder: 'Kernbotschaft / Angebot / Zielgruppe …',
+    prompt: `Erzeuge 10 E‑Mail‑Betreffzeilen in 3 Stilen:
+• Nutzenorientiert (4)
+• Frage‑Form (3)
+• Neugier/Pattern‑Break (3)
+Jeweils ≤ 42 Zeichen; kein Clickbait, präzise.`
   },
   {
-    label: "5‑Warum‑Coach",
-    hint: "Klick → Root‑Cause + Lösung",
-    action: "claude-input",
-    placeholder: "Symptom/Problem …",
-    explain: "Guided 5‑Why, danach 1–2 pragmatische Gegenmaßnahmen.",
-    prompt:
-`Leite mich durch **5‑Warum** (Frage/Antwort im Wechsel).
-Danach: wahrscheinlichste Ursache + 2 Gegenmaßnahmen (Low‑Effort).`
-  },
-
-  // ───────────────────── Ops / Meeting
-  {
-    label: "Meeting‑Kurzprotokoll",
-    hint: "Klick → Stichpunkte einfügen",
-    action: "claude-input",
-    placeholder: "Stichpunkte / Notizen …",
-    explain: "Aus Notizen werden Entscheid, To‑Dos (RACI), Nächste Schritte.",
-    prompt:
-`Destilliere: **Entscheide**, **To‑Dos (RACI)**, **Risiken**, **Nächste Schritte (mit Termin)**.
-Kurz & klar.`
-  },
-
-  // ───────────────────── Product / Design / Marketing
-  {
-    label: "PRD‑Generator (1‑Pager)",
-    hint: "Klick → Idee skizzieren",
-    action: "claude-input",
-    placeholder: "Problem/Nutzen/Zielgruppe …",
-    explain: "Aus einer Idee wird ein PRD‑1‑Pager (Problem, Nutzer, Jobs, Scope, Messung).",
-    prompt:
-`Erstelle ein **PRD (1‑Pager)**:
-- Problem/Nutzen, Zielgruppe, JTBD
-- Scope (in/out), Akzeptanzkriterien
-- Erfolgsmessung (KPI), Risiken`
+    label: 'LinkedIn‑Hook',
+    hint: 'Klick → 10 Hooks',
+    explain: 'Erste Zeile, die Scroll stoppt – ohne Buzzwords.',
+    action: 'claude-input',
+    placeholder: 'Thema/Takeaway …',
+    prompt: `Erzeuge 10 LinkedIn‑Hooks (erste Zeile).
+Kriterien: konkret, überraschend, ohne Floskeln, ≤ 16 Wörter.`
   },
   {
-    label: "Design‑Brief",
-    hint: "Klick → Anforderungen grob",
-    action: "claude-input",
-    placeholder: "Ziel, Zielgruppe, Look&Feel …",
-    explain: "Komprimierter Creative‑Brief inkl. Mood & Edge‑Cases.",
-    prompt:
-`Forme einen **Design‑Brief**:
-- Ziel, Audience, Botschaft
-- Stil/Referenzen, Farbwelt, Typo
-- Deliverables, Edge‑Cases, Erfolgskriterien`
+    label: 'Design‑Brief (Kurz)',
+    hint: 'Klick → Briefing‑Gerüst',
+    explain: 'Gerüst für ein klares Design‑/Kreativ‑Briefing.',
+    action: 'claude-input',
+    placeholder: 'Projekt/Ziel/Deadline …',
+    prompt: `Erstelle einen kompakten Design‑Brief:
+• Ziel & Ergebnis
+• Stimmung/Marke (3 Adjektive)
+• Muss‑Elemente (Logo, Farben, Formate)
+• Grenzen/No‑Gos
+• 3 Beispiel‑Referenzen (Beschreibung)
+• Erfolgskriterien`
   },
   {
-    label: "LinkedIn‑Hook",
-    hint: "Klick → Thema angeben",
-    action: "claude-input",
-    placeholder: "Thema / Kernaussage …",
-    explain: "3 Hook‑Varianten + ein 5‑Satz‑Post, deutsch, ohne Buzzword‑Gulasch.",
-    prompt:
-`Gib mir 3 **Hook‑Varianten** und 1 **5‑Satz‑Post** (deutsch, prägnant, konkret, ohne Floskeln).`
-  },
-  {
-    label: "Betreff‑Generator",
-    hint: "Klick → E‑Mail‑Ziel angeben",
-    action: "claude-input",
-    placeholder: "Ziel / Kontext …",
-    explain: "5 Betreffzeilen mit 2 Stilrichtungen, <50 Zeichen.",
-    prompt:
-`Erzeuge 5 Betreffzeilen (<50 Zeichen), je 2 Stilrichtungen (seriös/locker).`
+    label: 'Style‑Transfer',
+    hint: 'Klick → Stil ändern',
+    explain: 'Formt deinen Text in den gewünschten Stil um.',
+    action: 'claude-input',
+    placeholder: 'Text + gewünschter Stil (z. B. „klar & trocken“) …',
+    prompt: `Übertrage den Stil des folgenden Textes in den gewünschten Ziel‑Stil.
+Liefere: (A) Re‑Write, (B) 3 Begründungen für die Änderungen.`
   },
 
-  // ───────────────────── Research / Compare
+  // ──────────────────────────────────────────────── Strategy / Ops
   {
-    label: "FAQ‑Destillat",
-    hint: "Klick → Quelle/Transkript einfügen",
-    action: "claude-input",
-    placeholder: "Quelle/Transkript …",
-    explain: "Extrahiere 7–10 FAQs + prägnante Antworten, optional Quellen anfügen.",
-    prompt:
-`Extrahiere **7–10 FAQs** + **prägnante Antworten** aus dem Text.
-Wenn vorhanden: kurze Quellenangabe.`
+    label: 'Use‑Case‑Ideen',
+    hint: 'Klick → 12 Ideen',
+    explain: '12 KI‑Use‑Cases für Branche/Job – sortiert nach Wirkung/Einfachheit.',
+    action: 'claude-input',
+    placeholder: 'Branche/Job/Stack (z. B. Mittelstand, Vertrieb, HubSpot) …',
+    prompt: `Erzeuge 12 KI‑Use‑Cases als Tabelle:
+• Titel | Nutzen | Aufwand (S/M/L) | Risiko (L/M/H) | 1. Schritt
+Sortiere nach hohem Nutzen & geringem Aufwand.`
   },
   {
-    label: "Research‑Agent",
-    hint: "Klick → Live‑Recherche",
-    action: "research",
-    explain: "Live‑Suche (Tavily) → Kurzreport + 3 verlässliche Quellen.",
-    prompt: ""
+    label: '30‑Tage‑Plan',
+    hint: 'Klick → Tagesfahrplan',
+    explain: 'Ein realer Lern‑ oder Umsetzungsplan in 30 kleinen Etappen.',
+    action: 'claude-input',
+    placeholder: 'Skill/Projekt (z. B. „Prompt‑Engineering Basics“) …',
+    prompt: `Baue einen 30‑Tage‑Plan:
+• Wöchentliche Ziele (4)
+• Tages‑Etappen (30 × 10–20 Min)
+• Mini‑Meilensteine (wöchentlich)
+• Minimal‑Ergebnis am Ende`
   },
   {
-    label: "Cage‑Match",
-    hint: "Klick → Prompt & Modelle wählen",
-    action: "cage-match",
-    explain: "Modell‑Vergleich A/B mit demselben Prompt.",
-    prompt: ""
+    label: 'Risiko‑Check',
+    hint: 'Klick → Top‑Risiken',
+    explain: 'Risiken, Eintrittswahrscheinlichkeit, Gegenmaßnahmen.',
+    action: 'claude-input',
+    placeholder: 'Vorhaben/Entscheidung …',
+    prompt: `Erstelle eine Risiko‑Tabelle:
+• Risiko | Eintritt (niedrig/mittel/hoch) | Auswirkung | Gegenmaßnahme | Frühindikator
+Schließe mit 3 Sofort‑Checks.`
+  },
+  {
+    label: 'PRD‑Generator (1‑Pager)',
+    hint: 'Klick → PRD‑Gerüst',
+    explain: 'Einseitiges Product‑Requirements‑Dokument – fokussiert.',
+    action: 'claude-input',
+    placeholder: 'Produkt/Feature + Ziel …',
+    prompt: `Erzeuge ein PRD auf 1 Seite:
+• Problem, Ziel, Zielgruppe
+• Nutzer‑Stories (max. 5)
+• Annahmen & Grenzen
+• Metriken (3)
+• Risiken & Offene Fragen (max. 5)`
+  },
+  {
+    label: 'KI‑Policy (Skizze)',
+    hint: 'Klick → Unternehmensrahmen',
+    explain: 'Leitplanken für sicheren KI‑Einsatz (kurz & praktisch).',
+    action: 'claude-input',
+    placeholder: 'Unternehmens‑Kontext (Branche, Größe, Daten) …',
+    prompt: `Entwirf eine kurze KI‑Policy:
+• Erlaubt / Verboten
+• Umgang mit personenbezogenen/streng vertraulichen Daten
+• Modell‑/Tool‑Freigaben
+• Qualitätssicherung & Audit‑Trails
+• Schulung & Support`
   },
 
-  // ───────────────────── Fun / Visual
+  // ──────────────────────────────────────────────── Learn / Coach
   {
-    label: "Sakura Explorer 3D",
-    hint: "Klick → Endlos‑Teegarten",
-    action: "claude-input",
-    placeholder: "Stichworte für die Szene …",
-    explain: "Claude erzeugt Parameter – dein Canvas rendert Sakura‑Partikel live.",
-    prompt:
-`Erzeuge kompakte JSON‑Parameter für eine Sakura‑Partikel‑Szene:
-{ density: 0–1, wind: 0–1, hue: [min,max], glow: 0–1, camera: { orbit: deg } }`
+    label: '5‑Warum‑Coach',
+    hint: 'Klick → Ursachen finden',
+    explain: 'Leitet dich durch 5‑Warum bis zur Wurzelursache.',
+    action: 'claude-input',
+    placeholder: 'Problem/Aktuelle Beobachtung …',
+    prompt: `Führe mich durch 5‑Warum. Stelle nacheinander Fragen (max. 5 Ebenen),
+führe einen Ursachen‑Baum und schließe mit 3 Gegenmaßnahmen.`
   },
   {
-    label: "Synästhesie‑Symphonie",
-    hint: "Klick → 3 Töne + 1 Gefühl",
-    action: "claude-input",
-    placeholder: "Gefühl + 3 Töne (z. B. A4, C5, E4) …",
-    explain: "Aus Gefühl & Tönen entsteht ein kurzer generativer Clip (Audio/Visual).",
-    prompt:
-`Mappe Gefühl + Töne auf 10‑Sek‑Generative‑Clip:
-- HSL‑Palette (3 Farben)
-- 2 Bewegungsmuster (Namen)
-- Timing { bpm, envelope }`
+    label: 'Root‑Cause‑Skizze',
+    hint: 'Klick → Fehlerbild analysieren',
+    explain: 'Verdichtet Symptome → Hypothesen → Tests.',
+    action: 'claude-input',
+    placeholder: 'Symptome/Logs/Beobachtungen …',
+    prompt: `Erstelle:
+• Symptom‑Liste
+• 3–5 Hypothesen (mit Plausibilität)
+• Schnelltest je Hypothese (geringer Aufwand)
+• Entscheidung: welche 2 Tests zuerst`
+  },
+  {
+    label: 'Onboarding‑Mini‑Guide',
+    hint: 'Klick → in 10 Minuten startklar',
+    explain: 'Schnelleinführung für Tool/Team/Projekt, nur das Wesentliche.',
+    action: 'claude-input',
+    placeholder: 'Tool/Team/Projektname + Zielgruppe …',
+    prompt: `Erzeuge einen 10‑Minuten‑Onboarding‑Guide:
+• Warum/Was | 3 wichtigste Funktionen
+• Erstkonfiguration (Schrittfolge)
+• 3 häufige Fehler & Vermeidung
+• Checkliste Start‑bereit`
+  },
+  {
+    label: 'Persona‑Destillat',
+    hint: 'Klick → Zielbild konkret',
+    explain: 'Verdichtet Zielgruppe in 1 Seite mit Jobs‑to‑be‑Done.',
+    action: 'claude-input',
+    placeholder: 'Zielgruppe/Segment …',
+    prompt: `Erstelle eine knappe Persona (1 Seite):
+• JTBD (Top 3)
+• Schmerzpunkte (Top 5)
+• Kaufkriterien (5)
+• Medien/Touchpoints (5)
+• Satz: „Sie entscheidet sich, wenn …“`
+  },
+
+  // ──────────────────────────────────────────────── Research / Live
+  {
+    label: 'Research‑Agent',
+    hint: 'Klick → Live‑Recherche mit Quellen',
+    explain: 'Frage eingeben → Tavily + Claude → Quellen & Kurzfazit.',
+    action: 'research',
+    prompt: '' // wird im Frontend per Prompt-Dialog abgefragt
+  },
+  {
+    label: 'FAQ‑Destillat',
+    hint: 'Klick → 10 FAQs',
+    explain: 'Schürft aus Text/Links die 10 häufigsten Fragen & Antworten.',
+    action: 'claude-input',
+    placeholder: 'Produkt/Service/URL/Material …',
+    prompt: `Erzeuge 10 FAQs (Frage + präzise Antwort).
+Wenn Links gegeben, nutze sie zur Ableitung; keine Spekulation.`
+  },
+
+  // ──────────────────────────────────────────────── Mail / Docs
+  {
+    label: 'E‑Mail‑Assistent',
+    hint: 'Klick → Stichpunkte rein',
+    explain: 'Rohstichpunkte in prägnante Mail mit Betreff + Call‑to‑Action.',
+    action: 'claude-input',
+    placeholder: 'Stichpunkte oder grobe Rohfassung …',
+    prompt: `Forme die Stichpunkte in eine klare E‑Mail:
+• Betreff (3 Varianten)
+• Mailtext (kurz, 2–3 Absätze)
+• Call‑to‑Action (1 Satz)
+• PS (wenn sinnvoll)`
+  },
+  {
+    label: 'Bild‑Alt‑Texte',
+    hint: 'Klick → SEO‑Alttexte',
+    explain: 'Erzeugt 8 Alt‑Texte aus deiner knappen Bildbeschreibung.',
+    action: 'claude-input',
+    placeholder: 'Motiv, Kontext, Ziel‑Keyword …',
+    prompt: `Erzeuge 8 prägnante Alt‑Texte (≤ 110 Zeichen) aus der Beschreibung.
+Variation: informativ, emotional, transaktional, neutral.`
+  },
+
+  // ──────────────────────────────────────────────── Visual / Fun (dein VisualLab)
+  {
+    label: 'Synästhesie‑Symphonie',
+    hint: 'Klick → Tippen → Audio/Visual',
+    explain: 'Claude erzeugt Parameter; dein Canvas rendert live (Wow‑Moment).',
+    action: 'visual-synesthesia',
+    prompt: `Liefere JSON für ein Audio‑Visual‑Preset:
+{ "mood":"dawn|drive|rain", "tempo": 72..126, "palette":["#..","#..","#.."], "pulse":0.2..0.9 }`
+  },
+  {
+    label: 'Sakura Explorer 3D',
+    hint: 'Klick → Endlos‑Teegarten',
+    explain: 'Parametereingabe → Shader/Canvas generiert die Szene.',
+    action: 'visual-sakura',
+    prompt: `Gib JSON‑Parameter für Sakura‑Shader zurück:
+{ "bloom":0..1,"wind":0..1,"petals":60..180,"twinkle":0..1 }`
+  },
+
+  // ──────────────────────────────────────────────── Compare / Lab
+  {
+    label: 'Cage‑Match',
+    hint: 'Klick → Prompt & Modelle wählen',
+    explain: 'Zwei Modelle gegeneinander – gleiche Aufgabe, direkte Vergleichsansicht.',
+    action: 'cage-match',
+    prompt: ''
+  },
+
+  // ──────────────────────────────────────────────── Mini‑RAG / Cite
+  {
+    label: 'Mini‑RAG',
+    hint: 'Klick → RAG‑Baukasten',
+    explain: 'Frage + 3–8 URLs/Notizen → Antwort mit Zitaten.',
+    action: 'claude-input',
+    placeholder: 'Frage + (optional) Quellen/URLs in Zeilen …',
+    prompt: `Wenn Quellen enthalten sind: beantworte die Frage NUR daraus und zitiere wörtlich mit URL+Absatz‑Hinweis.
+Sonst: gib eine saubere, kurze Antwort und markiere [Keine Quellen übergeben].`
+  },
+
+  // ──────────────────────────────────────────────── Micro‑helpers
+  {
+    label: 'Kurz‑Checkliste',
+    hint: 'Klick → 7 Punkte',
+    explain: 'Schnelle 7‑Punkte‑Checkliste zu deinem Thema.',
+    action: 'claude-input',
+    placeholder: 'Thema/Output (z. B. „Landingpage‑Hero“) …',
+    prompt: `Erzeuge eine 7‑Punkte‑Checkliste (kurz, messbar formuliert).`
+  },
+  {
+    label: 'Mini‑Story‑Hook',
+    hint: 'Klick → 5 Zeilen',
+    explain: '5‑Zeilen‑Story mit Spannungsbogen, ready für Social.',
+    action: 'claude-input',
+    placeholder: 'Aussage/Produkt/Insight …',
+    prompt: `Schreibe eine 5‑Zeilen‑Mini‑Story:
+1 Aufhänger, 2 Konflikt, 3 Wendung, 4 Lösung, 5 Outcome (Zahl/Beleg).`
   }
+
 ];
