@@ -1,6 +1,25 @@
 {
+  "stand": "heute",
   "items": [
-    "🧠 Prompt des Tages: GIST→FACT→CITE zu deinem wichtigsten Projekt.",
-    "🧠 Prompt des Tages: Kontrast‑Paar (konservativ vs. radikal) mit 3 Entscheidungskriterien."
+    {
+      "title": "Executive-Summary-Destiller",
+      "prompt": "Verdichte folgenden Text auf 5 Kernaussagen + 1 Handlungssatz. Nutze klare, präzise Sprache ohne Superlative."
+    },
+    {
+      "title": "Stakeholder-Briefing",
+      "prompt": "Erzeuge ein 1-seitiges Briefing im Stil 'Ziel – Stand – Risiken – Nächste Schritte' aus den Stichpunkten."
+    },
+    {
+      "title": "Fehler-Radar (Code)",
+      "prompt": "Nenne die 3 wahrscheinlichsten Fehlerursachen im Code, verweise auf Zeilen/Pattern und gib je ein Minimal-Fix-Snippet."
+    },
+    {
+      "title": "Meeting-Sparer",
+      "prompt": "Baue aus dem Text eine Agenda mit Time-Boxing (max. 30 Minuten), Entscheidungsfragen und Ownern."
+    },
+    {
+      "title": "E-Mail-Schärfer",
+      "prompt": "Schreibe die Mail höflich, knapp, mit eindeutiger Bitte und 2 Alternativterminen. Betreff in 6 Wörtern."
+    }
   ]
 }

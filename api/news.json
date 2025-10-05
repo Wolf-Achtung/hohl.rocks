@@ -1,6 +1,20 @@
 {
+  "stand": "heute",
   "items": [
-    "KI‑Kurzupdate: Prüfe heute ‘Human‑Oversight’ & Logging in deinen Prozessen – kleiner Audit spart großen Ärger.",
-    "Tipp: Bau dir einen One‑Minute‑Plan‑Button in deine Notizen‑App – 5 Schritte, sofort umsetzbar."
+    {
+      "title": "EU-AI-Act: Hinweisblatt für KMU veröffentlicht",
+      "url": "https://example.com/ai-act-guide",
+      "snippet": "Kurzleitfaden mit Pflichten nach Risikoklassen und nächsten Schritten."
+    },
+    {
+      "title": "Open-Source-LLM verbessert Kontextfenster",
+      "url": "https://example.com/oss-llm",
+      "snippet": "Längere Eingaben ohne nennbaren Qualitätsverlust – Chancen für Wissensmanagement."
+    },
+    {
+      "title": "Förderaufruf für KI-Projekte",
+      "url": "https://example.com/funding",
+      "snippet": "Antragsfenster 6 Wochen, bevorzugt KMU-Kooperationen mit Hochschulen."
+    }
   ]
 }
