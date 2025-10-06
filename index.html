@@ -2,11 +2,15 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
+  <!-- Beschreibung für Suchmaschinen und Social Media -->
+  <meta name="description" content="Persönliche Website von Wolf Hohl, TÜV‑zertifizierter KI‑Manager. Interaktive Mini‑Apps zeigen praktische KI‑Anwendungen in den Bereichen Recherche, Schreiben, Design, Kunst und mehr." />
   <!-- Railway-API-Basis für Auto-Base -->
   <meta name="hohl-chat-base" content="https://hohlrocks-production.up.railway.app">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>hohl.rocks — Neon Gold UX+</title>
   <link rel="stylesheet" href="/hero-shapes.css" />
+  <!-- Preload des Hintergrundvideos für schnelleren Start -->
+  <link rel="preload" as="video" href="/videos/desert_drive.mp4" type="video/mp4">
   <style>
     html,body{height:100%;margin:0;background:#0a1118;color:#eaf2ff;font:500 16px/1.45 ui-sans-serif,system-ui}
     .stage{position:fixed;inset:0;overflow:hidden}
@@ -37,6 +41,8 @@
   <main class="stage" aria-label="Highway-Video mit organischen Neon-Shapes">
     <video id="bg-video" autoplay playsinline loop muted>
       <source src="/videos/desert_drive.mp4" type="video/mp4" />
+      <!-- Fallback-Text für Browser ohne Video-Unterstützung -->
+      Ihr Browser unterstützt das Hintergrundvideo nicht. Bitte aktualisieren Sie Ihren Browser.
     </video>
     <div id="shape-layer"></div>
   </main>
@@ -47,10 +53,10 @@
   </div>
 
   <div id="nav-buttons">
-    <button class="about">Über</button>
-    <button class="news">News</button>
-    <button class="prompts">Prompts</button>
-    <button class="projects">Projekte</button>
+    <button class="about"   aria-label="Über">Über</button>
+    <button class="news"    aria-label="News">News</button>
+    <button class="prompts" aria-label="Prompts">Prompts</button>
+    <button class="projects"aria-label="Projekte">Projekte</button>
   </div>
 
   <div id="help"><span>?</span>Was kann ich hier tun?</div>
