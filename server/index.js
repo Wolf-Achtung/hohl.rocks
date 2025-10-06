@@ -7,6 +7,12 @@ import path from "path";
 import fs from "fs/promises";
 import { fileURLToPath } from "url";
 
+// Import the Claude routes. These expose JSON and SSE endpoints for
+// interacting with the Anthropic Claude API. Without mounting this
+// router the frontend will receive 404s for `/api/claude-sse` and
+// `/api/claude-json`, which leads to cryptic error messages in the UI.
+import { router as claudeRouter } from "./routes/claude.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.join(__dirname, "..");
@@ -43,6 +49,17 @@ if (ALLOWED_ORIGINS.length) {
 
 // Static (liefert index.html etc., falls vorhanden)
 app.use(express.static(ROOT));
+
+// -----------------------------------------------------------------------------
+// API routes
+//
+// Mount all Claude-related routes under `/api`. The `claudeRouter` exports
+// handlers for POST `/claude` (classic JSON completion), GET `/claude-sse` (SSE
+// streaming) and POST `/claude-json` (structured JSON responses).  Mounting
+// under `/api` results in URLs like `/api/claude-sse`.  Without this
+// registration the frontend falls back to the JSON endpoint and raises
+// `Error: Claude JSON 404`, as seen in den Nutzer-Logs.
+app.use("/api", claudeRouter);
 
 // ── Minimal-API (damit Healthchecks was Sinnvolles haben)
 app.get("/healthz", (_req, res) => {
