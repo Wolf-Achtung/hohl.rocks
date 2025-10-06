@@ -24,24 +24,47 @@
     document.querySelector(".ap-backdrop")?.remove();
   }
 
+  // Ermögliche Schließen per ESC-Taste. Die Registrierung wird einmalig beim
+  // Laden durchgeführt. Beim Drücken der Escape-Taste wird das aktuell
+  // sichtbare Answer-Popup geschlossen, ohne dass weitere globale Events
+  // unterbrochen werden.
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") closePopup();
+  });
+
   function makeHeader(title, options) {
-    const hd = document.createElement("div"); hd.className = "ap-hd";
+    const hd = document.createElement("div");
+    hd.className = "ap-hd";
     const left = document.createElement("div");
-    const h3 = document.createElement("h3"); h3.textContent = title || "Ergebnis";
+    const h3 = document.createElement("h3");
+    h3.textContent = title || "Ergebnis";
     left.appendChild(h3);
     if (options?.explain) {
-      const p = document.createElement("p"); p.className = "explain"; p.textContent = options.explain; left.appendChild(p);
+      const p = document.createElement("p");
+      p.className = "explain";
+      p.textContent = options.explain;
+      left.appendChild(p);
     }
-    const tools = document.createElement("div"); tools.className = "ap-tools";
-    const bCopy = document.createElement("button"); bCopy.className = "ap-btn"; bCopy.textContent = "Kopieren";
+    const tools = document.createElement("div");
+    tools.className = "ap-tools";
+    const bCopy = document.createElement("button");
+    bCopy.className = "ap-btn";
+    bCopy.textContent = "Kopieren";
     bCopy.addEventListener("click", () => {
       const pre = document.querySelector(".ap-pre");
-      if (pre) navigator.clipboard.writeText(pre.innerText || pre.textContent || "");
+      if (pre)
+        navigator.clipboard.writeText(
+          pre.innerText || pre.textContent || ""
+        );
     });
-    const bClose = document.createElement("button"); bClose.className = "ap-btn"; bClose.textContent = "Schließen";
+    const bClose = document.createElement("button");
+    bClose.className = "ap-btn";
+    bClose.textContent = "Schließen";
     bClose.addEventListener("click", closePopup);
-    tools.appendChild(bCopy); tools.appendChild(bClose);
-    hd.appendChild(left); hd.appendChild(tools);
+    tools.appendChild(bCopy);
+    tools.appendChild(bClose);
+    hd.appendChild(left);
+    hd.appendChild(tools);
     return hd;
   }
 
@@ -50,53 +73,88 @@
     await window.Claude.stream(prompt, {
       threadId: options?.threadId,
       system: options?.system,
-      onDelta: t => pre.textContent += t,
-      onError: e => pre.textContent = `[Fehler] ${e}`
+      onDelta: (t) => (pre.textContent += t),
+      // Verwende e.message falls vorhanden, um das "Error:"‑Präfix zu vermeiden.
+      onError: (e) => {
+        const msg = e && e.message ? e.message : String(e);
+        pre.textContent = `[Fehler] ${msg}`;
+      },
     });
   }
 
-  function openAnswerPopup(promptOrText, sendToClaude = false, title = "Ergebnis", options = {}) {
-    const backdrop = document.createElement("div"); backdrop.className = "ap-backdrop"; backdrop.addEventListener("click", closePopup);
+  function openAnswerPopup(
+    promptOrText,
+    sendToClaude = false,
+    title = "Ergebnis",
+    options = {}
+  ) {
+    const backdrop = document.createElement("div");
+    backdrop.className = "ap-backdrop";
+    backdrop.addEventListener("click", closePopup);
     document.body.appendChild(backdrop);
 
-    const box = document.createElement("div"); box.className = "ap-box";
+    const box = document.createElement("div");
+    box.className = "ap-box";
     const header = makeHeader(title, options);
-    const varbar = document.createElement("div"); varbar.className = "ap-varbar";
-    ["Kürzer","Beispiel","Checkliste"].forEach(lbl => {
-      const b = document.createElement("button"); b.className = "ap-btn"; b.textContent = lbl;
+    const varbar = document.createElement("div");
+    varbar.className = "ap-varbar";
+    ["Kürzer", "Beispiel", "Checkliste"].forEach((lbl) => {
+      const b = document.createElement("button");
+      b.className = "ap-btn";
+      b.textContent = lbl;
       b.addEventListener("click", () => {
-        const tackOn = lbl === "Kürzer" ? "Kürze präzise ohne Inhalte zu verlieren."
-                     : lbl === "Beispiel" ? "Gib ein prägnantes, realistisches Beispiel."
-                     : "Erzeuge eine kompakte 5–7 Punkte Checkliste.";
+        const tackOn =
+          lbl === "Kürzer"
+            ? "Kürze präzise ohne Inhalte zu verlieren."
+            : lbl === "Beispiel"
+            ? "Gib ein prägnantes, realistisches Beispiel."
+            : "Erzeuge eine kompakte 5–7 Punkte Checkliste.";
         pre.textContent = "";
-        const base = typeof promptOrText === "string" ? promptOrText : "";
+        const base =
+          typeof promptOrText === "string" ? promptOrText : "";
         streamTo(pre, `${base}\n\n${tackOn}`, options);
       });
       varbar.appendChild(b);
     });
 
-    const body = document.createElement("div"); body.className = "ap-body";
-    const pre  = document.createElement("pre"); pre.className = "ap-pre";
-    pre.textContent = sendToClaude ? "" : (typeof promptOrText === "string" ? promptOrText : "");
+    const body = document.createElement("div");
+    body.className = "ap-body";
+    const pre = document.createElement("pre");
+    pre.className = "ap-pre";
+    pre.textContent =
+      sendToClaude || typeof promptOrText !== "string"
+        ? ""
+        : promptOrText;
     body.appendChild(pre);
 
-    box.appendChild(header); box.appendChild(varbar); box.appendChild(body);
+    box.appendChild(header);
+    box.appendChild(varbar);
+    box.appendChild(body);
     document.body.appendChild(box);
 
-    if (sendToClaude && typeof promptOrText === "string") streamTo(pre, promptOrText, options);
+    if (sendToClaude && typeof promptOrText === "string")
+      streamTo(pre, promptOrText, options);
   }
 
   function openHTMLPopup(title, html, options = {}) {
-    const backdrop = document.createElement("div"); backdrop.className = "ap-backdrop"; backdrop.addEventListener("click", () => {
-      document.querySelector(".ap-box")?.remove(); backdrop.remove();
+    const backdrop = document.createElement("div");
+    backdrop.className = "ap-backdrop";
+    backdrop.addEventListener("click", () => {
+      document.querySelector(".ap-box")?.remove();
+      backdrop.remove();
     });
     document.body.appendChild(backdrop);
-    const box = document.createElement("div"); box.className = "ap-box";
+    const box = document.createElement("div");
+    box.className = "ap-box";
     const header = makeHeader(title, options);
-    const body = document.createElement("div"); body.className = "ap-body"; body.innerHTML = html;
-    box.appendChild(header); box.appendChild(body); document.body.appendChild(box);
+    const body = document.createElement("div");
+    body.className = "ap-body";
+    body.innerHTML = html;
+    box.appendChild(header);
+    box.appendChild(body);
+    document.body.appendChild(box);
   }
 
   window.openAnswerPopup = openAnswerPopup;
-  window.openHTMLPopup   = openHTMLPopup;
+  window.openHTMLPopup = openHTMLPopup;
 })();
