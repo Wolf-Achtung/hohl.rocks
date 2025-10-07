@@ -1,0 +1,52 @@
+[
+  {
+    "name": "gpt-4o-mini-2024-07-18",
+    "tier": "low-cost",
+    "strengths": [
+      "Allround",
+      "Deutsch gut",
+      "schnell"
+    ],
+    "best_for": [
+      "Kurzrecherche",
+      "Entwürfe",
+      "Tabellen"
+    ],
+    "limits": [
+      "Sehr lange Kontexte kürzen"
+    ],
+    "sample_prompt": "GIST→FACT→CITE zu [Thema]"
+  },
+  {
+    "name": "gpt-4o-2024-08-06",
+    "tier": "paid",
+    "strengths": [
+      "präzise",
+      "Vision/Multimodal"
+    ],
+    "best_for": [
+      "Synthesen",
+      "Cage‑Match‑Vergleiche"
+    ],
+    "limits": [
+      "Kosten höher"
+    ],
+    "sample_prompt": "Kontrast‑Paar (konservativ vs. radikal)"
+  },
+  {
+    "name": "Claude Sonnet",
+    "tier": "freemium/paid",
+    "strengths": [
+      "lange Kontexte",
+      "saubere Sprache"
+    ],
+    "best_for": [
+      "lange Summaries",
+      "stilisierte Schreiben"
+    ],
+    "limits": [
+      "Vision/Tools tarifabhängig"
+    ],
+    "sample_prompt": "One‑Minute‑Plan für [Ziel]"
+  }
+]

@@ -1,0 +1,18 @@
+/* model-picker.js — dblclick News to open */
+(function(){
+  async function fetchModels(){
+    try{ const r=await fetch('/api/models-live',{cache:'no-store'}); if(r.ok) return await r.json(); }catch(e){}
+    try{ const r=await fetch('/api/models.json',{cache:'no-store'}); return await r.json(); }catch(e){ return []; }
+  }
+  async function openModelPicker(){
+    const arr=await fetchModels();
+    if(!arr.length){ openAnswerPopup('Model‑Picker: keine Daten.'); return; }
+    const lines=arr.map(m=>`• ${m.name} — ${m.tier}\n  Stärken: ${m.strengths.join(', ')}\n  Bestens für: ${m.best_for.join(', ')}\n  Beispiel: ${m.sample_prompt}`).join('\n\n');
+    openAnswerPopup('Model‑Picker\n\n'+lines);
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    const btn=document.querySelector('#nav-buttons .news');
+    if(btn){ btn.addEventListener('dblclick', openModelPicker); }
+  });
+  window.openModelPicker=openModelPicker;
+})();

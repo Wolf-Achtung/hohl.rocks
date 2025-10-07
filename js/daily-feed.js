@@ -1,0 +1,1 @@
+window.DailyFeed={async news(){try{return(await fetch('/api/news.json',{cache:'no-store'})).json().then(j=>j.items||[])}catch(e){return[]}},async prompt(){try{return(await fetch('/api/prompt.json',{cache:'no-store'})).json().then(j=>j.items||[])}catch(e){return[]}}};
