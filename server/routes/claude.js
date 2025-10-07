@@ -51,14 +51,7 @@ router.post('/claude', express.json(), async (req,res)=>{
   }catch(e){ res.status(500).json({ error: String(e) }); }
 });
 
-// Streaming-API: GET und POST
-//
-// Der GET-Endpunkt akzeptiert die Parameter über die Query-String, wie
-// ?prompt=...&system=...&model=...&thread=....
-// Der POST-Endpunkt nimmt dieselben Felder aus dem JSON-Body entgegen. Beide
-// implementieren identische Logik: Sie rufen das Anthropic-API mit
-// stream=true auf und forwarden die Events (delta/done/error) im SSE-Format.
-
+// SSE (stream) – normalisiert {delta}
 router.get('/claude-sse', async (req,res)=>{
   try{
     const prompt = String(req.query.prompt||req.query.message||'');
@@ -103,51 +96,6 @@ router.get('/claude-sse', async (req,res)=>{
   }catch(e){
     res.writeHead(500, {'Content-Type':'text/event-stream'});
     res.write(`event: error\ndata: ${JSON.stringify({error:String(e)})}\n\n`); res.end();
-  }
-});
-
-// POST-Variante für Streaming: liest prompt/system/model/thread aus dem JSON-Body.
-router.post('/claude-sse', express.json(), async (req,res)=>{
-  try{
-    const { prompt = '', system = '', model = MODEL, thread: id = '' } = req.body || {};
-    const messages = toMsgs(thread(id), String(prompt), String(system));
-    const upstream = await fetch(API_URL, { method:'POST', headers: headers(),
-      body: JSON.stringify({ model: String(model||MODEL), max_tokens: 1200, temperature: 0.7, stream:true, messages }) });
-    if(!upstream.ok){ const txt = await upstream.text(); console.error('Claude SSE', upstream.status, txt);
-      res.writeHead(502, {'Content-Type':'text/event-stream'});
-      res.write(`event: error\ndata: ${JSON.stringify({status:upstream.status,body:txt})}\n\n`);
-      return res.end(); }
-    res.writeHead(200, {'Content-Type':'text/event-stream','Cache-Control':'no-cache, no-transform','Connection':'keep-alive','Access-Control-Allow-Origin':'*'});
-    const reader = upstream.body.getReader(); const dec = new TextDecoder();
-    let buf = '', acc=''; let closed=false;
-    req.on('close', ()=>{ try{ reader.cancel(); }catch(_e){} closed=true; });
-    const hb = setInterval(()=>{ if(!closed) res.write(':hb\n\n'); }, 15000);
-    while(true){
-      const { value, done } = await reader.read(); if(done) break;
-      buf += dec.decode(value,{stream:true});
-      let ix; while((ix = buf.indexOf('\n\n'))>=0){
-        const block = buf.slice(0,ix); buf = buf.slice(ix+2);
-        let ev='message', data='';
-        for(const line of block.split('\n')){
-          if(line.startsWith('event:')) ev = line.slice(6).trim();
-          else if(line.startsWith('data:')) data += line.slice(5).trim();
-        }
-        if(ev==='content_block_delta'){
-          try{ const j = JSON.parse(data); const t=j?.delta?.text||''; if(t){ acc+=t; res.write(`data: ${JSON.stringify({delta:t})}\n\n`);} }catch{}
-        }
-        if(ev==='message_stop'){
-          res.write('event: done\n'); res.write('data: [DONE]\n\n'); clearInterval(hb); res.end();
-          push(id,'user', String(prompt)); push(id,'assistant', acc);
-          return;
-        }
-      }
-    }
-    clearInterval(hb);
-    if(!closed){ res.write('event: done\n'); res.write('data: [DONE]\n\n'); res.end(); }
-  }catch(e){
-    res.writeHead(500, {'Content-Type':'text/event-stream'});
-    res.write(`event: error\ndata: ${JSON.stringify({error:String(e)})}\n\n`);
-    res.end();
   }
 });
 
