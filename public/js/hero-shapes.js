@@ -124,8 +124,28 @@
 
     // Label/Hints/Aktionen
     if (Array.isArray(window.__TICKER_ITEMS) && window.__TICKER_ITEMS.length) {
+      // Wähle ein Item aus __TICKER_ITEMS, das noch nicht gleichzeitig als
+      // sichtbare Bubble auf der Seite aktiv ist. Dadurch vermeiden wir,
+      // dass zwei Bubbles mit demselben Label gleichzeitig erscheinen. Es
+      // wird maximal einmal über alle Einträge iteriert, um ein passendes
+      // Item zu finden. Sollte kein neues gefunden werden (z. B. wenn es
+      // weniger Items als maximale gleichzeitige Bubbles gibt), wird das
+      // zuletzt geprüfte Item verwendet.
       if (typeof window.__bubbleIndex !== 'number') window.__bubbleIndex = 0;
-      const it = window.__TICKER_ITEMS[(window.__bubbleIndex++) % window.__TICKER_ITEMS.length];
+      const total = window.__TICKER_ITEMS.length;
+      const visible = new Set(BUBBLES.map(b => b.el?.dataset?.label));
+      let it = null;
+      let attempts = 0;
+      while (attempts < total) {
+        const candidate = window.__TICKER_ITEMS[(window.__bubbleIndex++) % total];
+        attempts++;
+        if (!visible.has(candidate.label)) {
+          it = candidate;
+          break;
+        }
+      }
+      // Falls nach allen Versuchen kein neues Label gefunden wurde, verwende das letzte geprüfte Item
+      if (!it) it = window.__TICKER_ITEMS[(window.__bubbleIndex - 1 + total) % total];
 
       // Titel/Hinweis
       const wrap = document.createElement('div');
