@@ -54,11 +54,11 @@ app.use(express.static(ROOT));
 // API routes
 //
 // Mount all Claude-related routes under `/api`. The `claudeRouter` exports
-// handlers for POST `/claude` (classic JSON completion), GET/POST `/claude-sse`
-// (SSE streaming) and POST `/claude-json` (structured JSON responses).  Mounting
+// handlers for POST `/claude` (classic JSON completion), GET `/claude-sse` (SSE
+// streaming) and POST `/claude-json` (structured JSON responses).  Mounting
 // under `/api` results in URLs like `/api/claude-sse`.  Without this
 // registration the frontend falls back to the JSON endpoint and raises
-// `Error: Claude JSON 404`, as seen in den Nutzer-Logs.
+// `Error: Claude JSON 404`, as seen in the user screenshots.
 app.use("/api", claudeRouter);
 
 // ── Minimal-API (damit Healthchecks was Sinnvolles haben)
