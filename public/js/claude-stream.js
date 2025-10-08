@@ -1,4 +1,4 @@
-// public/js/claude-stream.js — SSE/JSON Client for hohl.rocks
+// public/js/claude-stream.js — SSE/JSON Client
 
 const BASE = (() => {
   const meta = document.querySelector('meta[name="hohl-chat-base"]');
@@ -10,10 +10,6 @@ function abs(path) {
   return `${BASE}${path}`;
 }
 
-/**
- * Streamt einen Prompt zu /api/claude-sse und ruft onToken(text) für jedes
- * Delta auf. onDone() wird am Ende aufgerufen, onError(err) bei Fehlern.
- */
 export async function streamClaude({ prompt, system = 'hohl.rocks', model = '', thread = '' }, { onToken, onDone, onError } = {}) {
   try {
     const res = await fetch(abs('/api/claude-sse'), {
@@ -49,14 +45,14 @@ export async function streamClaude({ prompt, system = 'hohl.rocks', model = '', 
           try {
             const j = JSON.parse(data);
             if (j?.text && typeof onToken === 'function') onToken(j.text);
-          } catch { /* ignore */ }
+          } catch {}
         }
         if (event === 'done') {
           if (typeof onDone === 'function') onDone();
           return;
         }
-        if (event === 'error') {
-          if (typeof onError === 'function') onError(new Error(data));
+        if (event === 'error' && typeof onError === 'function') {
+          onError(new Error(data));
         }
       }
     }
@@ -69,17 +65,15 @@ export async function streamClaude({ prompt, system = 'hohl.rocks', model = '', 
 export async function fetchNews() {
   const r = await fetch(abs('/api/news'));
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json(); // { items, stand }
+  return r.json();
 }
-
 export async function fetchTopPrompts() {
   const r = await fetch(abs('/api/prompts/top'));
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json(); // { items, stand }
+  return r.json();
 }
-
 export async function fetchDaily() {
   const r = await fetch(abs('/api/daily'));
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json(); // { title, body, stand }
+  return r.json();
 }

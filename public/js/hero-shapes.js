@@ -24,7 +24,7 @@ const COLORS = [
 ];
 
 function mkThread(label) {
-  const b = new TextEncoder().encode(label);
+  const b = new TextEncoder().encode(label || 'bubble');
   let h = 0; for (let i = 0; i < b.length; i++) h = (h * 131 + b[i]) >>> 0;
   return `t_${h.toString(16)}`;
 }
@@ -35,10 +35,10 @@ function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 const entries = new Set();
 let lastSpawn = 0;
 
-// Daily‑Slot aus API ersetzen (einmal beim Start)
+// Daily‑Slot aktualisieren (einmal beim Start)
 (async () => {
   try {
-    const daily = await fetchDaily(); // {title, body}
+    const daily = await fetchDaily();
     const idx = __TICKER_ITEMS.findIndex(i => i.label?.toLowerCase?.().includes('heute neu'));
     if (idx >= 0 && daily?.title) {
       __TICKER_ITEMS[idx] = {
@@ -49,7 +49,7 @@ let lastSpawn = 0;
         prompt: daily.body || 'Tagesinfo.'
       };
     }
-  } catch { /* ignore */ }
+  } catch {}
 })();
 
 function spawnOne() {
@@ -67,7 +67,7 @@ function spawnOne() {
   el.dataset.explain = it.explain || '';
   el.dataset.placeholder = it.placeholder || '';
   el.dataset.action = it.action || 'input';
-  el.dataset.threadId = mkThread(it.label || 'bubble');
+  el.dataset.threadId = mkThread(it.label);
 
   const w = layer.clientWidth, h = layer.clientHeight;
   const x = rand(w * 0.15, w * 0.85), y = rand(h * 0.2, h * 0.85);
@@ -95,7 +95,7 @@ function spawnOne() {
     sPhase: rand(0, Math.PI * 2),
     sSpeed: rand(0.0012, 0.0022),
     life: rand(CFG.LIFE_MIN, CFG.LIFE_MAX),
-    fadeOut: false, fadeStart: 0
+    fadeOut: false, fadeStart: 0, _clicks: 0
   };
 
   el.style.left = `${x}px`; el.style.top = `${y}px`;
@@ -108,8 +108,6 @@ function spawnOne() {
     document.querySelectorAll('.shape').forEach(s => { if (s !== el) s.style.opacity = '0.25'; });
     setTimeout(() => document.querySelectorAll('.shape').forEach(s => { if (s !== el) s.style.opacity = '0.35'; }), 1200);
 
-    // Lebensdauer verlängern
-    if (!entry._clicks) entry._clicks = 0;
     if (entry._clicks < 2) { entry._clicks++; entry.life += CFG.CLICK_EXTEND_MS; }
 
     const action = el.dataset.action;
@@ -139,19 +137,16 @@ function update() {
     const age = t - e.born;
     if (age > e.life && !e.fadeOut) { e.fadeOut = true; e.fadeStart = t; }
 
-    // Bewegung
     e.x += e.vx; e.y += e.vy;
     if (e.x < 60 || e.x > w - 60) e.vx *= -1;
     if (e.y < 60 || e.y > h - 60) e.vy *= -1;
 
-    // Größen‑Oszillation
     e.sPhase += e.sSpeed;
     const s = 0.92 + Math.sin(e.sPhase) * 0.06;
     e.el.style.transform = `translate(-50%,-50%) scale(${s})`;
     e.el.style.left = `${e.x}px`;
     e.el.style.top = `${e.y}px`;
 
-    // Ausblenden
     if (e.fadeOut) {
       const k = Math.min(1, (t - e.fadeStart) / CFG.FADE_MS);
       e.el.style.opacity = String(0.98 * (1 - k));
@@ -162,9 +157,6 @@ function update() {
 }
 requestAnimationFrame(update);
 
-// Resize‑Debounce (hier reicht der Reflow durch CSS; wir halten es leichtgewichtig)
+// leichte Resize‑Debounce
 let rs;
-window.addEventListener('resize', () => {
-  clearTimeout(rs);
-  rs = setTimeout(() => {}, 120);
-});
+window.addEventListener('resize', () => { clearTimeout(rs); rs = setTimeout(() => {}, 120); });
