@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <!-- API-Basis (Railway-/Prod-URL). Leer lassen für selbe Origin. -->
+  <!-- API-Basis (Railway/Prod). Leer lassen = gleiche Origin -->
   <meta name="hohl-chat-base" content="">
   <title>hohl.rocks — Neon Gold UX+</title>
 
@@ -14,15 +14,14 @@
   <link rel="stylesheet" href="/hero-shapes.css" />
 </head>
 <body>
-  <noscript>Bitte JavaScript aktivieren, um die interaktive KI-Experience zu nutzen.</noscript>
+  <noscript>Bitte JavaScript aktivieren, um die interaktive KI‑Experience zu nutzen.</noscript>
 
-  <!-- Bühne -->
   <div class="stage" id="stage" aria-live="polite" aria-busy="false">
     <video id="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
       <source src="/videos/road.mp4" type="video/mp4" />
     </video>
 
-    <div id="shape-layer" class="shape-layer" role="region" aria-label="Interaktive Ideen-Bubbles"></div>
+    <div id="shape-layer" class="shape-layer" role="region" aria-label="Interaktive Ideen‑Bubbles"></div>
 
     <nav id="nav" class="nav" aria-label="Sektionen">
       <button class="nav-btn nav-about" data-action="about">Über</button>
@@ -35,7 +34,7 @@
 
   <div id="popup-root" class="popup-root" aria-live="polite"></div>
 
-  <!-- Module (Reihenfolge wichtig) -->
+  <!-- Module -->
   <script type="module" src="/public/js/claude-stream.js"></script>
   <script type="module" src="/public/js/answer-popup.js"></script>
   <script type="module" src="/public/js/nav-popups.js"></script>

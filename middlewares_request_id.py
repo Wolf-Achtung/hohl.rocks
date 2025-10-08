@@ -2,14 +2,7 @@
 middlewares_request_id.py — Starlette/FastAPI middleware for request correlation.
 
 Adds/propagates `X-Request-ID` (or `rid` query param), stores it on
-`request.state.rid`, echoes the header in responses and logs a concise line.
-
-Usage:
-    from fastapi import FastAPI
-    from middlewares_request_id import RequestIdMiddleware
-
-    app = FastAPI()
-    app.add_middleware(RequestIdMiddleware)
+`request.state.rid`, echoes the header in responses and logs one concise line.
 """
 
 from __future__ import annotations
