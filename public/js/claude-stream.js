@@ -1,83 +1,85 @@
-// public/js/claude-stream.js
+// public/js/claude-stream.js — SSE/JSON Client for hohl.rocks
+
 const BASE = (() => {
   const meta = document.querySelector('meta[name="hohl-chat-base"]');
-  return meta?.content?.trim() || '';
+  return (meta?.content || '').trim();
 })();
 
-// Simple SSE/stream reader
-async function streamFetch(url, body, onToken, onDone, onError) {
+function abs(path) {
+  if (!BASE) return path;           // gleiche Origin
+  return `${BASE}${path}`;
+}
+
+/**
+ * Streamt einen Prompt zu /api/claude-sse und ruft onToken(text) für jedes
+ * Delta auf. onDone() wird am Ende aufgerufen, onError(err) bei Fehlern.
+ */
+export async function streamClaude({ prompt, system = 'hohl.rocks', model = '', thread = '' }, { onToken, onDone, onError } = {}) {
   try {
-    const res = await fetch(url, {
+    const res = await fetch(abs('/api/claude-sse'), {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(body)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, system, model, thread })
     });
     if (!res.ok) {
-      const t = await res.text().catch(()=> '');
-      throw new Error(`HTTP ${res.status} ${t || ''}`);
+      const msg = await res.text().catch(() => '');
+      throw new Error(`Claude SSE HTTP ${res.status}: ${msg}`);
     }
+
     const reader = res.body.getReader();
-    const dec = new TextDecoder('utf-8');
+    const dec = new TextDecoder();
     let buf = '';
+
     while (true) {
-      const {done, value} = await reader.read();
+      const { done, value } = await reader.read();
       if (done) break;
-      buf += dec.decode(value, {stream:true});
-      // split SSE lines
-      const parts = buf.split('\n\n');
-      buf = parts.pop() || '';
-      for (const chunk of parts) {
-        const line = chunk.split('\n').find(l=>l.startsWith('data:'));
-        if (!line) continue;
-        const data = line.slice(5).trim();
-        if (data === '[DONE]') { onDone?.(); return; }
-        try {
-          const j = JSON.parse(data);
-          if (j.delta) onToken?.(j.delta);
-        } catch {
-          // allow plain text fallbacks
-          onToken?.(data);
+      buf += dec.decode(value, { stream: true });
+
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) >= 0) {
+        const frame = buf.slice(0, idx); buf = buf.slice(idx + 2);
+        let data = '', event = 'message';
+        for (const line of frame.split('\n')) {
+          if (line.startsWith('event:')) event = line.slice(6).trim();
+          else if (line.startsWith('data:')) data += line.slice(5).trim();
+        }
+        if (!data) continue;
+
+        if (event === 'delta') {
+          try {
+            const j = JSON.parse(data);
+            if (j?.text && typeof onToken === 'function') onToken(j.text);
+          } catch { /* ignore */ }
+        }
+        if (event === 'done') {
+          if (typeof onDone === 'function') onDone();
+          return;
+        }
+        if (event === 'error') {
+          if (typeof onError === 'function') onError(new Error(data));
         }
       }
     }
-    onDone?.();
-  } catch (e) {
-    onError?.(e);
+    if (typeof onDone === 'function') onDone();
+  } catch (err) {
+    if (typeof onError === 'function') onError(err);
   }
 }
 
-export function sendClaudeStream({prompt, system, threadId}) {
-  const url = `${BASE}/api/claude-sse`;
-  return {
-    start(onToken, onDone, onError){
-      streamFetch(url, {prompt, system, threadId}, onToken, onDone, onError);
-    }
-  };
-}
-
-export async function sendClaudeJSON({prompt, system, threadId}) {
-  const res = await fetch(`${BASE}/api/claude-json`, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({prompt, system, threadId})
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
 export async function fetchNews() {
-  const res = await fetch(`${BASE}/api/news`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json(); // {items:[{title,url,source}], cachedAt:"HH:MM"}
+  const r = await fetch(abs('/api/news'));
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json(); // { items, stand }
 }
 
 export async function fetchTopPrompts() {
-  const res = await fetch(`${BASE}/api/top-prompts`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json(); // {items:[{title,body}], cachedAt:"HH:MM"}
+  const r = await fetch(abs('/api/prompts/top'));
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json(); // { items, stand }
 }
 
 export async function fetchDaily() {
-  const res = await fetch(`${BASE}/api/daily`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json(); // {title, body}
+  const r = await fetch(abs('/api/daily'));
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json(); // { title, body, stand }
 }
