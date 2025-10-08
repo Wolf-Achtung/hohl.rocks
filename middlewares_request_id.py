@@ -1,10 +1,6 @@
 """
 middlewares_request_id.py — Starlette/FastAPI middleware for request correlation.
-
-Adds/propagates `X-Request-ID` (or `rid` query param), stores it on
-`request.state.rid`, echoes the header in responses and logs one concise line.
 """
-
 from __future__ import annotations
 
 import logging
@@ -33,15 +29,15 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         start = time.time()
         response: Response | None = None
         try:
-            response = await call_next(request)
-            return response
+          response = await call_next(request)
+          return response
         finally:
-            duration_ms = int((time.time() - start) * 1000)
-            if response is not None:
-                response.headers.setdefault("X-Request-ID", rid)
-                client_ip = request.client.host if request.client else "-"
-                LOG.info(
-                    "rid=%s ip=%s %s %s status=%s dur_ms=%s",
-                    rid, client_ip, request.method, request.url.path,
-                    getattr(response, "status_code", 0), duration_ms
-                )
+          duration_ms = int((time.time() - start) * 1000)
+          if response is not None:
+            response.headers.setdefault("X-Request-ID", rid)
+            client_ip = request.client.host if request.client else "-"
+            LOG.info(
+              "rid=%s ip=%s %s %s status=%s dur_ms=%s",
+              rid, client_ip, request.method, request.url.path,
+              getattr(response, "status_code", 0), duration_ms
+            )

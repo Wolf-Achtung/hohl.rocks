@@ -28,13 +28,14 @@
       <button class="nav-btn nav-news" data-action="news">News</button>
       <button class="nav-btn nav-prompts" data-action="prompts">Prompts</button>
       <button class="nav-btn nav-projects" data-action="projects">Projekte</button>
-      <button id="sound-toggle" class="nav-btn nav-sound" aria-pressed="false">Klang</button>
+      <button id="sound-toggle" class="nav-btn nav-sound" data-action="sound" aria-pressed="false">Klang</button>
     </nav>
   </div>
 
   <div id="popup-root" class="popup-root" aria-live="polite"></div>
 
-  <!-- Module -->
+  <!-- Module: Reihenfolge wichtig -->
+  <script type="module" src="/public/js/ambient-radiohead.js"></script>
   <script type="module" src="/public/js/claude-stream.js"></script>
   <script type="module" src="/public/js/answer-popup.js"></script>
   <script type="module" src="/public/js/nav-popups.js"></script>
