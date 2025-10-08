@@ -2,26 +2,28 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <!-- Passe hier die Server-Base für API-Aufrufe an (Railway/App-URL) -->
-  <meta name="hohl-chat-base" content="https://hohlrocks-production.up.railway.app">
+  <!-- API-Basis (Railway-/Prod-URL). Leer lassen für selbe Origin. -->
+  <meta name="hohl-chat-base" content="">
   <title>hohl.rocks — Neon Gold UX+</title>
 
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="preload" href="/hero-shapes.css" as="style" />
   <link rel="stylesheet" href="/hero-shapes.css" />
 </head>
 <body>
+  <noscript>Bitte JavaScript aktivieren, um die interaktive KI-Experience zu nutzen.</noscript>
+
   <!-- Bühne -->
   <div class="stage" id="stage" aria-live="polite" aria-busy="false">
-    <!-- Hintergrundvideo (optional austauschbar) -->
     <video id="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
       <source src="/videos/road.mp4" type="video/mp4" />
     </video>
 
-    <!-- Layer für Bubbles -->
     <div id="shape-layer" class="shape-layer" role="region" aria-label="Interaktive Ideen-Bubbles"></div>
 
-    <!-- Navigationsleiste -->
     <nav id="nav" class="nav" aria-label="Sektionen">
       <button class="nav-btn nav-about" data-action="about">Über</button>
       <button class="nav-btn nav-news" data-action="news">News</button>
@@ -31,11 +33,9 @@
     </nav>
   </div>
 
-  <!-- Popups werden dynamisch in diesen Container gehängt -->
   <div id="popup-root" class="popup-root" aria-live="polite"></div>
 
-  <!-- JS (Reihenfolge wichtig) -->
-  <script type="module" src="/public/js/ambient-radiohead.js"></script>
+  <!-- Module (Reihenfolge wichtig) -->
   <script type="module" src="/public/js/claude-stream.js"></script>
   <script type="module" src="/public/js/answer-popup.js"></script>
   <script type="module" src="/public/js/nav-popups.js"></script>
