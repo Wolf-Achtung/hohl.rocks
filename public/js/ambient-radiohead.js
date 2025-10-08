@@ -11,11 +11,7 @@ class AmbientEngine {
     o1.start(); o2.start();
     this._ctx = ctx; this._gain = gain; this._on = true;
   }
-  toggle() {
-    if (!this._ctx) { this.ensureStart(); return; }
-    this._on = !this._on;
-    if (this._gain) this._gain.gain.value = this._on ? 0.15 : 0.0;
-  }
+  toggle() { if (!this._ctx) { this.ensureStart(); return; } this._on = !this._on; if (this._gain) this._gain.gain.value = this._on ? 0.15 : 0.0; }
   isOn() { return !!this._on; }
 }
 window.Ambient = new AmbientEngine();

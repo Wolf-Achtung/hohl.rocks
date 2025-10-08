@@ -6,14 +6,10 @@ const BASE = (() => {
 })();
 
 function abs(path) {
-  if (!BASE) return path;           // gleiche Origin
+  if (!BASE) return path;
   return `${BASE}${path}`;
 }
 
-/**
- * Streamt einen Prompt zu /api/claude-sse und ruft onToken(text) für jedes
- * Delta auf. onDone() wird am Ende aufgerufen, onError(err) bei Fehlern.
- */
 export async function streamClaude({ prompt, system = 'hohl.rocks', model = '', thread = '' }, { onToken, onDone, onError } = {}) {
   try {
     const res = await fetch(abs('/api/claude-sse'), {
@@ -44,20 +40,9 @@ export async function streamClaude({ prompt, system = 'hohl.rocks', model = '', 
           else if (line.startsWith('data:')) data += line.slice(5).trim();
         }
         if (!data) continue;
-
-        if (event === 'delta') {
-          try {
-            const j = JSON.parse(data);
-            if (j?.text && typeof onToken === 'function') onToken(j.text);
-          } catch {}
-        }
-        if (event === 'done') {
-          if (typeof onDone === 'function') onDone();
-          return;
-        }
-        if (event === 'error' && typeof onError === 'function') {
-          onError(new Error(data));
-        }
+        if (event === 'delta') { try { const j = JSON.parse(data); if (j?.text && typeof onToken === 'function') onToken(j.text); } catch {} }
+        if (event === 'done') { if (typeof onDone === 'function') onDone(); return; }
+        if (event === 'error' && typeof onError === 'function') onError(new Error(data));
       }
     }
     if (typeof onDone === 'function') onDone();
@@ -66,18 +51,6 @@ export async function streamClaude({ prompt, system = 'hohl.rocks', model = '', 
   }
 }
 
-export async function fetchNews() {
-  const r = await fetch(abs('/api/news'));
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
-export async function fetchTopPrompts() {
-  const r = await fetch(abs('/api/prompts/top'));
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
-export async function fetchDaily() {
-  const r = await fetch(abs('/api/daily'));
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
+export async function fetchNews() { const r = await fetch(abs('/api/news')); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
+export async function fetchTopPrompts() { const r = await fetch(abs('/api/prompts/top')); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
+export async function fetchDaily() { const r = await fetch(abs('/api/daily')); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
