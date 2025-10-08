@@ -1,4 +1,4 @@
-// server/routes/claude.js — Anthropic (Claude) JSON + SSE (Gold‑Standard+)
+// server/routes/claude.js — Anthropic (Claude) JSON + SSE
 import express from 'express';
 export const router = express.Router();
 
@@ -8,11 +8,10 @@ const DEFAULT_MODEL = (process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022')
 const FALLBACKS = ['claude-3-5-sonnet-latest', 'claude-3-haiku-20240307'].filter(m => m !== DEFAULT_MODEL);
 const MODELS = [DEFAULT_MODEL, ...FALLBACKS].filter(Boolean);
 
-// In‑Memory Threadstore (4h TTL, max 500)
+// Thread‑Mini‑Store (4h TTL, max 500)
 const TTL = 4 * 60 * 60 * 1000;
 const MAX = 500;
 const SESS = new Map(); // id -> {t, m:[]}
-
 function touchThread(id) {
   const now = Date.now();
   let t = SESS.get(id);
