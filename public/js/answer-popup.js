@@ -1,96 +1,109 @@
-// public/js/answer-popup.js
-import { sendClaudeStream } from './claude-stream.js';
+// public/js/answer-popup.js — Unified Popups (Input + Answer)
+import { streamClaude } from './claude-stream.js';
 
 const root = document.getElementById('popup-root');
 
-function el(tag, cls, txt){
+function el(tag, cls, txt) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
-  if (txt!=null) e.textContent = txt;
+  if (txt != null) e.textContent = txt;
   return e;
 }
+function closeAll() { root.innerHTML = ''; }
 
-export function openAnswerPopup({title, explain, content}) {
-  closePopups();
-  const box = el('div','popup');
-  const h3 = el('h3', null, title || 'Antwort');
-  box.appendChild(h3);
-  if (explain) {
-    const p = el('p','explain', explain);
-    p.setAttribute('role','note');
-    box.appendChild(p);
-  }
-  const copyBtn = el('button','copy-btn','Kopieren');
-  const closeBtn= el('button','close-btn','Schließen');
-  closeBtn.addEventListener('click', closePopups);
-  copyBtn.addEventListener('click', ()=>{
-    navigator.clipboard.writeText(content || '').then(()=>{
-      copyBtn.textContent = 'Kopiert ✓';
-      setTimeout(()=> copyBtn.textContent='Kopieren', 1200);
-    });
-  });
-  box.appendChild(closeBtn);
-  box.appendChild(copyBtn);
-
-  const pre = el('div','stream', content || '');
-  pre.setAttribute('aria-live','polite');
-  box.appendChild(pre);
-
-  root.appendChild(box);
+function toast(msg) {
+  const t = el('div', 'toast', msg);
+  root.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); t.remove(); }, 1600);
 }
 
-export function openInputBubble({title, explain, placeholder, prompt, threadId}) {
-  closePopups();
-  const box = el('div','popup');
-  const h3 = el('h3', null, title || 'Eingabe');
-  box.appendChild(h3);
-  if (explain) {
-    const p = el('p','explain', explain);
-    p.setAttribute('role','note');
-    box.appendChild(p);
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Kopiert ✓');
+  } catch {
+    toast('Kopieren nicht möglich');
   }
-  const copyBtn = el('button','copy-btn','Kopieren');
-  const closeBtn= el('button','close-btn','Schließen');
-  closeBtn.addEventListener('click', closePopups);
-  box.appendChild(closeBtn); box.appendChild(copyBtn);
+}
 
-  const ta = el('textarea', null, '');
-  ta.placeholder = placeholder || 'Notizen hier …';
-  ta.setAttribute('aria-label','Eingabe');
-  box.appendChild(ta);
+export function openAnswerPopup({ title = 'Info', explain = '', content = '' } = {}) {
+  closeAll();
+  const overlay = el('div', 'popup');
+  const box = el('div', 'popup-inner');
+  const h = el('div', 'popup-title', title);
+  const x = el('button', 'popup-close', '×');
+  x.addEventListener('click', closeAll);
 
-  const actions = el('div','actions');
-  const sendBtn = el('button','btn','Senden');
-  actions.appendChild(sendBtn);
-  box.appendChild(actions);
+  const exp = explain ? el('div', 'popup-explain', explain) : null;
+  const body = el('div', 'popup-body');
+  const pre = el('pre', 'answer');
+  pre.textContent = content;
 
-  const stream = el('div','stream','');
-  stream.setAttribute('aria-live','polite');
-  box.appendChild(stream);
+  const actions = el('div', 'popup-actions');
+  const cpy = el('button', 'btn', 'Kopieren');
+  cpy.addEventListener('click', () => copyToClipboard(pre.textContent));
+  const ok = el('button', 'btn btn-primary', 'Schließen');
+  ok.addEventListener('click', closeAll);
 
-  copyBtn.addEventListener('click', ()=>{
-    navigator.clipboard.writeText(stream.textContent || '').then(()=>{
-      copyBtn.textContent = 'Kopiert ✓';
-      setTimeout(()=> copyBtn.textContent='Kopieren', 1200);
-    });
-  });
+  actions.append(cpy, ok);
+  body.append(pre);
+  box.append(h, x);
+  if (exp) box.append(exp);
+  box.append(body, actions);
+  overlay.append(box);
+  root.append(overlay);
+}
 
-  sendBtn.addEventListener('click', ()=>{
-    stream.textContent = '';
-    const user = (ta.value || '').trim();
-    const fullPrompt = (prompt || '').replace('{{INPUT}}', user);
-    const flow = sendClaudeStream({prompt: fullPrompt, system: title, threadId});
-    flow.start(
-      (delta)=> { stream.textContent += delta; stream.scrollTop = stream.scrollHeight; },
-      ()=> {},
-      (err)=> { stream.textContent = `[Fehler] ${err?.message || err}`; }
+export function openInputBubble({ title = 'Frage', explain = '', placeholder = '', prompt = '', threadId = '' } = {}) {
+  closeAll();
+  const overlay = el('div', 'popup');
+  const box = el('div', 'popup-inner');
+  const h = el('div', 'popup-title', title);
+  const x = el('button', 'popup-close', '×'); x.addEventListener('click', closeAll);
+  const exp = explain ? el('div', 'popup-explain', explain) : null;
+
+  const body = el('div', 'popup-body');
+  const ta = el('textarea', 'prompt-input');
+  if (placeholder) ta.placeholder = placeholder;
+
+  const out = el('pre', 'answer');
+  const actions = el('div', 'popup-actions');
+  const send = el('button', 'btn btn-primary', 'Senden');
+  const cpy = el('button', 'btn', 'Kopieren'); cpy.disabled = true;
+  const cancel = el('button', 'btn', 'Abbrechen');
+
+  actions.append(send, cpy, cancel);
+  body.append(ta, out);
+
+  box.append(h, x);
+  if (exp) box.append(exp);
+  box.append(body, actions);
+  overlay.append(box);
+  root.append(overlay);
+
+  let acc = '';
+  function append(txt) { acc += txt; out.textContent += txt; }
+
+  send.addEventListener('click', async () => {
+    send.disabled = true; cancel.disabled = false; ta.disabled = true; out.textContent = '';
+    acc = '';
+
+    const userText = ta.value.trim();
+    const composed = prompt && prompt.includes('{{input}}')
+      ? prompt.replace('{{input}}', userText)
+      : (prompt ? `${prompt}\n\n${userText}` : userText);
+
+    await streamClaude(
+      { prompt: composed, system: 'hohl.rocks', thread: threadId || '' },
+      {
+        onToken: (t) => append(t),
+        onDone: () => { cpy.disabled = !acc; send.disabled = false; },
+        onError: (e) => { append(`\n[Fehler] ${e?.message || e}`); send.disabled = false; }
+      }
     );
   });
 
-  root.appendChild(box);
-  ta.focus();
-}
-
-export function closePopups(){
-  root.innerHTML = '';
+  cpy.addEventListener('click', () => copyToClipboard(acc));
+  cancel.addEventListener('click', closeAll);
 }

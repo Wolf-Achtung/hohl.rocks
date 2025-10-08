@@ -1,4 +1,4 @@
-// public/js/claude-stream.js — SSE/JSON Client
+// public/js/claude-stream.js — SSE/JSON Client (Gold‑Standard+)
 
 const BASE = (() => {
   const meta = document.querySelector('meta[name="hohl-chat-base"]');
@@ -10,6 +10,10 @@ function abs(path) {
   return `${BASE}${path}`;
 }
 
+/**
+ * Streamt einen Prompt zu /api/claude-sse und ruft onToken(text) für jedes
+ * Delta auf. onDone() wird am Ende aufgerufen, onError(err) bei Fehlern.
+ */
 export async function streamClaude({ prompt, system = 'hohl.rocks', model = '', thread = '' }, { onToken, onDone, onError } = {}) {
   try {
     const res = await fetch(abs('/api/claude-sse'), {

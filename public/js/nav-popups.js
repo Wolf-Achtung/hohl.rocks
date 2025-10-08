@@ -1,92 +1,57 @@
-// public/js/nav-popups.js
-import { fetchNews, fetchTopPrompts } from './claude-stream.js';
+// public/js/nav-popups.js — Simple overlays for About/News/Prompts/Projects/Sound
 import { openAnswerPopup } from './answer-popup.js';
+import { fetchNews, fetchTopPrompts } from './claude-stream.js';
 
 const nav = document.getElementById('nav');
+const soundBtn = document.getElementById('sound-toggle');
 
-const legalText = `Rechtliches & Transparenz
+nav?.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.nav-btn');
+  if (!btn) return;
+  const action = btn.dataset.action;
 
-Impressum
-Verantwortlich für den Inhalt:
-Wolf Hohl
-Greifswalder Str. 224a
-10405 Berlin
-E-Mail: wolf@hohl.rocks
-
-Haftungsausschluss:
-Diese Website dient ausschließlich der Information. Trotz sorgfältiger Prüfung übernehme ich keine Haftung für Inhalte externer Links.
-
-Urheberrecht:
-Alle Inhalte dieser Website unterliegen dem deutschen Urheberrecht, alle Bilder wurden mit Hilfe von KI-Tools wie Midjourney erzeugt.
-
-Hinweis zum EU AI Act:
-Diese Website informiert über Pflichten, Risiken und Fördermöglichkeiten beim Einsatz von KI nach EU AI Act und DSGVO. Sie ersetzt keine Rechtsberatung.
-
-Datenschutzerklärung
-Der Schutz Ihrer persönlichen Daten ist mir ein besonderes Anliegen.
-
-Kontakt mit mir
-Wenn Sie per Formular oder E-Mail Kontakt aufnehmen, werden Ihre Angaben zur Bearbeitung sechs Monate gespeichert.
-
-Cookies
-Diese Website verwendet keine Cookies zur Nutzerverfolgung oder Analyse.
-
-Ihre Rechte laut DSGVO
-Auskunft, Berichtigung oder Löschung Ihrer Daten
-Datenübertragbarkeit
-Widerruf erteilter Einwilligungen
-Beschwerde bei der Datenschutzbehörde`;
-
-nav?.addEventListener('click', async (e)=>{
-  const b = e.target.closest('button[data-action]');
-  if (!b) return;
-  const act = b.dataset.action;
-
-  if (act === 'about') {
+  if (action === 'about') {
     openAnswerPopup({
       title: 'Über',
-      explain: 'Rechtliches & Transparenz.',
-      content: legalText
+      explain: 'Wolf Hohl · TÜV-zertifizierter KI-Manager',
+      content: 'hohl.rocks ist eine ruhige, spielerische KI-Experience. Bubbles öffnen Micro‑Apps, die mit Claude streamen.'
     });
   }
 
-  if (act === 'news') {
-    try{
-      const {items=[], cachedAt} = await fetchNews();
-      const body = `Stand: ${cachedAt || '–'}\n\n` + items.map((n,i)=> `• ${n.title}  [${n.source}] \n  ${n.url}`).join('\n');
-      openAnswerPopup({
-        title: 'KI‑News (kuratiert)',
-        explain: 'Kompakt, verlässlich, mit Quelle – Cache 12 h.',
-        content: body
-      });
-    }catch(err){
-      openAnswerPopup({ title:'News', content:`[Fehler] ${err?.message||err}` });
+  if (action === 'news') {
+    try {
+      const j = await fetchNews();
+      const text = (j.items || []).map(i => `• ${i.title} — ${i.source}\n  ${i.url}`).join('\n\n') || 'Keine News.';
+      openAnswerPopup({ title: 'News', explain: `Stand: ${j.stand || '-'}`, content: text });
+    } catch (e2) {
+      openAnswerPopup({ title: 'News', content: `Fehler: ${e2?.message || e2}` });
     }
   }
 
-  if (act === 'prompts') {
-    try{
-      const {items=[], cachedAt} = await fetchTopPrompts();
-      const body = `Top‑5 Prompts der Woche — Stand: ${cachedAt||'–'}\n\n` + items.map((p,i)=> `${i+1}. ${p.title}\n${p.body}\n`).join('\n');
-      openAnswerPopup({
-        title:'Prompts',
-        explain:'Wöchentlich kuratierte Top‑Prompts (praktisch und neu).',
-        content: body
-      });
-    }catch(err){
-      openAnswerPopup({ title:'Prompts', content:`[Fehler] ${err?.message||err}` });
+  if (action === 'prompts') {
+    try {
+      const j = await fetchTopPrompts();
+      const text = (j.items || []).map(i => `• ${i.title}\n  ${i.prompt}`).join('\n\n') || 'Keine Prompts.';
+      openAnswerPopup({ title: 'Top‑Prompts', explain: `Stand: ${j.stand || '-'}`, content: text });
+    } catch (e3) {
+      openAnswerPopup({ title: 'Top‑Prompts', content: `Fehler: ${e3?.message || e3}` });
     }
   }
 
-  if (act === 'projects') {
+  if (action === 'projects') {
     openAnswerPopup({
-      title:'Projekte',
-      explain:'Aktuelle Arbeiten & Demos (Auswahl).',
-      content:'stay tuned!'
+      title: 'Projekte',
+      content: '• hohl.rocks — persönliche KI‑Experience\n• Jellyfish Motion — organische Interaktion\n• Micro‑Apps — 28 Mini‑Anwendungen'
     });
   }
 
-  if (act === 'sound') {
-    // handled in ambient-radiohead.js via button id #sound-toggle
+  if (action === 'sound') {
+    try {
+      window.Ambient?.toggle();
+      const on = window.Ambient?.isOn();
+      soundBtn?.setAttribute('aria-pressed', on ? 'true' : 'false');
+    } catch {
+      openAnswerPopup({ title: 'Klang', content: 'Audio nicht verfügbar.' });
+    }
   }
 });

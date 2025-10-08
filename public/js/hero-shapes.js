@@ -35,7 +35,7 @@ function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 const entries = new Set();
 let lastSpawn = 0;
 
-// Daily‑Slot aktualisieren (einmal beim Start)
+// Daily‑Slot aktualisieren
 (async () => {
   try {
     const daily = await fetchDaily();
