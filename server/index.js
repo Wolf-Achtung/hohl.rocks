@@ -1,8 +1,4 @@
 // server/index.js — hohl.rocks Backends (Gold‑Standard+)
-// Node 20+, ESM. Robust: Helmet, CORS, SSE‑sichere Compression, Morgan,
-// /healthz (GET/HEAD), TTL‑Cache (12h), Tavily‑Fallback, SPA‑Fallback,
-// Keep‑Alive/HeadersTimeout tuned, Graceful Shutdown.
-
 import 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
@@ -12,7 +8,6 @@ import morgan from 'morgan';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs/promises';
-
 import { router as claudeRouter } from './routes/claude.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,13 +17,12 @@ const ROOT = join(__dirname, '..');
 const ENV = process.env.NODE_ENV || 'production';
 const PORT = Number(process.env.PORT || 8080);
 
-// CORS Whitelist (Komma‑getrennte Liste)
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
 
-// --- TTL‑Cache (12h)
+// TTL‑Cache (12h)
 const TTL_MS = 12 * 60 * 60 * 1000;
 const CACHE = new Map();
 const now = () => Date.now();
@@ -63,7 +57,7 @@ app.use(cors({
 }));
 if (ENV !== 'test') app.use(morgan(ENV === 'production' ? 'combined' : 'dev'));
 
-// Static (liefert index.html & /public/*)
+// Static
 app.use(express.static(ROOT));
 
 // Health
@@ -74,7 +68,7 @@ app.get('/healthz', (_req, res) => {
 });
 app.head('/healthz', (_req, res) => res.status(200).end());
 
-// (Optional) SSE‑Ping zum Testen
+// SSE‑Ping
 app.get('/__sse/ping', (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -87,7 +81,7 @@ app.get('/__sse/ping', (req, res) => {
   req.on('close', () => { clearInterval(hb); try { res.end(); } catch {} });
 });
 
-// API‑Routen
+// APIs
 app.use('/api', claudeRouter);
 
 // News (Tavily → Fallback)
@@ -110,8 +104,7 @@ app.get('/api/news', async (_req, res) => {
     if (!r.ok) throw new Error(`Tavily ${r.status}: ${await r.text()}`);
     const j = await r.json();
     const items = (j?.results || []).slice(0, 8).map(v => ({
-      title: v.title,
-      url: v.url,
+      title: v.title, url: v.url,
       source: (v.url || '').replace(/^https?:\/\/(www\.)?/, '').split('/')[0]
     }));
     const payload = { items, stand: hhmm() };
@@ -169,7 +162,7 @@ app.get('/api/daily', async (_req, res) => {
   }
 });
 
-// Root + SPA‑Fallback
+// SPA‑Fallback
 app.get('/', (_req, res) => res.sendFile(join(ROOT, 'index.html')));
 app.get('*', (_req, res) => res.sendFile(join(ROOT, 'index.html')));
 
