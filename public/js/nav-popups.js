@@ -1,55 +1,92 @@
-// /public/js/nav-popups.js
-(() => {
-  function on(sel, ev, fn){ document.addEventListener(ev, e => { if (e.target.closest(sel)) fn(e); }); }
+// public/js/nav-popups.js
+import { fetchNews, fetchTopPrompts } from './claude-stream.js';
+import { openAnswerPopup } from './answer-popup.js';
 
-  const aboutHTML = `
-    <div style="max-height:60vh;overflow:auto">
-      <h4>Rechtliches & Transparenz</h4>
-      <p><b>Impressum</b><br/>
-      Verantwortlich für den Inhalt:<br/>
-      Wolf Hohl, TÜV-zertifiziertes KI-Management<br/>
-      Greifswalder Str. 224a<br/>10405 Berlin</p>
-      <p>E‑Mail: <a href="mailto:wolf@hohl.rocks">wolf@hohl.rocks</a></p>
-      <p><b>Haftungsausschluss:</b><br/>Diese Website dient ausschließlich der Information. Trotz sorgfältiger Prüfung übernehme ich keine Haftung für Inhalte externer Links.</p>
-      <p><b>Urheberrecht:</b><br/>Alle Inhalte dieser Website unterliegen dem deutschen Urheberrecht; Bilder wurden mit KI‑Tools (z. B. Midjourney) erzeugt.</p>
-      <p><b>Hinweis zum EU AI Act:</b><br/>Informationen zu Pflichten, Risiken und Fördermöglichkeiten beim Einsatz von KI nach EU AI Act & DSGVO. Keine Rechtsberatung.</p>
-      <h4>Datenschutzerklärung</h4>
-      <p><b>Kontakt:</b> Bei Kontakt per Formular/E‑Mail werden Angaben zur Bearbeitung sechs Monate gespeichert.</p>
-      <p><b>Cookies:</b> Keine Tracking‑/Analyse‑Cookies.</p>
-      <p><b>Ihre Rechte laut DSGVO:</b> Auskunft, Berichtigung, Löschung, Datenübertragbarkeit, Widerruf, Beschwerde.</p>
-    </div>
-  `;
+const nav = document.getElementById('nav');
 
-  async function openNews() {
-    try {
-      const r = await fetch("/api/news"); const j = await r.json();
-      const list = (j.items || []).slice(0,8).map(it => `
-        <li style="margin:.35rem 0">
-          <a href="${it.url}" target="_blank" rel="noopener" style="color:#9cf">${it.title}</a>
-          <div style="opacity:.85">${it.snippet || ""}</div>
-        </li>`).join("");
-      window.openHTMLPopup("News (KI · Recht · Tools)", `<div>Stand: <b>${j.stand || "-"}</b></div><ol style="padding-left:1.1rem;margin:.6rem 0 0">${list}</ol>`, { explain: "Tagesaktuell, 12 h Cache." });
-    } catch (e) {
-      window.openHTMLPopup("News", `<p>[Fehler] ${String(e)}</p>`);
+const legalText = `Rechtliches & Transparenz
+
+Impressum
+Verantwortlich für den Inhalt:
+Wolf Hohl
+Greifswalder Str. 224a
+10405 Berlin
+E-Mail: wolf@hohl.rocks
+
+Haftungsausschluss:
+Diese Website dient ausschließlich der Information. Trotz sorgfältiger Prüfung übernehme ich keine Haftung für Inhalte externer Links.
+
+Urheberrecht:
+Alle Inhalte dieser Website unterliegen dem deutschen Urheberrecht, alle Bilder wurden mit Hilfe von KI-Tools wie Midjourney erzeugt.
+
+Hinweis zum EU AI Act:
+Diese Website informiert über Pflichten, Risiken und Fördermöglichkeiten beim Einsatz von KI nach EU AI Act und DSGVO. Sie ersetzt keine Rechtsberatung.
+
+Datenschutzerklärung
+Der Schutz Ihrer persönlichen Daten ist mir ein besonderes Anliegen.
+
+Kontakt mit mir
+Wenn Sie per Formular oder E-Mail Kontakt aufnehmen, werden Ihre Angaben zur Bearbeitung sechs Monate gespeichert.
+
+Cookies
+Diese Website verwendet keine Cookies zur Nutzerverfolgung oder Analyse.
+
+Ihre Rechte laut DSGVO
+Auskunft, Berichtigung oder Löschung Ihrer Daten
+Datenübertragbarkeit
+Widerruf erteilter Einwilligungen
+Beschwerde bei der Datenschutzbehörde`;
+
+nav?.addEventListener('click', async (e)=>{
+  const b = e.target.closest('button[data-action]');
+  if (!b) return;
+  const act = b.dataset.action;
+
+  if (act === 'about') {
+    openAnswerPopup({
+      title: 'Über',
+      explain: 'Rechtliches & Transparenz.',
+      content: legalText
+    });
+  }
+
+  if (act === 'news') {
+    try{
+      const {items=[], cachedAt} = await fetchNews();
+      const body = `Stand: ${cachedAt || '–'}\n\n` + items.map((n,i)=> `• ${n.title}  [${n.source}] \n  ${n.url}`).join('\n');
+      openAnswerPopup({
+        title: 'KI‑News (kuratiert)',
+        explain: 'Kompakt, verlässlich, mit Quelle – Cache 12 h.',
+        content: body
+      });
+    }catch(err){
+      openAnswerPopup({ title:'News', content:`[Fehler] ${err?.message||err}` });
     }
   }
 
-  async function openWeeklyPrompts() {
-    try {
-      const r = await fetch("/api/prompts/top"); const j = await r.json();
-      const list = (j.items || []).map(it => `<li style="margin:.35rem 0"><b>${it.title}</b><br/><code style="white-space:pre-wrap">${it.prompt}</code></li>`).join("");
-      window.openHTMLPopup("Top‑5‑Prompts der Woche", `<div>Stand: <b>${j.stand || "-"}</b></div><ol style="padding-left:1.1rem;margin:.6rem 0 0">${list}</ol>`, { explain: "Kuratiert & verdichtet – sofort nutzbar." });
-    } catch (e) {
-      window.openHTMLPopup("Top‑5‑Prompts", `<p>[Fehler] ${String(e)}</p>`);
+  if (act === 'prompts') {
+    try{
+      const {items=[], cachedAt} = await fetchTopPrompts();
+      const body = `Top‑5 Prompts der Woche — Stand: ${cachedAt||'–'}\n\n` + items.map((p,i)=> `${i+1}. ${p.title}\n${p.body}\n`).join('\n');
+      openAnswerPopup({
+        title:'Prompts',
+        explain:'Wöchentlich kuratierte Top‑Prompts (praktisch und neu).',
+        content: body
+      });
+    }catch(err){
+      openAnswerPopup({ title:'Prompts', content:`[Fehler] ${err?.message||err}` });
     }
   }
 
-  function openProjects() {
-    window.openHTMLPopup("Projekte", `<p><b>stay tuned!</b> — Projekt‑Showcase & Demos folgen hier.</p>`, { explain: "Aktuelle Cases & Live‑Demos." });
+  if (act === 'projects') {
+    openAnswerPopup({
+      title:'Projekte',
+      explain:'Aktuelle Arbeiten & Demos (Auswahl).',
+      content:'stay tuned!'
+    });
   }
 
-  on('#nav-buttons .about',    'click', () => window.openHTMLPopup("Über", aboutHTML, { explain: "Rechtliches & Transparenz" }));
-  on('#nav-buttons .news',     'click', openNews);
-  on('#nav-buttons .prompts',  'click', openWeeklyPrompts);
-  on('#nav-buttons .projects', 'click', openProjects);
-})();
+  if (act === 'sound') {
+    // handled in ambient-radiohead.js via button id #sound-toggle
+  }
+});

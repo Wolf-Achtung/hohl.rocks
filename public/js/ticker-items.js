@@ -1,469 +1,196 @@
-// public/js/ticker-items.js — Kuratierte Mini‑Apps/Prompts
-//
-// Dieses Array enthält 30 deutschsprachige Mini‑Apps, die verschiedene
-// Anwendungsgebiete der KI abdecken: Recherche, Schreiben, Design,
-// Visualisierung, Tipps & Tricks, Eye‑Candy, Kunst, KI‑Potenziale,
-// alltägliche Benefits und Operations. Jede Bubble wird von hero‑shapes.js
-// zufällig erzeugt und enthält Label, Kurzhinweis, Erklärung, Aktion,
-// Eingabe‑Placeholder und den Prompt.
-
-window.__TICKER_ITEMS = [
+// public/js/ticker-items.js
+export const __TICKER_ITEMS = [
   {
-    label: "Schnelle Recherche",
-    hint: "Klick → Thema eingeben",
-    explain: "Finde Fakten und Quellen in einem Satz.",
-    action: "claude-input",
-    placeholder: "Thema oder Frage …",
-    prompt: `Recherchiere das Thema prägnant: Nenne drei verlässliche Fakten und je eine Quelle.`
-  },
-  {
-    label: "Marktanalyse",
-    hint: "Klick → Branche nennen",
-    explain: "Analyse in 3 Punkten mit Trend.",
-    action: "claude-input",
-    placeholder: "Branche/Produkt …",
-    prompt: `Analysiere den Markt: 1. Größe, 2. Haupttrends, 3. Chancen (kompakt).`
-  },
-  {
-    label: "Quellencheck",
-    hint: "Klick → Link einfügen",
-    explain: "Bewertung der Quelle nach Seriosität.",
-    action: "claude-input",
-    placeholder: "URL einfügen …",
-    prompt: `Bewerte die Seriosität und Relevanz der folgenden Quelle. Gib eine kurze Begründung.`
-  },
-  {
-    label: "Blogpost‑Skelett",
-    hint: "Klick → Thema eingeben",
-    explain: "Schreibe die Gliederung für einen Blogartikel.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Erstelle eine Gliederung (Einleitung, drei Abschnitte, Fazit) zum genannten Thema.`
+    label: "E‑Mail‑Assistent",
+    explain: "Grobe Stichpunkte rein → perfekte, freundliche E‑Mail raus – mit Ton & Zielgruppe.",
+    placeholder: "Stichpunkte oder grobe Rohfassung …",
+    action: "input",
+    prompt: `Du bist ein präziser E-Mail-Redakteur. Schreibe aus den Notizen eine klare E-Mail.
+Ton bitte: freundlich, prägnant, deutsch. 
+Wenn nötig: Betreff vorschlagen, 1 Call-to-Action, 1 höfliche Abschlussformel.
+Text: {{INPUT}}`
   },
   {
     label: "LinkedIn‑Post",
-    hint: "Klick → Idee eingeben",
-    explain: "Formuliere einen inspirierenden LinkedIn‑Beitrag.",
-    action: "claude-input",
-    placeholder: "Idee / Nachricht …",
-    prompt: `Schreibe einen LinkedIn‑Post (2–3 Sätze), der Fachleute anspricht. Verwende klare Sprache und einen Call‑to‑Action.`
+    explain: "Aus einer Idee 3 knackige Post-Varianten (Hook/Body/CTA), dazu 5 Hashtags.",
+    placeholder: "Thema, Kernbotschaft, Ziel (Reichweite/Recruiting/Authority) …",
+    action: "input",
+    prompt: `Du bist Social-Copy-Pro. Erstelle 3 LinkedIn-Post-Varianten (Hook/Body/CTA) + 5 Hashtags.
+Stil: menschlich, konkret, kein Marketing-Blabla. Text: {{INPUT}}`
   },
   {
-    label: "E‑Mail‑Assistent",
-    hint: "Klick → Stichpunkte eingeben",
-    explain: "Formuliere höfliche, klare E‑Mails.",
-    action: "claude-input",
-    placeholder: "Stichpunkte …",
-    prompt: `Formuliere aus den Stichpunkten eine höfliche E‑Mail (max. 6 Sätze). Beginne mit einer passenden Anrede und schließe mit einem Dank.`
+    label: "One‑Minute‑Plan",
+    explain: "In 60 Sekunden von Idee zu 5 konkreten nächsten Schritten.",
+    placeholder: "Projekt/Problem + Ziel …",
+    action: "input",
+    prompt: `Du bist Umsetzungs-Coach. 
+Gib 5 konkrete, kleine nächste Schritte (mit Aufwand/Impact). Kontext: {{INPUT}}`
   },
   {
-    label: "Kurzgeschichte",
-    hint: "Klick → Thema nennen",
-    explain: "Erstelle eine Minigeschichte in vier Sätzen.",
-    action: "claude-input",
-    placeholder: "Thema oder Ort …",
-    prompt: `Schreibe eine kreative Kurzgeschichte in vier Sätzen zum genannten Thema. Beziehe eine überraschende Wendung ein.`
+    label: "Texteditor (Korrektur)",
+    explain: "Grammatik/ Stil schärfen, aber deine Stimme erhalten. Erklärt Änderungen verständlich.",
+    placeholder: "Füge hier deinen Text ein …",
+    action: "input",
+    prompt: `Du bist Lektor. Korrigiere Grammatik, Stil und Verständlichkeit.
+Gib zuerst die verbesserte Version, danach Stichpunkte mit Begründung der Änderungen.
+Text: {{INPUT}}`
   },
   {
-    label: "Landing‑Page‑Layout",
-    hint: "Klick → Produkt eingeben",
-    explain: "Erzeuge eine Inhaltsstruktur für eine Landing‑Page.",
-    action: "claude-input",
-    placeholder: "Produkt / Dienst …",
-    prompt: `Erstelle ein schematisches Layout für eine Landing‑Page: Header, USP‑Abschnitte, Social Proof und Call‑to‑Action.`
+    label: "GIST → FACT → CITE",
+    explain: "1 Satz Essenz → 3–5 Fakten → 2–3 zitierfähige Quellen (Links).",
+    placeholder: "Thema/Artikel/Notizen …",
+    action: "input",
+    prompt: `Strukturiere wie folgt:
+GIST (1 Satz), FACTS (3–5 Bulletpoints), CITE (2–3 Quellen mit URL).
+Thema: {{INPUT}}`
   },
   {
-    label: "Logo‑Ideen",
-    hint: "Klick → Markenname eingeben",
-    explain: "Drei kreative Richtungen für ein Logo.",
-    action: "claude-input",
-    placeholder: "Markenname …",
-    prompt: `Beschreibe drei unterschiedliche Logo‑Konzeptideen für den genannten Namen (Stil, Farbe, Symbolik).`
+    label: "Prompt‑Linter",
+    explain: "Diagnose für bessere Prompts: Ziel/Format/Constraints/Negativliste – mit Vorschlagen.",
+    placeholder: "Dein aktueller Prompt …",
+    action: "input",
+    prompt: `Analysiere diesen Prompt nach Ziel, Format, Constraints, Negativliste.
+Schlage 2 bessere Prompt-Varianten vor (eine kurz, eine präzise). Prompt: {{INPUT}}`
   },
   {
-    label: "Farbpalette",
-    hint: "Klick → Stil eingeben",
-    explain: "Empfiehlt fünf harmonische Farben.",
-    action: "claude-input",
-    placeholder: "Stil / Stimmung …",
-    prompt: `Schlage eine Farbpalette aus fünf harmonischen Farben für den genannten Stil vor. Nenne die jeweiligen Hex‑Codes.`
+    label: "Mini‑RAG",
+    explain: "Baustein, um eigene FAQ/Docs zu befragen (Checkliste & Struktur).",
+    placeholder: "Kurze Beschreibung deines Dokuments/FAQ …",
+    action: "input",
+    prompt: `Gib eine knappe Anleitung, wie ich ein Mini-RAG aufbaue (Dateien, Embeddings, Abfragen).
+Passe es an meinen Kontext an: {{INPUT}}`
   },
   {
-    label: "Diagramm‑Text",
-    hint: "Klick → Daten beschreiben",
-    explain: "Formuliert Beschriftungen für Diagramme.",
-    action: "claude-input",
-    placeholder: "Welche Daten / Achsen …",
-    prompt: `Formuliere Titel und Achsenbeschriftungen für ein Diagramm basierend auf deiner Beschreibung.`
+    label: "Sakura Explorer 3D",
+    explain: "Kreativprompt für kurze 3D‑Trails (Shader‑Parameter) – generiert Variationen.",
+    placeholder: "Stimmung, Farben, Bewegung …",
+    action: "input",
+    prompt: `Gib 4 alternative Parametermixe (je 1 Zeile) für eine sanfte 3D‑Partikel/Sakura-Szene.
+Jede Zeile: seed, hue, drift, swirl, bloom, life (kurz). Kontext: {{INPUT}}`
   },
   {
-    label: "Folie entwerfen",
-    hint: "Klick → Thema nennen",
-    explain: "Inhaltliche Struktur einer Präsentationsfolie.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Skizziere die inhaltliche Struktur einer überzeugenden Präsentationsfolie zum angegebenen Thema (Überschrift, Kernpunkte, Visual).`
+    label: "Research‑Agent (Live)",
+    explain: "Kompakte Web‑Recherche mit Quellen, seriös & sachlich.",
+    placeholder: "Fragestellung + was genau herausfinden? …",
+    action: "input",
+    prompt: `Führe eine kompakte Recherche durch (seriöse Quellen, deutsch).
+Struktur: Ergebnis-Kernaussage (2–3 Sätze), Bullets, 2–4 Quellen mit URL. Thema: {{INPUT}}`
   },
   {
-    label: "Zeitersparnis‑Trick",
-    hint: "Klick → Bereich wählen",
-    explain: "Kleiner Trick, um Zeit zu sparen.",
-    action: "claude-input",
-    placeholder: "Arbeitsbereich …",
-    prompt: `Nenne einen konkreten Tipp, wie man im genannten Bereich mit KI täglich zehn Minuten spart.`
+    label: "Stil‑Transfer",
+    explain: "Schreibe deinen Text im Stil von „präzise & warm“ oder „sachlich & knapp“.",
+    placeholder: "Dein Text + Wunschstil …",
+    action: "input",
+    prompt: `Schreibe den Text in dem gewünschten Stil neu. Ggf. Beispiele für passende Formulierungen.
+Text+Stil: {{INPUT}}`
   },
   {
-    label: "Produktivitätshack",
-    hint: "Klick → Problem nennen",
-    explain: "Tipps für mehr Effizienz im Alltag.",
-    action: "claude-input",
-    placeholder: "Problem oder Herausforderung …",
-    prompt: `Gib einen kurzen Hack, um dieses Problem effizienter zu lösen. Verwende praxisorientierte Tipps.`
+    label: "PRD‑Generator (1‑Pager)",
+    explain: "Ein Produkt‑1‑Pager mit Problem, Ziel, Nutzen, KPIs, Risiken.",
+    placeholder: "Idee, Zielgruppe, grobe Lösung …",
+    action: "input",
+    prompt: `Erzeuge einen 1‑Pager (Problem, Ziel, Nutzen, KPIs, Risiken, Nächste Schritte).
+Kontext: {{INPUT}}`
   },
   {
-    label: "Haiku generieren",
-    hint: "Klick → Motiv nennen",
-    explain: "Kreiere ein kurzes Haiku.",
-    action: "claude-input",
-    placeholder: "Thema / Motiv …",
-    prompt: `Schreibe ein Haiku (5‑7‑5 Silben) über das genannte Motiv.`
+    label: "FAQ‑Destillat",
+    explain: "Mach aus langen Beschreibungen eine verständliche FAQ (10 Fragen/Antworten).",
+    placeholder: "Thema/Produkt/Leistung …",
+    action: "input",
+    prompt: `Erzeuge 10 prägnante FAQ‑Paare (Frage+Antwort, deutsch, laienverständlich).
+Thema: {{INPUT}}`
   },
   {
-    label: "Meme‑Idee",
-    hint: "Klick → Thema nennen",
-    explain: "Beschreibung für ein lustiges KI‑Meme.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Beschreibe eine originelle Meme‑Idee zum genannten Thema (Bild + Textbeschreibung).`
+    label: "Use‑Case‑Ideen",
+    explain: "Für dein Team/Branche 7 smarte KI‑Use‑Cases mit Aufwand/Impact.",
+    placeholder: "Team/Branche/Tools …",
+    action: "input",
+    prompt: `Liste 7 Use‑Cases für {{INPUT}} (je Aufwand/Impact kurz einschätzen).`
   },
   {
-    label: "Bildidee",
-    hint: "Klick → Konzept nennen",
-    explain: "Skizziert ein kreatives Kunstwerk.",
-    action: "claude-input",
-    placeholder: "Konzept …",
-    prompt: `Beschreibe detailliert eine Bildidee (Stil, Elemente, Stimmung) zum genannten Konzept – ideal für Midjourney oder DALL·E.`
+    label: "Risiko‑Check",
+    explain: "Kurzcheck AI‑Risiken (Bias, Datenschutz, Halluzinationen) + pragmatische Gegenmaßnahmen.",
+    placeholder: "Kontext: Datenarten, Outputs, Stakeholder …",
+    action: "input",
+    prompt: `Kurzer AI‑Risiko‑Check (Bias, Datenschutz, Halluzinationen, IP).
+Gib konkrete Gegenmaßnahmen und Verantwortlichkeiten. Kontext: {{INPUT}}`
   },
   {
-    label: "KI‑Poesie",
-    hint: "Klick → Thema nennen",
-    explain: "Kreative Lyrik.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Verfasse ein kurzes Gedicht (vier Zeilen) über das angegebene Thema im Stil von Rilke.`
+    label: "Kontrast‑Paar",
+    explain: "Zeige 2 Wege zum Ziel (Lean vs. Deluxe) – mit Kosten/Nutzen/Tempo.",
+    placeholder: "Ziel/Feature/Projekt …",
+    action: "input",
+    prompt: `Zeige 2 Alternativen (Lean vs. Deluxe) als Tabelle (Schritte, Dauer, Kosten, Risiko). Thema: {{INPUT}}`
   },
   {
-    label: "KI im Gesundheitswesen",
-    hint: "Klick → Fokus nennen",
-    explain: "Praxisbeispiel für KI‑Potenziale.",
-    action: "claude-input",
-    placeholder: "Fokus (z. B. Diagnostik) …",
-    prompt: `Nenne zwei konkrete Beispiele, wie KI den genannten Bereich im Gesundheitswesen verbessert und welche Vorteile sich ergeben.`
+    label: "5‑Warum‑Coach",
+    explain: "Symptom → Ursache (5 Why) → kleine Experimente gegen die Wurzel.",
+    placeholder: "Problem kurz beschreiben …",
+    action: "input",
+    prompt: `Führe eine 5‑Why‑Kausalkette durch und schlage 3 kleine Experimente vor. Problem: {{INPUT}}`
   },
   {
-    label: "KI in der Bildung",
-    hint: "Klick → Fach nennen",
-    explain: "Potenziale der KI im Unterricht.",
-    action: "claude-input",
-    placeholder: "Fach / Thema …",
-    prompt: `Erkläre, wie KI den Unterricht in diesem Fach bereichern kann und welche konkreten Tools genutzt werden könnten.`
+    label: "Entstehungsgeschichte",
+    explain: "Schreibe eine kurze Projekt‑Entstehungsstory mit Wendepunkt & Lerneffekten.",
+    placeholder: "Projekt/Produkt/Erfahrung …",
+    action: "input",
+    prompt: `Erzeuge eine kurze Entstehungsstory (1–2 Absätze) mit klarer Moral. Thema: {{INPUT}}`
   },
   {
-    label: "Einkaufsplaner",
-    hint: "Klick → Anlass nennen",
-    explain: "Alltagshelfer zur Optimierung der Einkaufsliste.",
-    action: "claude-input",
-    placeholder: "Anlass / Mahlzeit …",
-    prompt: `Erstelle eine optimale Einkaufsliste für den genannten Anlass, achte auf Nachhaltigkeit und saisonale Produkte.`
+    label: "KI‑Plattformer",
+    explain: "3 Levels: Anfänger → Fortgeschritten → Pro – jeweils 3 Aufgaben zum Üben.",
+    placeholder: "Thema/Skill …",
+    action: "input",
+    prompt: `Erstelle 3 Lernstufen mit je 3 Aufgaben & kurzem Leitfaden. Thema: {{INPUT}}`
   },
   {
-    label: "Reise‑Assistent",
-    hint: "Klick → Ziel nennen",
-    explain: "KI‑gestützte Reiseplanung.",
-    action: "claude-input",
-    placeholder: "Stadt / Ziel …",
-    prompt: `Plane einen Tag in der angegebenen Stadt: Sehenswürdigkeiten, Restaurantempfehlung, Geheimtipp.`
+    label: "Meeting‑Kurzprotokoll",
+    explain: "Stichpunkte rein → strukturierte Notiz mit Entscheidungen & Action Items.",
+    placeholder: "Stichpunkte, Teilnehmer, Datum …",
+    action: "input",
+    prompt: `Formatiere ein Meeting-Kurzprotokoll (Themen, Entscheidungen, Aufgaben mit Owner+Date). Stichpunkte: {{INPUT}}`
   },
   {
-    label: "Haushalt organisieren",
-    hint: "Klick → Aufgaben nennen",
-    explain: "Planung täglicher Haushaltsaufgaben.",
-    action: "claude-input",
-    placeholder: "Aufgaben …",
-    prompt: `Erstelle einen Wochenplan, um die genannten Aufgaben effizient und gleichmäßig zu verteilen.`
+    label: "Synästhesie‑Symphonie",
+    explain: "Aus 5 Wörtern kurze Audio/Visual‑Stimmungen (Parameter‑Vorschlag).",
+    placeholder: "5 Stichworte zu Stimmung …",
+    action: "input",
+    prompt: `Erzeuge 4 Zeilen an Parametern (tempo, texture, grain, chord, color), inspiriert von {{INPUT}}.`
   },
   {
-    label: "Prozessoptimierung",
-    hint: "Klick → Prozess beschreiben",
-    explain: "Verbesserungsvorschläge für Abläufe.",
-    action: "claude-input",
-    placeholder: "Prozessbeschreibung …",
-    prompt: `Analysiere den Prozess und nenne drei konkrete Optimierungsvorschläge (Zeit/Effizienz).`
+    label: "Storyboard",
+    explain: "Aus einer Idee 6‑Bild‑Storyboard (Shot‑Liste) – klar und filmisch.",
+    placeholder: "Kurzidee/Produkt/Ort …",
+    action: "input",
+    prompt: `Erstelle eine 6‑Shot‑Shotliste mit Bildinhalt, Kamera, Licht, Text-Overlay. Idee: {{INPUT}}`
   },
   {
-    label: "KPI‑Dashboard",
-    hint: "Klick → Daten nennen",
-    explain: "Kernmetriken und Visualisierungen.",
-    action: "claude-input",
-    placeholder: "Datenquelle / Ziel …",
-    prompt: `Definiere die wichtigsten KPIs für die gegebene Datenquelle und schlage eine Dashboard‑Struktur vor.`
+    label: "Quest‑Briefing",
+    explain: "Gamifizierter Arbeitsauftrag in 5 Schritten + XP/Belohnung.",
+    placeholder: "Aufgabe + Ziel + Rahmen …",
+    action: "input",
+    prompt: `Schreibe ein kurzes Quest-Briefing in 5 Schritten (XP, kleine Belohnung). Kontext: {{INPUT}}`
   },
   {
-    label: "Trendanalyse",
-    hint: "Klick → Thema nennen",
-    explain: "Recherchiere aktuelle Trends.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Fasse die drei wichtigsten aktuellen Trends zum genannten Thema kurz zusammen.`
+    label: "Konzept‑PR",
+    explain: "Presse‑Pitch in 7 Sätzen (Wert, neu, Beweis, Call‑to‑Action).",
+    placeholder: "Innovation/Projekt …",
+    action: "input",
+    prompt: `Erzeuge einen PR‑Pitch in 7 Sätzen (Wert, Neuheit, Beweis, CTA). Thema: {{INPUT}}`
   },
   {
-    label: "Textzusammenfassung",
-    hint: "Klick → Text eingeben",
-    explain: "Verdichte lange Texte auf das Wesentliche.",
-    action: "claude-input",
-    placeholder: "Längerer Text …",
-    prompt: `Fasse diesen Text in zwei prägnanten Sätzen zusammen und nenne die Kernbotschaft.`
+    label: "Subject‑Generator",
+    explain: "5 Betreff‑Zeilen (A/B/C/D/E) – kurz, konkret, neugierig.",
+    placeholder: "E‑Mail‑Thema, Zielgruppe …",
+    action: "input",
+    prompt: `Gib 5 Betreffzeilen (max. 55 Zeichen), deutsch, variierend. Thema: {{INPUT}}`
   },
+  // Daily Spotlight Slot (wird dynamisch ersetzt)
   {
-    label: "User‑Flow‑Entwurf",
-    hint: "Klick → Ziel nennen",
-    explain: "Skizziert einen Ablauf im UX‑Design.",
-    action: "claude-input",
-    placeholder: "Ziel / Aktion …",
-    prompt: `Erstelle einen einfachen User‑Flow mit drei Schritten, um das Ziel zu erreichen.`
-  },
-  {
-    label: "Daten interpretieren",
-    hint: "Klick → Kennzahlen nennen",
-    explain: "Helfen, Zahlen zu verstehen.",
-    action: "claude-input",
-    placeholder: "Kennzahlen …",
-    prompt: `Interpretiere die genannten Kennzahlen und gib eine kurze Handlungsempfehlung.`
-  },
-  {
-    label: "Stress reduzieren",
-    hint: "Klick → Kontext nennen",
-    explain: "Stressabbau‑Tipp mit KI‑Hilfe.",
-    action: "claude-input",
-    placeholder: "Kontext …",
-    prompt: `Gib einen Tipp, wie KI im genannten Kontext hilft, Stress zu reduzieren (z. B. durch Automatisierung).`
-  }
-  ,
-  // ── Zusätzliche kreative Mini‑Apps, um die Vielfalt der KI zu zeigen ──
-  {
-    label: "Songschmied",
-    hint: "Klick → Thema eingeben",
-    explain: "Komponiere einen Songtext mit Refrain und Akkorden.",
-    action: "claude-input",
-    placeholder: "Thema oder Stil …",
-    prompt: `Schreibe einen kurzen Songtext (Refrain und zwei Zeilen Strophe) zum genannten Thema und gib passende Akkorde in Klammern an.`
-  },
-  {
-    label: "Traumdeuter",
-    hint: "Klick → Traum beschreiben",
-    explain: "Symbolische Deutung deiner Träume.",
-    action: "claude-input",
-    placeholder: "Ich träume, dass …",
-    prompt: `Interpretiere den beschriebenen Traum symbolisch und erkläre, was er über die aktuelle Lebenssituation aussagen könnte.`
-  },
-  {
-    label: "Filmszene",
-    hint: "Klick → Situation nennen",
-    explain: "Dramatische Szene mit Dialogen und Kameraführung.",
-    action: "claude-input",
-    placeholder: "Ort / Situation …",
-    prompt: `Schreibe eine kurze Filmszene (3–4 Sätze) mit Dialogen, Kameraanweisungen und einer überraschenden Wendung für die genannte Situation.`
-  },
-  {
-    label: "Emoji‑Gedicht",
-    hint: "Klick → Begriff nennen",
-    explain: "Dichte mit Emojis.",
-    action: "claude-input",
-    placeholder: "Begriff …",
-    prompt: `Formuliere ein Zweizeiler-Gedicht über den genannten Begriff ausschließlich mit Emojis (max. 10 Zeichen pro Zeile).`
-  },
-  {
-    label: "Mindmap erstellen",
-    hint: "Klick → Thema nennen",
-    explain: "Strukturiere dein Thema als Mindmap.",
-    action: "claude-input",
-    placeholder: "Oberthema …",
-    prompt: `Erstelle eine Mindmap für das Thema und nenne vier Hauptzweige sowie je zwei Unterpunkte.`
-  },
-  {
-    label: "DIY‑Anleitung",
-    hint: "Klick → Wunschprojekt nennen",
-    explain: "Bauanleitung aus Alltagsmaterialien.",
-    action: "claude-input",
-    placeholder: "Was soll gebaut werden? …",
-    prompt: `Erstelle eine Schritt-für-Schritt-DIY-Anleitung für das genannte Projekt aus gängigen Haushaltsmaterialien.`
-  },
-  {
-    label: "Zutaten‑Rezept",
-    hint: "Klick → Zutaten eingeben",
-    explain: "Kochen mit Resten.",
-    action: "claude-input",
-    placeholder: "Zutaten (Komma getrennt) …",
-    prompt: `Schlage ein leckeres Rezept vor, das die angegebenen Zutaten verwendet, und beschreibe die Zubereitung in kurzen Schritten.`
-  },
-  {
-    label: "Workout‑Plan",
-    hint: "Klick → Ziel nennen",
-    explain: "20‑Minuten-Workout ohne Geräte.",
-    action: "claude-input",
-    placeholder: "Ziel (z. B. Rücken stärken) …",
-    prompt: `Erstelle einen 20‑minütigen Trainingsplan ohne Geräte für das genannte Ziel (inkl. Dauer pro Übung und kurze Beschreibung).`
-  },
-  {
-    label: "Meditationsskript",
-    hint: "Klick → Stimmung nennen",
-    explain: "Geführte Meditation für mehr Gelassenheit.",
-    action: "claude-input",
-    placeholder: "Stimmung / Thema …",
-    prompt: `Schreibe ein 2‑minütiges geführtes Meditationsskript zum genannten Thema mit beruhigenden Bildern und sanften Anweisungen.`
-  },
-  {
-    label: "Comic‑Idee",
-    hint: "Klick → Thema nennen",
-    explain: "Konzipiere einen Drei‑Panel‑Comic.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Beschreibe eine 3‑Panel-Comicgeschichte zum angegebenen Thema: gib je Panel die Handlung und den Dialog kurz an.`
-  },
-  {
-    label: "Rap-Vers",
-    hint: "Klick → Thema nennen",
-    explain: "Reim dich reich.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Schreibe zwei Rap-Versen über das angegebene Thema im Stil der 1990er Jahre und reime das jeweils letzte Wort jeder Zeile.`
-  },
-  {
-    label: "Product Tagline",
-    hint: "Klick → Produkt eingeben",
-    explain: "Catchy Slogan gesucht.",
-    action: "claude-input",
-    placeholder: "Produkt / Marke …",
-    prompt: `Kreiere drei einprägsame Taglines für das genannte Produkt; jede max. 8 Wörter, deutsch und emotional.`
-  },
-  {
-    label: "Podcast‑Skript",
-    hint: "Klick → Thema nennen",
-    explain: "Podcast in 5 Minuten.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Skizziere ein 5‑minütiges Podcast-Skript zum angegebenen Thema: Einleitung, drei Abschnitte, Abschluss.`
-  },
-  {
-    label: "Werbespot",
-    hint: "Klick → Produkt nennen",
-    explain: "Drehbuch für 30 Sekunden.",
-    action: "claude-input",
-    placeholder: "Produkt / Dienst …",
-    prompt: `Schreibe einen 30‑sekündigen Werbespot mit Voiceover-Text und kurzer Szenenbeschreibung für das genannte Produkt.`
-  },
-  {
-    label: "Lernplan",
-    hint: "Klick → Kompetenz nennen",
-    explain: "Plan für neue Skills.",
-    action: "claude-input",
-    placeholder: "Skill / Thema …",
-    prompt: `Erstelle einen einwöchigen Lernplan mit täglichen 30‑minütigen Übungen, um die genannte Fähigkeit zu erlernen.`
-  },
-  {
-    label: "Magischer Trick",
-    hint: "Klick → Gegenstand nennen",
-    explain: "Erfinde einen Zaubertrick.",
-    action: "claude-input",
-    placeholder: "Gegenstand (z. B. Münze) …",
-    prompt: `Beschreibe einen neuen Zaubertrick mit dem genannten Gegenstand; erkläre Aufbau, Durchführung und Überraschungseffekt.`
-  },
-  {
-    label: "3D-Design",
-    hint: "Klick → Objekt nennen",
-    explain: "Konzept für den 3D-Druck.",
-    action: "claude-input",
-    placeholder: "Objekt / Idee …",
-    prompt: `Entwirf ein 3D-druckbares Objekt zum genannten Zweck. Beschreibe Form, Maße und Funktion prägnant.`
-  },
-  {
-    label: "Notizen zusammenfassen",
-    hint: "Klick → Stichpunkte eingeben",
-    explain: "Bulletpoints und To‑Dos generieren.",
-    action: "claude-input",
-    placeholder: "Gespräch / Meetingnotizen …",
-    prompt: `Fasse die eingegebenen Notizen in klaren Bulletpoints zusammen und liste konkrete nächste Schritte separat auf.`
-  },
-  {
-    label: "Shakespeare-Version",
-    hint: "Klick → Text eingeben",
-    explain: "Moderner Text im Stil Shakespeares.",
-    action: "claude-input",
-    placeholder: "Kurzer Text …",
-    prompt: `Schreibe den eingegebenen modernen Text im Stil eines Shakespeare-Monologs um, mit altertümlicher Wortwahl.`
-  },
-  {
-    label: "Romandialog",
-    hint: "Klick → Thema nennen",
-    explain: "Gespräch historischer Personen.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Lass zwei historische Figuren (nach Wahl) ein kurzes Gespräch über das genannte Thema führen. Halte den Ton authentisch.`
-  },
-  {
-    label: "Science‑Fiction Idee",
-    hint: "Klick → Zweck nennen",
-    explain: "Futuristisches Gadget erfinden.",
-    action: "claude-input",
-    placeholder: "Zweck / Bedarf …",
-    prompt: `Entwirf ein futuristisches Gerät, das dem angegebenen Zweck dient. Beschreibe Aussehen, Technologie und Anwendung.`
-  },
-  {
-    label: "Dreizeiler‑Witz",
-    hint: "Klick → Thema nennen",
-    explain: "Ein Witz in drei Zeilen.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Erzähle einen humorvollen Witz in drei Zeilen über das angegebene Thema. Das Ende sollte überraschend sein.`
-  },
-  {
-    label: "Parfum‑Beschreibung",
-    hint: "Klick → Name nennen",
-    explain: "Luxuriöser Dufttext.",
-    action: "claude-input",
-    placeholder: "Name / Duftnote …",
-    prompt: `Verfasse eine sinnliche Beschreibung für das genannte Parfum, inklusive Kopf-, Herz- und Basisnote, in poetischer Sprache.`
-  },
-  {
-    label: "Futuristisches Menü",
-    hint: "Klick → Anlass nennen",
-    explain: "Speisen aus der Zukunft.",
-    action: "claude-input",
-    placeholder: "Anlass / Thema …",
-    prompt: `Stelle ein futuristisches 3-Gänge-Menü zusammen, inspiriert vom genannten Anlass. Beschreibe jedes Gericht kreativ.`
-  },
-  {
-    label: "Song‑Mashup",
-    hint: "Klick → Genres nennen",
-    explain: "Zwei Stile, ein Hit.",
-    action: "claude-input",
-    placeholder: "Genre 1, Genre 2 …",
-    prompt: `Beschreibe ein Lied, das zwei genannte Genres kombiniert, und gib eine Idee für Refrain und Instrumentierung an.`
-  },
-  {
-    label: "Kartenspiel‑Regel",
-    hint: "Klick → Thema nennen",
-    explain: "Einfaches Kartenspiel erfinden.",
-    action: "claude-input",
-    placeholder: "Thema …",
-    prompt: `Entwirf die Regeln für ein einfaches Kartenspiel, das auf dem genannten Thema basiert. Erkläre Ablauf, Ziel und Besonderheiten.`
-  },
-  {
-    label: "Garten‑Roboter",
-    hint: "Klick → Aufgabe nennen",
-    explain: "Roboter für den Alltag.",
-    action: "claude-input",
-    placeholder: "Aufgabe (z. B. Rasenmähen) …",
-    prompt: `Beschreibe einen Haushaltsroboter, der die genannte Aufgabe übernimmt. Gehe auf Funktionen, Design und Nutzen ein.`
+    label: "Heute neu",
+    explain: "Tägliches Micro‑Topic (News → Kurzformat).",
+    placeholder: "—",
+    action: "info",
+    prompt: `Tagesaktuelle Kurzinfo (wird serverseitig über /api/daily befüllt).`
   }
 ];

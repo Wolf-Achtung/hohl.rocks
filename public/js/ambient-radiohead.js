@@ -1,55 +1,74 @@
-// /public/js/ambient-radiohead.js
-(() => {
-  const Ambient = {
-    ctx: null, master: null, noise: null, filt: null, lfo: null, lfoGain: null, started: false,
-    ensureStart() {
-      if (this.started) return;
-      try {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.master = this.ctx.createGain(); this.master.gain.value = 0.12; // sehr leise
-        // Rauschbett
-        const bufferSize = 2 * this.ctx.sampleRate;
-        const noiseBuf = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = noiseBuf.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.35;
-        this.noise = this.ctx.createBufferSource(); this.noise.buffer = noiseBuf; this.noise.loop = true;
+// public/js/ambient-radiohead.js
+// Subtiler On-Device-Ambientsound. Start erst nach User-Geste (DSGVO-freundlich).
+class RadioheadAmbient {
+  constructor(){
+    this.ctx = null;
+    this.master = null;
+    this.noise = null;
+    this.lfo = null;
+    this.filter = null;
+    this.started = false;
+    this.gainTarget = .0;
+  }
+  ensureStart(){
+    if (this.started) return;
+    try{
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.master = this.ctx.createGain(); this.master.gain.value = 0.0;
+      this.filter = this.ctx.createBiquadFilter(); this.filter.type = 'lowpass'; this.filter.frequency.value = 900;
+      this.master.connect(this.filter); this.filter.connect(this.ctx.destination);
 
-        // Filter + LFO
-        this.filt = this.ctx.createBiquadFilter(); this.filt.type = "lowpass"; this.filt.frequency.value = 900;
-        this.lfo = this.ctx.createOscillator(); this.lfo.type = "sine"; this.lfo.frequency.value = 0.08; // sehr langsam
-        this.lfoGain = this.ctx.createGain(); this.lfoGain.gain.value = 260; // Modulationshub
-        this.lfo.connect(this.lfoGain); this.lfoGain.connect(this.filt.frequency);
+      // noise
+      const buffer = this.ctx.createBuffer(1, this.ctx.sampleRate * 2, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i=0;i<data.length;i++) data[i] = (Math.random()*2-1)*0.15;
+      const src = this.ctx.createBufferSource(); src.buffer = buffer; src.loop = true;
+      src.connect(this.master); src.start();
+      this.noise = src;
 
-        this.noise.connect(this.filt); this.filt.connect(this.master); this.master.connect(this.ctx.destination);
-        this.noise.start(); this.lfo.start();
+      // lfo
+      this.lfo = {phase:0, speed:0.0009};
 
-        // Reaktion auf Scroll/Bewegung
-        let lastY = window.scrollY, lastX = 0, lastT = performance.now();
-        window.addEventListener("scroll", () => {
-          const dy = Math.abs(window.scrollY - lastY); lastY = window.scrollY;
-          // kleines Puls‑Gefühl bei Scroll
-          this.master.gain.cancelScheduledValues(this.ctx.currentTime);
-          this.master.gain.linearRampToValueAtTime(0.16, this.ctx.currentTime + 0.02);
-          this.master.gain.linearRampToValueAtTime(0.12, this.ctx.currentTime + 0.25 + Math.min(0.25, dy / 2000));
-        }, { passive: true });
+      const tick = ()=>{
+        if (!this.ctx) return;
+        this.lfo.phase += this.lfo.speed * (1 + Math.random()*0.05);
+        const lfoVal = (Math.sin(this.lfo.phase)+1)/2; // 0..1
+        const f = 800 + lfoVal*500;
+        this.filter.frequency.setTargetAtTime(f, this.ctx.currentTime, 0.08);
 
-        window.addEventListener("pointermove", (e) => {
-          const now = performance.now(); const dt = now - lastT; lastT = now;
-          const speed = Math.hypot(e.movementX || (e.clientX - lastX), e.movementY || 0) / Math.max(8, dt);
-          lastX = e.clientX;
-          const targetFreq = 600 + Math.min(1200, speed * 240);
-          this.filt.frequency.cancelScheduledValues(this.ctx.currentTime);
-          this.filt.frequency.linearRampToValueAtTime(targetFreq, this.ctx.currentTime + 0.05);
-          this.filt.frequency.linearRampToValueAtTime(900, this.ctx.currentTime + 0.7);
-        }, { passive: true });
+        // smooth gain
+        const gNow = this.master.gain.value;
+        const gNext = gNow + (this.gainTarget - gNow) * 0.02;
+        this.master.gain.setTargetAtTime(gNext, this.ctx.currentTime, 0.05);
 
-        this.started = true;
-      } catch { /* Audio nicht verfügbar */ }
-    },
-    stop() {
-      try { this.noise?.stop(); this.ctx?.close(); } catch {}
-      this.started = false;
-    }
-  };
-  window.Ambient = Ambient;
-})();
+        requestAnimationFrame(tick);
+      };
+      tick();
+
+      this.started = true;
+    }catch(e){/* ignore */}
+  }
+  setActive(active){
+    if (!this.started) return;
+    this.gainTarget = active ? 0.18 : 0.0;
+  }
+}
+const Ambient = new RadioheadAmbient();
+window.Ambient = Ambient;
+
+// Start über Button
+const btn = document.getElementById('sound-toggle');
+btn?.addEventListener('click', ()=>{
+  Ambient.ensureStart();
+  const pressed = btn.getAttribute('aria-pressed') === 'true';
+  Ambient.setActive(!pressed);
+  btn.setAttribute('aria-pressed', (!pressed) ? 'true':'false');
+});
+
+// Mini-Reaktion auf Scroll/Move
+let lastY = 0;
+window.addEventListener('scroll', ()=>{
+  if (!Ambient.started) return;
+  const dy = Math.abs(window.scrollY - lastY); lastY = window.scrollY;
+  Ambient.filter && (Ambient.filter.Q.value = Math.min(18, 2 + dy*0.01));
+}, {passive:true});

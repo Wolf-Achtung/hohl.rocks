@@ -1,29 +1,96 @@
-/* /hero-shapes.css — Neon Gold UX+ */
+:root{
+  --bg:#0a1118;
+  --fg:#eaf2ff;
+  --glass:rgba(15,25,35,.58);
+  --glass-strong:rgba(15,25,35,.78);
+  --neon:#45ffd4;
+  --shadow:0 10px 50px rgba(0,0,0,.45);
+  --radius:18px;
+}
 
-#shapes{position:fixed;inset:0;pointer-events:auto}
-.shape{user-select:none}
-.shape svg{width:100%;height:100%;display:block;mix-blend-mode:screen}
-.shape path{stroke-linecap:round;stroke-linejoin:round;shape-rendering:geometricPrecision}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:500 16px/1.45 ui-sans-serif, system-ui}
 
-.shape [data-label]{pointer-events:none}
-.shape:focus-visible{outline:2px solid #9cf; outline-offset:4px; border-radius:12px}
+.stage{position:fixed;inset:0;overflow:hidden}
+#bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(1) contrast(1.05)}
+.shape-layer{position:absolute;inset:0;pointer-events:auto}
 
-/* Label/Hints (zentriert) – robust über Video */
-.shape .title{
-  color:#081218;font-weight:800;font-size:14px;background:rgba(255,255,255,.38);
-  padding:6px 10px;border-radius:10px;text-shadow:0 1px 2px rgba(255,255,255,.6)
+/* Bubble */
+.shape{
+  position:absolute;
+  transform:translate(-50%,-50%) scale(.9);
+  filter:blur(0px);
+  border-radius:40% 60% 60% 40%/ 40% 40% 60% 60%;
+  will-change:transform, opacity, filter;
+  opacity:0;
+  box-shadow:var(--shadow);
+  transition:filter .6s ease;
+}
+.shape:hover{filter:blur(0px) brightness(1.08)}
+
+.shape .label{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  background:rgba(10,17,24,.45);
+  backdrop-filter: blur(10px);
+  border:1px solid rgba(255,255,255,.15);
+  color:#fff;padding:.55rem .8rem;border-radius:999px;
+  font-weight:700; letter-spacing:.2px; text-shadow:0 1px 2px rgba(0,0,0,.35);
+  pointer-events:none; white-space:nowrap;
 }
 .shape .hint{
-  margin-top:6px;font-size:11px;opacity:.95;background:rgba(12,16,22,.35);
-  color:#eaf2ff;padding:4px 8px;border-radius:8px
+  position:absolute;left:50%;top:calc(50% + 28px);transform:translate(-50%,-50%);
+  background:rgba(10,17,24,.35); color:#cfe3ff; font-size:.8rem;
+  padding:.35rem .6rem;border-radius:999px;border:1px solid rgba(255,255,255,.12);
+  pointer-events:none; white-space:nowrap;
 }
 
-/* Hilfe / Buttons */
-#nav-buttons button{transition:filter .2s ease, transform .06s ease}
-#nav-buttons button:active{transform:translateY(1px)}
+/* Popup */
+.popup-root{position:fixed;inset:0;pointer-events:none}
+.popup{
+  position:absolute;left:50%;top:7.5%;transform:translateX(-50%);
+  width:min(920px,90vw); background:linear-gradient(180deg, rgba(20,28,36,.86), rgba(10,16,22,.86));
+  backdrop-filter: blur(16px);
+  border:1px solid rgba(255,255,255,.12); border-radius:16px; box-shadow: var(--shadow);
+  padding:18px 18px 14px; color:#eaf2ff; pointer-events:auto;
+  animation:fadeIn .35s ease both;
+}
+.popup h3{margin:.2rem 0 0;font-size:1.2rem}
+.popup p.explain{margin:.35rem 0 1rem;color:#cfe3ff;opacity:.9}
+.popup .close-btn,.popup .copy-btn{
+  float:right;margin-left:10px;background:#fff;color:#0b1420;border:none;border-radius:999px;padding:.45rem .8rem;cursor:pointer;font-weight:700;
+}
+.popup textarea{
+  width:100%;min-height:180px;background:rgba(0,0,0,.35);color:#eaf2ff;border:1px solid rgba(255,255,255,.15);
+  border-radius:12px;padding:.8rem;resize:vertical;outline:none;
+}
+.popup .actions{display:flex;gap:.6rem;align-items:center;margin-top:.75rem}
+.popup .btn{
+  background:#1de9b6;color:#051018;border:none;border-radius:999px;padding:.55rem .9rem;font-weight:800;cursor:pointer;
+}
+.popup .stream{
+  white-space:pre-wrap;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.8rem;margin-top:.6rem;min-height:90px;
+}
 
-/* A11y: weniger Bewegung */
+/* Nav */
+.nav{
+  position:absolute;left:50%;bottom:22px;transform:translateX(-50%);
+  display:flex;gap:.65rem;align-items:center;z-index:50;
+}
+.nav .nav-btn{
+  background:#0e1824;color:#eaf2ff;border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;padding:.5rem .9rem;cursor:pointer;box-shadow:var(--shadow)
+}
+.nav .nav-about{background:#00b0ff}
+.nav .nav-news{background:#ffd400;color:#111}
+.nav .nav-prompts{background:#ff67b3}
+.nav .nav-projects{background:#22e58b;color:#0b1522}
+.nav .nav-sound{background:#334155}
+
+/* A11y / motion */
+:focus-visible{outline:3px solid #77f;outline-offset:2px}
 @media (prefers-reduced-motion: reduce){
-  .shape{transition:none !important}
-  .shape svg{animation:none !important}
+  .shape{transition:none}
 }
+
+/* Animations utility */
+@keyframes fadeIn{from{opacity:0;transform:translate(-50%,-18px)}to{opacity:1;transform:translate(-50%,0)}}
