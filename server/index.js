@@ -1,230 +1,267 @@
-// server/index.js (ESM)
-import express from 'express';
-import helmet from 'helmet';
-import compression from 'compression';
-import cors from 'cors';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fetch from 'node-fetch';
+// server/index.js — Neon Gold UX+ Backends
+// Node 20+ (global fetch); ESM; robust CORS, Helmet, Compression.
+// Routes:
+//   - POST /api/claude-sse   (SSE Streaming via Anthropic)
+//   - POST /api/claude-json  (non-stream)
+//   - GET  /api/news         (Tavily, 12h Cache, Stand: HH:MM)
+//   - GET  /api/prompts/top  (Top-5 Prompts, 12h Cache)
+//   - GET  /api/daily        (Daily Spotlight, 12h Cache)
+//   - GET  /healthz          (Health)
+
+import express from "express";
+import helmet from "helmet";
+import compression from "compression";
+import cors from "cors";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname  = dirname(__filename);
+const ROOT       = join(__dirname, "..");
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 8080;
 
-app.use(helmet({contentSecurityPolicy:false}));
+// ───────────────────────────────────────────────────────────────────────────────
+// ENV
+const ALLOWED_ORIGINS   = (process.env.ALLOWED_ORIGINS || "").split(",").map(s=>s.trim()).filter(Boolean);
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY || "";
+const TAVILY_API_KEY    = process.env.TAVILY_API_KEY || "";
+const MODEL_PRIMARY     = (process.env.CLAUDE_MODEL || "").trim();
+const MODEL_FALLBACKS   = ["claude-3-5-sonnet-latest", "claude-3-5-sonnet-20241022", "claude-3-haiku-20240307"]
+  .filter(m => !MODEL_PRIMARY || m !== MODEL_PRIMARY);
+const MODELS_TO_TRY     = [MODEL_PRIMARY, ...MODEL_FALLBACKS].filter(Boolean);
+
+const NEWS_TTL_MS   = 12 * 60 * 60 * 1000;
+const TOP_TTL_MS    = 12 * 60 * 60 * 1000;
+const DAILY_TTL_MS  = 12 * 60 * 60 * 1000;
+
+// ───────────────────────────────────────────────────────────────────────────────
+// APP SETUP
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(compression());
-app.use(cors({origin: true, credentials:false}));
-app.use(express.json({limit:'1mb'}));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+  origin: (origin, cb)=>{
+    if (!origin) return cb(null, true);
+    if (!ALLOWED_ORIGINS.length || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    return cb(null, false);
+  }
+}));
 
 // Static
-app.use(express.static(join(__dirname, '..')));
+app.use(express.static(ROOT));
 
-// Simple in-memory cache with TTL
-const cache = new Map();
-function setCache(key, data, ttlMs){ cache.set(key, {data, exp: Date.now()+ttlMs}); }
-function getCache(key){
-  const hit = cache.get(key);
-  if (!hit) return null;
-  if (Date.now() > hit.exp) { cache.delete(key); return null; }
-  return hit.data;
+// Simple in-mem Cache
+const CACHE = new Map();
+const now = () => Date.now();
+const setCache = (k, data, ttl) => CACHE.set(k, { data, exp: now() + ttl });
+const getCache = (k) => {
+  const v = CACHE.get(k);
+  if (!v) return null;
+  if (now() > v.exp) { CACHE.delete(k); return null; }
+  return v.data;
+};
+const hhmm = (d=new Date()) => d.toLocaleTimeString("de-DE", {hour:"2-digit",minute:"2-digit"});
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Anthropic helpers
+function anthHeaders() {
+  if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt");
+  return { "content-type":"application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version":"2023-06-01" };
+}
+function* modelChain() {
+  for (const m of (MODELS_TO_TRY.length? MODELS_TO_TRY : ["claude-3-5-sonnet-20241022","claude-3-haiku-20240307"])) yield m;
 }
 
-// Health
-app.get('/healthz', (_,res)=> res.json({ok:true}));
+// ── JSON (non-stream) ─────────────────────────────────────────────────────────
+app.post("/api/claude-json", async (req, res) => {
+  try {
+    const { prompt="", system="hohl.rocks", max_tokens=900, temperature=0.25 } = req.body || {};
+    let lastErr = null;
 
-// ---------- Anthropic (Claude) ----------
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
-const CLAUDE_MODEL = process.env.CLAUDE_MODEL || ''; // optional override
+    for (const model of modelChain()) {
+      try {
+        const r = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST", headers: anthHeaders(),
+          body: JSON.stringify({ model, max_tokens, temperature, system, messages: [{role:"user", content: prompt}] })
+        });
+        if (!r.ok) {
+          const txt = await r.text();
+          lastErr = new Error(`Claude JSON ${r.status}: ${txt}`);
+          if (r.status === 404) continue;
+          throw lastErr;
+        }
+        const j = await r.json();
+        const text = (j?.content || []).map(c => c?.text || "").join("");
+        return res.json({ model, text });
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error("Claude JSON fehlgeschlagen");
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
 
-const MODEL_CHAIN = [
-  CLAUDE_MODEL,
-  'claude-3-5-sonnet-20241022',
-  'claude-3-5-sonnet-20240620',
-  'claude-3-opus-20240229',
-  'claude-3-haiku-20240307',
-  'claude-3-5-haiku-20241022'
-].filter(Boolean);
+// ── SSE (stream) ───────────────────────────────────────────────────────────────
+app.post("/api/claude-sse", async (req, res) => {
+  try {
+    const { prompt="", system="hohl.rocks", max_tokens=900, temperature=0.25 } = req.body || {};
 
-function pickModel(){ return MODEL_CHAIN[0]; }
-
-// SSE forwarder
-app.post('/api/claude-sse', async (req,res)=>{
-  if (!ANTHROPIC_API_KEY) return res.status(500).end('Anthropic key missing');
-
-  const {prompt='', system='hohl.rocks', threadId=''} = req.body || {};
-  const model = pickModel();
-
-  res.writeHead(200, {
-    'Content-Type':'text/event-stream',
-    'Cache-Control':'no-cache, no-transform',
-    'Connection':'keep-alive',
-    'X-Accel-Buffering':'no'
-  });
-
-  try{
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{
-        'content-type':'application/json',
-        'anthropic-version':'2023-06-01',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'accept': 'text/event-stream'
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 1024,
-        stream: true,
-        system,
-        messages: [{role:'user', content: prompt}],
-        metadata: threadId ? {thread_id: threadId} : undefined
-      })
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "Connection": "keep-alive",
+      "X-Accel-Buffering": "no"
     });
 
-    if (!r.ok) {
-      const text = await r.text().catch(()=> '');
-      res.write(`data: ${JSON.stringify({delta:`[Fehler Claude] HTTP ${r.status} ${text}`})}\n\n`);
-      return res.end('data: [DONE]\n\n');
-    }
+    let sent = false;
+    for (const model of modelChain()) {
+      const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { ...anthHeaders(), "accept":"text/event-stream" },
+        body: JSON.stringify({ model, max_tokens, temperature, system, stream: true, messages: [{role:"user", content: prompt}] })
+      });
 
-    const reader = r.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = '';
-    while (true) {
-      const {done, value} = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, {stream:true});
-      // forward raw server-sent chunks from Anthropic
-      const parts = buf.split('\n\n');
-      buf = parts.pop() || '';
-      for (const part of parts) {
-        // Extract deltas
-        const line = part.split('\n').find(l=> l.startsWith('data: '));
-        if (!line) continue;
-        const data = line.slice(6);
-        try{
-          const j = JSON.parse(data);
-          // Combine known event types
-          if (j.type === 'content_block_delta' && j.delta?.text) {
-            res.write(`data: ${JSON.stringify({delta:j.delta.text})}\n\n`);
-          } else if (j.type === 'message_delta' && j.delta?.stop_reason) {
-            // ignore
-          }
-        }catch{/* ignore */}
+      if (!upstream.ok) {
+        const txt = await upstream.text().catch(()=> "");
+        if (upstream.status === 404) continue;
+        res.write(`event: error\ndata: ${JSON.stringify({status: upstream.status, message: txt})}\n\n`);
+        res.write(`event: done\ndata: {}\n\n`);
+        return res.end();
       }
+
+      const reader = upstream.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, {stream:true});
+
+        const parts = buf.split("\n\n");
+        buf = parts.pop() || "";
+        for (const p of parts) {
+          const dline = p.split("\n").find(l=> l.startsWith("data:"));
+          if (!dline) continue;
+          const data = dline.slice(5).trim();
+          if (!data || data === "[DONE]") continue;
+          try {
+            const evt = JSON.parse(data);
+            if (evt?.type === "content_block_delta" && evt?.delta?.text) {
+              sent = true;
+              res.write(`event: delta\ndata: ${JSON.stringify({text:evt.delta.text})}\n\n`);
+            }
+            if (evt?.type === "message_stop") {
+              res.write(`event: done\ndata: {}\n\n`);
+              return res.end();
+            }
+          } catch {/* ignore parsing issues */}
+        }
+      }
+      break; // worked
     }
-    res.write('data: [DONE]\n\n');
+
+    if (!sent) {
+      res.write(`event: error\ndata: ${JSON.stringify({error:"Kein zugängliches Modell. Bitte CLAUDE_MODEL anpassen."})}\n\n`);
+      res.write(`event: done\ndata: {}\n\n`);
+    }
     res.end();
-  }catch(err){
-    res.write(`data: ${JSON.stringify({delta:`[Fehler] ${err?.message||err}`})}\n\n`);
-    res.write('data: [DONE]\n\n'); res.end();
+  } catch (e) {
+    try {
+      res.write(`event: error\ndata: ${JSON.stringify({error:String(e.message||e)})}\n\n`);
+      res.write(`event: done\ndata: {}\n\n`);
+      res.end();
+    } catch {}
   }
 });
 
-app.post('/api/claude-json', async (req,res)=>{
-  if (!ANTHROPIC_API_KEY) return res.status(500).json({error:'Anthropic key missing'});
-  const {prompt='', system='hohl.rocks', threadId=''} = req.body || {};
-  const model = pickModel();
-  try{
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{
-        'content-type':'application/json',
-        'anthropic-version':'2023-06-01',
-        'x-api-key': ANTHROPIC_API_KEY
-      },
-      body: JSON.stringify({
-        model, max_tokens: 1024, system,
-        messages: [{role:'user', content: prompt}],
-        metadata: threadId ? {thread_id: threadId} : undefined
-      })
-    });
-    if (!r.ok) {
-      const t = await r.text().catch(()=> '');
-      return res.status(r.status).json({error:t || `HTTP ${r.status}`});
-    }
-    const j = await r.json();
-    const text = j?.content?.map(c=> c.text || '').join('') || '';
-    res.json({text});
-  }catch(err){
-    res.status(500).json({error:String(err)});
-  }
-});
-
-// ---------- Tavily News / Top Prompts / Daily ----------
-const TAVILY_API_KEY = process.env.TAVILY_API_KEY || '';
-
-async function tavilySearch(q){
-  const r = await fetch('https://api.tavily.com/search', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({api_key: TAVILY_API_KEY, query:q, search_depth:'advanced', max_results:6})
-  });
-  if (!r.ok) throw new Error(`Tavily HTTP ${r.status}`);
-  return r.json();
-}
-
-function hhmm(d=new Date()){
-  return d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-}
-
-app.get('/api/news', async (_req,res)=>{
-  const key = 'news';
+// ── Tavily News (12h Cache) ───────────────────────────────────────────────────
+app.get("/api/news", async (_req, res) => {
+  const key = "news";
   const hit = getCache(key);
   if (hit) return res.json(hit);
-  if (!TAVILY_API_KEY) return res.status(500).json({error:'Tavily key missing'});
-
-  try{
-    const topic = 'KI Recht Tools Trends EU AI Act DSGVO';
-    const j = await tavilySearch(`Aktuelle Nachrichten ${topic} deutsch seriöse Quellen`);
-    const items = (j?.results||[]).map(r=> ({
-      title: r.title, url: r.url, source: (r?.metadata?.source || r.url || '').replace(/^https?:\/\/(www\.)?/,'').split('/')[0]
-    })).slice(0,6);
-    const payload = {items, cachedAt: hhmm()};
-    setCache(key, payload, 12*60*60*1000);
+  try {
+    if (!TAVILY_API_KEY) throw new Error("TAVILY_API_KEY fehlt");
+    const r = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        api_key: TAVILY_API_KEY,
+        query: "KI News Deutschland Recht Tools EU AI Act DSGVO last 24 hours",
+        search_depth: "advanced",
+        max_results: 10,
+        include_answer: false,
+        include_images: false
+      })
+    });
+    if (!r.ok) throw new Error(`Tavily ${r.status}: ${await r.text()}`);
+    const j = await r.json();
+    const items = (j?.results || []).slice(0,8).map(it => ({
+      title: it.title,
+      url: it.url,
+      source: (it.url || "").replace(/^https?:\/\/(www\.)?/,"").split("/")[0]
+    }));
+    const payload = { items, stand: hhmm() };
+    setCache(key, payload, NEWS_TTL_MS);
     res.json(payload);
-  }catch(err){
-    res.status(500).json({error:String(err)});
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
   }
 });
 
-// Dummy „Top Prompts der Woche“ – hier exemplarisch (du kannst eine echte Aggregation anbinden)
-app.get('/api/top-prompts', async (_req,res)=>{
-  const key='top-prompts';
+// ── Top-5 Prompts (12h Cache) ────────────────────────────────────────────────
+app.get("/api/prompts/top", async (_req, res) => {
+  const key = "top-prompts";
   const hit = getCache(key); if (hit) return res.json(hit);
   const items = [
-    {title:'Kontrast-Paar', body:'Zeige 2 Wege zum Ziel (Lean vs. Deluxe) als Tabelle …'},
-    {title:'GIST → FACT → CITE', body:'1 Satz Essenz → 3–5 Fakten → 2–3 Quellen …'},
-    {title:'Prompt-Linter', body:'Diagnose von Ziel/Format/Constraints/Negativliste …'},
-    {title:'One‑Minute‑Plan', body:'5 konkrete nächste Schritte …'},
-    {title:'Research-Agent', body:'Kurze Web-Recherche mit Quellen …'}
+    { title:"RAG-Diagnose in 90s", prompt:"Analysiere ein RAG-Setup (Index/Retriever/Chunking/Ranking). Liefere Messpunkte, 3 Quick-Wins & 1 Langfristmaßnahme."},
+    { title:"Agent-SOP", prompt:"SOP für Agenten-Pipeline (Research→Synthese→Review→Publish) inkl. Handoffs & Stop-Rules."},
+    { title:"GIST→FACT→CITE (Meeting)", prompt:"Meeting destillieren + Risiken/Mitigation als Tabelle (Owner, Due)."},
+    { title:"Eval-Set-Builder", prompt:"10 Testfälle inkl. Edge-Cases & Hallu-Trigger; Score-Rubrik dazu."},
+    { title:"One-Minute-Plan", prompt:"Ziel in 5 Mikro-Schritte (< 60 s) mit Micro-Ergebnis."}
   ];
-  const payload={items, cachedAt: hhmm()};
-  setCache(key, payload, 7*24*60*60*1000);
+  const payload = { items, stand: hhmm() };
+  setCache(key, payload, TOP_TTL_MS);
   res.json(payload);
 });
 
-app.get('/api/daily', async (_req,res)=>{
-  const key='daily';
+// ── Daily Spotlight (12h Cache) ──────────────────────────────────────────────
+app.get("/api/daily", async (_req, res) => {
+  const key = "daily";
   const hit = getCache(key); if (hit) return res.json(hit);
-  if (!TAVILY_API_KEY) return res.json({title:'KI‑Notiz', body:'(Tavily API nicht konfiguriert)'});
-
-  try{
-    const j = await tavilySearch('neue kurze KI Meldung deutsch komprimiert');
-    const best = (j?.results||[])[0];
-    const title = best?.title?.slice(0,80) || 'KI‑Notiz';
-    const body  = `${best?.title || 'Heute neu'}\n${best?.url || ''}`;
-    const payload = {title, body};
-    setCache(key, payload, 24*60*60*1000);
+  try {
+    if (!TAVILY_API_KEY) throw new Error("TAVILY_API_KEY fehlt");
+    const r = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        api_key: TAVILY_API_KEY,
+        query: "generative AI update OR LLM release OR EU AI Act guidance last 48 hours",
+        search_depth: "advanced",
+        max_results: 5,
+        include_answer: false,
+        include_images: false
+      })
+    });
+    if (!r.ok) throw new Error(`Tavily ${r.status}`);
+    const j = await r.json();
+    const first = (j?.results || [])[0];
+    const title = first?.title || "KI-Notiz";
+    const body  = `${first?.title || ""}\n${first?.url || ""}`;
+    const payload = { title, body };
+    setCache(key, payload, DAILY_TTL_MS);
     res.json(payload);
-  }catch(err){
-    res.json({title:'KI‑Notiz', body:'(Fehler bei Tavily)'}); // weich
+  } catch (e) {
+    res.json({ title: "KI-Notiz", body: "(Daily nicht verfügbar)" });
   }
 });
 
-// Fallback SPA
-app.get('*', (req,res)=>{
-  res.sendFile(join(__dirname,'..','index.html'));
-});
+// Health
+app.get("/healthz", (_req,res)=> res.json({ok:true, env:process.env.NODE_ENV||'development'}));
 
-app.listen(PORT, ()=> console.log('server up on', PORT));
+// SPA fallback (optional)
+app.get("*", (req,res) => res.sendFile(join(ROOT,"index.html")));
+
+app.listen(PORT, ()=> console.log(`server up on ${PORT} (env=${process.env.NODE_ENV||'development'})`));
