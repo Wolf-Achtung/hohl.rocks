@@ -1,29 +1,27 @@
-/* /hero-shapes.css — Neon Gold UX+ */
-
-#shapes{position:fixed;inset:0;pointer-events:auto}
-.shape{user-select:none}
-.shape svg{width:100%;height:100%;display:block;mix-blend-mode:screen}
-.shape path{stroke-linecap:round;stroke-linejoin:round;shape-rendering:geometricPrecision}
-
-.shape [data-label]{pointer-events:none}
-.shape:focus-visible{outline:2px solid #9cf; outline-offset:4px; border-radius:12px}
-
-/* Label/Hints (zentriert) – robust über Video */
-.shape .title{
-  color:#081218;font-weight:800;font-size:14px;background:rgba(255,255,255,.38);
-  padding:6px 10px;border-radius:10px;text-shadow:0 1px 2px rgba(255,255,255,.6)
-}
-.shape .hint{
-  margin-top:6px;font-size:11px;opacity:.95;background:rgba(12,16,22,.35);
-  color:#eaf2ff;padding:4px 8px;border-radius:8px
-}
-
-/* Hilfe / Buttons */
-#nav-buttons button{transition:filter .2s ease, transform .06s ease}
-#nav-buttons button:active{transform:translateY(1px)}
-
-/* A11y: weniger Bewegung */
-@media (prefers-reduced-motion: reduce){
-  .shape{transition:none !important}
-  .shape svg{animation:none !important}
-}
+/* hero-shapes.css — minimal, ruhig, winterlich */
+:root { --bg:#0b0e13; --panel:rgba(16,18,24,0.78); --text:#dde3ea; --muted:#a6b1bb; --accent:#7af1d8; }
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"}
+.stage{position:relative;width:100%;height:100vh;overflow:hidden}
+#bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:contrast(.85) brightness(.85)}
+.shape-layer{position:absolute;inset:0}
+.shape{position:absolute;left:50%;top:50%;width:180px;height:180px;border-radius:999px;display:grid;place-items:center;text-align:center;color:#0a0a0a;font-weight:600;letter-spacing:.2px;box-shadow:0 0 60px rgba(255,255,255,.15) inset;transition:opacity 260ms ease}
+.shape .label{font-size:14px;mix-blend-mode:overlay}
+.shape .hint{margin-top:4px;font-size:11px;color:#0a0a0a;opacity:.75}
+.nav{position:absolute;left:16px;bottom:16px;display:flex;gap:8px;z-index:10}
+.nav-btn{-webkit-appearance:none;appearance:none;background:var(--panel);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer}
+.nav-btn:hover{border-color:rgba(255,255,255,.25)}
+.popup-root{position:relative}
+.popup{position:fixed;inset:0;background:rgba(2,4,8,.55);backdrop-filter:blur(3px);display:grid;place-items:center;z-index:50}
+.popup-inner{width:min(820px,92vw);max-height:86vh;overflow:auto;background:var(--panel);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:16px 16px 12px;position:relative}
+.popup-title{font-weight:700;margin:4px 28px 8px 0}
+.popup-explain{color:var(--muted);font-size:13px;margin-bottom:8px}
+.popup-close{position:absolute;top:8px;right:10px;width:28px;height:28px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:transparent;color:var(--text);cursor:pointer}
+.popup-body{display:grid;gap:10px}
+.prompt-input{width:100%;min-height:110px;resize:vertical;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:var(--text);padding:10px}
+.answer{white-space:pre-wrap;word-wrap:break-word;line-height:1.42;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px;font-size:14px;color:var(--text)}
+.popup-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.btn{appearance:none;background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:6px 10px;cursor:pointer}
+.btn-primary{background:var(--accent);border-color:transparent;color:#061412;font-weight:700}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:var(--panel);color:var(--text);border:1px solid rgba(255,255,255,.14);padding:8px 12px;border-radius:8px;opacity:0;transition:transform .2s ease,opacity .2s ease;z-index:60}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
