@@ -18,9 +18,7 @@ const ENV = process.env.NODE_ENV || 'production';
 const PORT = Number(process.env.PORT || 8080);
 
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || process.env.ALLOWED_ORIGINS || '')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
+  .split(',').map(s => s.trim()).filter(Boolean);
 
 // TTL‑Cache (12h)
 const TTL_MS = 12 * 60 * 60 * 1000;
@@ -28,11 +26,7 @@ const CACHE = new Map();
 const now = () => Date.now();
 const hhmm = (d = new Date()) => d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 const setCache = (k, data, ttl = TTL_MS) => CACHE.set(k, { data, exp: now() + ttl });
-const getCache = k => {
-  const v = CACHE.get(k); if (!v) return null;
-  if (now() > v.exp) { CACHE.delete(k); return null; }
-  return v.data;
-};
+const getCache = k => { const v = CACHE.get(k); if (!v) return null; if (now() > v.exp) { CACHE.delete(k); return null; } return v.data; };
 
 const app = express();
 app.disable('x-powered-by');
@@ -95,10 +89,8 @@ app.get('/api/news', async (_req, res) => {
       body: JSON.stringify({
         api_key: TAVILY_API_KEY,
         query: 'AI LLM EU AI Act DSGVO Recht Tools last 24 hours',
-        search_depth: 'advanced',
-        max_results: 10,
-        include_answer: false,
-        include_images: false
+        search_depth: 'advanced', max_results: 10,
+        include_answer: false, include_images: false
       })
     });
     if (!r.ok) throw new Error(`Tavily ${r.status}: ${await r.text()}`);
@@ -110,20 +102,16 @@ app.get('/api/news', async (_req, res) => {
     const payload = { items, stand: hhmm() };
     setCache('news', payload); res.json(payload);
   } catch {
-    try {
-      const local = JSON.parse(await fs.readFile(join(ROOT, 'api', 'news.json'), 'utf-8'));
-      res.json(local);
-    } catch (e) { res.status(500).json({ error: String(e?.message || e) }); }
+    try { const local = JSON.parse(await fs.readFile(join(ROOT, 'api', 'news.json'), 'utf-8')); res.json(local); }
+    catch (e) { res.status(500).json({ error: String(e?.message || e) }); }
   }
 });
 
 // Top‑Prompts (lokal → TTL)
 app.get('/api/prompts/top', async (_req, res) => {
   const hit = getCache('top-prompts'); if (hit) return res.json(hit);
-  try {
-    const local = JSON.parse(await fs.readFile(join(ROOT, 'api', 'prompt.json'), 'utf-8'));
-    setCache('top-prompts', local); res.json(local);
-  } catch (e) { res.status(500).json({ error: String(e?.message || e) }); }
+  try { const local = JSON.parse(await fs.readFile(join(ROOT, 'api', 'prompt.json'), 'utf-8')); setCache('top-prompts', local); res.json(local); }
+  catch (e) { res.status(500).json({ error: String(e?.message || e) }); }
 });
 
 // Daily Spotlight (Tavily → Fallback)
@@ -137,28 +125,18 @@ app.get('/api/daily', async (_req, res) => {
       body: JSON.stringify({
         api_key: TAVILY_API_KEY,
         query: 'generative AI update OR LLM release OR EU AI Act guidance last 48 hours',
-        search_depth: 'advanced',
-        max_results: 5,
-        include_answer: false,
-        include_images: false
+        search_depth: 'advanced', max_results: 5,
+        include_answer: false, include_images: false
       })
     });
     if (!r.ok) throw new Error(`Tavily ${r.status}`);
     const j = await r.json();
     const first = (j?.results || [])[0];
-    const payload = {
-      title: first?.title || 'KI‑Notiz',
-      body: `${first?.title || ''}\n${first?.url || ''}`.trim(),
-      stand: hhmm()
-    };
+    const payload = { title: first?.title || 'KI‑Notiz', body: `${first?.title || ''}\n${first?.url || ''}`.trim(), stand: hhmm() };
     setCache('daily', payload); res.json(payload);
   } catch {
-    try {
-      const local = JSON.parse(await fs.readFile(join(ROOT, 'api', 'daily.json'), 'utf-8'));
-      res.json(local);
-    } catch {
-      res.json({ title: 'KI‑Notiz', body: '(Daily nicht verfügbar)', stand: hhmm() });
-    }
+    try { const local = JSON.parse(await fs.readFile(join(ROOT, 'api', 'daily.json'), 'utf-8')); res.json(local); }
+    catch { res.json({ title: 'KI‑Notiz', body: '(Daily nicht verfügbar)', stand: hhmm() }); }
   }
 });
 
@@ -167,19 +145,12 @@ app.get('/', (_req, res) => res.sendFile(join(ROOT, 'index.html')));
 app.get('*', (_req, res) => res.sendFile(join(ROOT, 'index.html')));
 
 // Start + Timeouts + Graceful Shutdown
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`server up on ${PORT} (env=${ENV})`);
-});
-server.keepAliveTimeout = 75_000;
-server.headersTimeout = 76_000;
-server.requestTimeout = 0;
+const server = app.listen(PORT, '0.0.0.0', () => { console.log(`server up on ${PORT} (env=${ENV})`); });
+server.keepAliveTimeout = 75_000; server.headersTimeout = 76_000; server.requestTimeout = 0;
 
 const graceful = (signal) => {
   console.log(`received ${signal}, shutting down gracefully…`);
-  server.close((err) => {
-    if (err) { console.error('Error on server.close:', err); process.exit(1); }
-    process.exit(0);
-  });
+  server.close((err) => { if (err) { console.error('Error on server.close:', err); process.exit(1); } process.exit(0); });
   setTimeout(() => process.exit(1), 8000).unref();
 };
 process.on('SIGTERM', () => graceful('SIGTERM'));
