@@ -1,4 +1,8 @@
 // server/index.js — hohl.rocks Backends (Gold‑Standard+)
+// Node 20+, ESM. Robust: Helmet, CORS, SSE‑sichere Compression, Morgan,
+// /healthz (GET/HEAD), TTL‑Cache (12h), Tavily‑Fallback, SPA‑Fallback,
+// Keep‑Alive/HeadersTimeout tuned, Graceful Shutdown.
+
 import 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
@@ -8,6 +12,7 @@ import morgan from 'morgan';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs/promises';
+
 import { router as claudeRouter } from './routes/claude.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,13 +22,13 @@ const ROOT = join(__dirname, '..');
 const ENV = process.env.NODE_ENV || 'production';
 const PORT = Number(process.env.PORT || 8080);
 
-// CORS Whitelist
+// CORS Whitelist (Komma‑getrennte Liste)
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
 
-// 12h TTL Cache
+// --- TTL‑Cache (12h)
 const TTL_MS = 12 * 60 * 60 * 1000;
 const CACHE = new Map();
 const now = () => Date.now();
@@ -47,7 +52,6 @@ const compressionFilter = (req, res) =>
   (req.headers.accept || '').includes('text/event-stream') ? false : compression.filter(req, res);
 app.use(compression({ filter: compressionFilter }));
 
-// Basics
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
@@ -59,7 +63,7 @@ app.use(cors({
 }));
 if (ENV !== 'test') app.use(morgan(ENV === 'production' ? 'combined' : 'dev'));
 
-// Static
+// Static (liefert index.html & /public/*)
 app.use(express.static(ROOT));
 
 // Health
@@ -70,7 +74,7 @@ app.get('/healthz', (_req, res) => {
 });
 app.head('/healthz', (_req, res) => res.status(200).end());
 
-// SSE Ping (manueller Test)
+// (Optional) SSE‑Ping zum Testen
 app.get('/__sse/ping', (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -83,7 +87,7 @@ app.get('/__sse/ping', (req, res) => {
   req.on('close', () => { clearInterval(hb); try { res.end(); } catch {} });
 });
 
-// Claude APIs
+// API‑Routen
 app.use('/api', claudeRouter);
 
 // News (Tavily → Fallback)
@@ -94,13 +98,21 @@ app.get('/api/news', async (_req, res) => {
     if (!TAVILY_API_KEY) throw new Error('TAVILY_API_KEY fehlt');
     const r = await fetch('https://api.tavily.com/search', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ api_key: TAVILY_API_KEY, query: 'AI LLM EU AI Act DSGVO Recht Tools last 24 hours',
-        search_depth: 'advanced', max_results: 10, include_answer: false, include_images: false })
+      body: JSON.stringify({
+        api_key: TAVILY_API_KEY,
+        query: 'AI LLM EU AI Act DSGVO Recht Tools last 24 hours',
+        search_depth: 'advanced',
+        max_results: 10,
+        include_answer: false,
+        include_images: false
+      })
     });
     if (!r.ok) throw new Error(`Tavily ${r.status}: ${await r.text()}`);
     const j = await r.json();
     const items = (j?.results || []).slice(0, 8).map(v => ({
-      title: v.title, url: v.url, source: (v.url || '').replace(/^https?:\/\/(www\.)?/, '').split('/')[0]
+      title: v.title,
+      url: v.url,
+      source: (v.url || '').replace(/^https?:\/\/(www\.)?/, '').split('/')[0]
     }));
     const payload = { items, stand: hhmm() };
     setCache('news', payload); res.json(payload);
@@ -129,13 +141,23 @@ app.get('/api/daily', async (_req, res) => {
     if (!TAVILY_API_KEY) throw new Error('TAVILY_API_KEY fehlt');
     const r = await fetch('https://api.tavily.com/search', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ api_key: TAVILY_API_KEY, query: 'generative AI update OR LLM release OR EU AI Act guidance last 48 hours',
-        search_depth: 'advanced', max_results: 5, include_answer: false, include_images: false })
+      body: JSON.stringify({
+        api_key: TAVILY_API_KEY,
+        query: 'generative AI update OR LLM release OR EU AI Act guidance last 48 hours',
+        search_depth: 'advanced',
+        max_results: 5,
+        include_answer: false,
+        include_images: false
+      })
     });
     if (!r.ok) throw new Error(`Tavily ${r.status}`);
     const j = await r.json();
     const first = (j?.results || [])[0];
-    const payload = { title: first?.title || 'KI‑Notiz', body: `${first?.title || ''}\n${first?.url || ''}`.trim(), stand: hhmm() };
+    const payload = {
+      title: first?.title || 'KI‑Notiz',
+      body: `${first?.title || ''}\n${first?.url || ''}`.trim(),
+      stand: hhmm()
+    };
     setCache('daily', payload); res.json(payload);
   } catch {
     try {
@@ -147,7 +169,8 @@ app.get('/api/daily', async (_req, res) => {
   }
 });
 
-// SPA fallback
+// Root + SPA‑Fallback
+app.get('/', (_req, res) => res.sendFile(join(ROOT, 'index.html')));
 app.get('*', (_req, res) => res.sendFile(join(ROOT, 'index.html')));
 
 // Start + Timeouts + Graceful Shutdown
