@@ -1,4 +1,4 @@
-// public/js/nav-popups.js — overlays for About/News/Prompts/Projects/Sound
+// File: public/js/nav-popups.js — News-Overlay mit echten Treffern + „Stand: HH:MM“
 import { openAnswerPopup, openCustomPopup } from './answer-popup.js';
 import { fetchNews, fetchTopPrompts } from './claude-stream.js';
 
@@ -7,68 +7,74 @@ const soundBtn = document.getElementById('sound-toggle');
 
 function makeNewsList(items = []) {
   const wrap = document.createElement('div');
+  wrap.className = 'news-wrap';
   const ul = document.createElement('ul');
   ul.style.margin = '0';
   ul.style.paddingLeft = '18px';
+
   for (const it of items) {
     const li = document.createElement('li');
     const a = document.createElement('a');
     a.href = it.url || '#';
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
-    a.textContent = it.title || (it.url || '').slice(0, 60);
-    a.style.color = 'inherit';
-    a.style.textDecoration = 'underline';
-    const small = document.createElement('span');
-    try {
-      const d = it.source || (new URL(it.url).hostname.replace(/^www\./, ''));
-      if (d) { small.textContent = ` — ${d}`; small.style.opacity = '0.7'; small.style.fontSize = '12px'; }
-    } catch {}
-    li.append(a, small);
+    a.textContent = it.title || (it.url || '').slice(0, 80);
+    const src = document.createElement('span');
+    src.className = 'news-source';
+    src.textContent = (it.source ? ` — ${it.source}` : '');
+    li.appendChild(a);
+    li.appendChild(src);
     ul.appendChild(li);
   }
   wrap.appendChild(ul);
   return wrap;
 }
 
-nav?.addEventListener('click', async (e) => {
-  const btn = e.target.closest('.nav-btn');
-  if (!btn) return;
-  const action = btn.dataset.action;
-
-  if (action === 'about') {
+async function showNews() {
+  try {
+    const data = await fetchNews();
+    const time = data?.stand ? data.stand : '';
+    const items = data?.items || [];
+    const box = openCustomPopup({
+      title: 'News',
+      explain: `Stand: ${time || '—'}`,
+    });
+    box.body.appendChild(makeNewsList(items));
+    box.ok.textContent = 'Schließen';
+    box.cpy.textContent = 'Kopieren';
+    box.cpy.addEventListener('click', () => {
+      const text = items.map(i => `• ${i.title} — ${i.url}`).join('\n');
+      navigator.clipboard?.writeText(text).catch(()=>{});
+    }, { once: true });
+  } catch (e) {
     openAnswerPopup({
-      title: 'Über',
-      explain: 'Wolf Hohl · TÜV-zertifizierter KI-Manager',
-      content: 'hohl.rocks ist eine ruhige, spielerische KI‑Experience. Bubbles öffnen Micro‑Apps, die mit Claude streamen.'
+      title: 'News',
+      content: 'Keine Live‑News abrufbar. Bitte TAVILY_API_KEY setzen oder später erneut versuchen.'
     });
   }
+}
+
+nav?.addEventListener('click', async (ev) => {
+  const target = ev.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.getAttribute('data-action');
 
   if (action === 'news') {
-    try {
-      const j = await fetchNews();
-      const node = makeNewsList(j.items || []);
-      openCustomPopup({ title: 'News', explain: `Stand: ${j.stand || 'heute'}`, contentNode: node });
-    } catch (e2) {
-      openAnswerPopup({ title: 'News', content: `Fehler: ${e2?.message || e2}` });
-    }
+    ev.preventDefault();
+    showNews();
+    return;
   }
 
-  if (action === 'prompts') {
+  if (action === 'top-prompts') {
+    ev.preventDefault();
     try {
-      const j = await fetchTopPrompts();
-      const text = (j.items || []).map(i => `• ${i.title}\n  ${i.prompt}`).join('\n\n') || 'Keine Prompts.';
-      openAnswerPopup({ title: 'Top‑Prompts', explain: `Stand: ${j.stand || '-'}`, content: text });
-    } catch (e3) {
-      openAnswerPopup({ title: 'Top‑Prompts', content: `Fehler: ${e3?.message || e3}` });
+      const data = await fetchTopPrompts();
+      const list = (data?.items || []).map((t,i)=>`${i+1}. ${t}`).join('\n');
+      openAnswerPopup({ title:'Top‑Prompts', content: list || '—' });
+    } catch {
+      openAnswerPopup({ title:'Top‑Prompts', content: 'Derzeit nicht verfügbar.' });
     }
-  }
-
-  if (action === 'projects') {
-    openAnswerPopup({
-      title: 'Projekte',
-      content: '• hohl.rocks — persönliche KI‑Experience\n• Jellyfish Motion — organische Interaktion\n• Micro‑Apps — 28 Mini‑Anwendungen'
-    });
+    return;
   }
 
   if (action === 'sound') {
