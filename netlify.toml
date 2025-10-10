@@ -1,23 +1,19 @@
-
 [build]
   publish = "public"
   command = "echo 'Static build only'"
 
-# Proxy API calls to Railway API
 [[redirects]]
   from = "/api/*"
   to = ":API_BASE/:splat"
   status = 200
   force = true
 
-# Stream proxy for SSE
 [[redirects]]
   from = "/chat-sse"
   to = ":API_BASE/chat-sse"
   status = 200
   force = true
 
-# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
