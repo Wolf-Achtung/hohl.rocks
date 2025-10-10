@@ -1,12 +1,13 @@
 // File: server/index.js
-// server/index.js — hohl.rocks Backend (Gold‑Standard+)
-// Complete, cleaned and enhanced version
+// hohl.rocks Backend (Gold‑Standard+) — graceful shutdown, healthz, Tavily news, rate limit
+
 import 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
 import compression from 'compression';
 import cors from 'cors';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -14,9 +15,6 @@ import fs from 'fs/promises';
 
 // Feature routers
 import { router as claudeRouter } from './routes/claude.js';
-import { router as newsRouter } from './routes/news.js';            // optional, keeps parity
-import { router as dailyIdeaRouter } from './routes/daily-idea.js'; // optional, keeps parity
-import { router as researchRouter } from './routes/research-agent.js'; // optional
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -46,7 +44,7 @@ function getCache(key){
 const app = express();
 
 // Basic hardening
-app.use(helmet({ contentSecurityPolicy: false })); // CSP handled statically
+app.use(helmet({ contentSecurityPolicy: false }));
 app.disable('x-powered-by');
 
 // CORS (allow list via env CORS_ORIGINS=a.com,b.com)
@@ -86,6 +84,16 @@ const compressionFilter = (req, res) => {
 };
 app.use(compression({ filter: compressionFilter }));
 
+// Rate limiting for model endpoints
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { type: 'error', error: { code: 429, message: 'Zu viele Anfragen – bitte kurz warten.' } }
+});
+app.use(['/api/claude', '/api/claude-sse'], limiter);
+
 // Static hosting
 app.use(express.static(ROOT, { etag: true, maxAge: ENV === 'production' ? '1h' : 0 }));
 
@@ -120,7 +128,7 @@ app.get('/healthz', async (_req, res) => {
 });
 app.head('/healthz', (_req, res) => res.status(200).end());
 
-// SSE ping helper (for proxies / smoke-tests)
+// SSE ping helper
 app.get('/__sse/ping', (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -134,15 +142,9 @@ app.get('/__sse/ping', (req, res) => {
 });
 
 // ------------------ API routes --------------------------------------------------
-// Claude SSE/JSON
 app.use('/api', claudeRouter);
 
-// Optional additional routers (no harm if endpoints overlap are unused)
-app.use('/api', newsRouter);
-app.use('/api', dailyIdeaRouter);
-app.use('/api', researchRouter);
-
-// Lightweight news (Tavily) with 12h cache and local fallback
+// Tavily news (DACH + EU focus) with 12h cache and local fallback
 app.get('/api/news', async (_req, res) => {
   const hit = getCache('news'); if (hit) return res.json(hit);
   try {
@@ -153,7 +155,7 @@ app.get('/api/news', async (_req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         api_key: apiKey,
-        query: '("AI" OR "KI" OR "LLM") (EU OR Deutschland OR Europe) last 24 hours',
+        query: '("KI" OR "Künstliche Intelligenz" OR "LLM" OR "AI") AND (Deutschland OR Österreich OR Schweiz OR EU OR Europa) published:24h',
         search_depth: 'advanced',
         max_results: 8,
         include_answer: false,
@@ -205,7 +207,7 @@ app.get('/api/daily', async (_req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         api_key: apiKey,
-        query: 'generative AI OR LLM OR EU AI Act last 48 hours',
+        query: '("KI" OR "LLM" OR "AI") AND (Deutschland OR Österreich OR Schweiz OR EU OR Europa) published:48h',
         search_depth: 'advanced',
         max_results: 5,
         include_answer: false,
@@ -255,7 +257,6 @@ function graceful(signal){
     console.log(`[info] http server closed in ${Date.now() - start}ms`);
     process.exit(0);
   });
-  // Fallback: hard exit after 10s
   setTimeout(() => {
     console.warn('[warn] forced shutdown after 10s');
     process.exit(0);
