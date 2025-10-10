@@ -1,14 +1,10 @@
-/* File: public/css/styles.css — Neon, bewegte Bubbles, barrierearm */
+/* Neon + Bewegung + Barrierefreiheit */
 :root{
   --bg: #0a0c12;
   --panel: rgba(12,14,20,0.86);
   --text: #e8edf4;
   --muted: #a6b1bb;
   --accent: #7af1d8;
-  --neon1: #98fbff;
-  --neon2: #ffd7f7;
-  --neon3: #d7ffe1;
-  --neon4: #e2e7ff;
   --bubble-font: ui-rounded, 'SF Pro Rounded', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --ui-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
@@ -22,19 +18,13 @@ body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--ui-fo
 
 .shape-layer{ position:relative; width:100%; height:100%; }
 
-@keyframes float {
-  0%   { transform: translateY(0px) }
-  50%  { transform: translateY(-8px) }
-  100% { transform: translateY(0px) }
-}
+@keyframes float { 0%{transform:translateY(0)} 50%{transform:translateY(-8px)} 100%{transform:translateY(0)} }
 
 .shape{
   position:absolute; display:flex; align-items:center; justify-content:center;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.95), rgba(255,255,255,.7));
-  box-shadow:
-    0 0 30px rgba(151, 255, 240, .35),
-    0 8px 32px rgba(0,0,0,.35);
+  box-shadow: 0 0 30px rgba(151, 255, 240, .35), 0 8px 32px rgba(0,0,0,.35);
   cursor:pointer;
   transition: transform .18s ease, box-shadow .25s ease, filter .2s ease;
   filter: saturate(115%);
