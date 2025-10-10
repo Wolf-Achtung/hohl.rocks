@@ -1,32 +1,42 @@
+<!-- File: public/index.html -->
 <!doctype html>
-<html lang="de" data-theme="dark">
+<html lang="de">
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- API-Basis: Wenn du hier leer lässt, spricht das Frontend mit derselben Origin.
+       Für Produktionsbetrieb mit Railway kannst du (optional) direkt setzen: 
+       content="https://hohlrocks-production.up.railway.app" -->
   <meta name="hohl-chat-base" content="https://hohlrocks-production.up.railway.app">
+
+  <!-- Analytics (Umami) – wird erst nach Consent geladen; Werte hier pflegen oder leer lassen -->
+  <meta name="umami-src" content="">
+  <meta name="umami-website-id" content="">
+
   <title>hohl.rocks — Neon Gold UX++</title>
 
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/public/css/styles.css" />
+  <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
-  <noscript>Bitte JavaScript aktivieren, um die interaktive KI‑Experience zu nutzen.</noscript>
+  <noscript>Bitte JavaScript aktivieren, um die interaktive KI-Experience zu nutzen.</noscript>
 
   <div class="stage" id="stage" aria-live="polite" aria-busy="false">
     <video id="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
       <source src="/videos/road.mp4" type="video/mp4" />
     </video>
 
-    <div id="shape-layer" class="shape-layer" role="region" aria-label="Interaktive Ideen‑Bubbles"></div>
+    <div id="shape-layer" class="shape-layer" role="region" aria-label="Interaktive Ideen-Bubbles"></div>
 
     <nav id="nav" class="nav" aria-label="Sektionen">
-      <button class="nav-btn" data-action="about" data-i18n="nav.about">Über</button>
-      <button class="nav-btn" data-action="news" data-i18n="nav.news">News</button>
-      <button class="nav-btn" data-action="prompts" data-i18n="nav.prompts">Prompts</button>
-      <button class="nav-btn" data-action="projects" data-i18n="nav.projects">Projekte</button>
-      <button class="nav-btn" data-action="settings" data-i18n="nav.settings">Settings</button>
+      <button class="nav-btn" data-action="about">Über</button>
+      <button class="nav-btn" data-action="news">News</button>
+      <button class="nav-btn" data-action="prompts">Prompts</button>
+      <button class="nav-btn" data-action="projects">Projekte</button>
+      <button class="nav-btn" data-action="settings">⚙︎</button>
       <button id="lang-toggle" class="nav-btn" data-action="lang">DE/EN</button>
       <button id="sound-toggle" class="nav-btn" data-action="sound" aria-pressed="false">Klang</button>
     </nav>
@@ -34,16 +44,17 @@
 
   <div id="popup-root" class="popup-root" aria-live="polite"></div>
 
-  <script type="module" src="/public/js/i18n.js"></script>
-  <script type="module" src="/public/js/settings-store.js"></script>
-  <script type="module" src="/public/js/claude-stream.js"></script>
-  <script type="module" src="/public/js/answer-popup.js"></script>
-  <script type="module" src="/public/js/ticker-items.js"></script>
-  <script type="module" src="/public/js/hero-shapes.js"></script>
-  <script type="module" src="/public/js/nav-popups.js"></script>
-  <script type="module" src="/public/js/news-search.js"></script>
-  <script type="module" src="/public/js/bg-video.js"></script>
-  <script type="module" src="/public/js/consent.js"></script>
-  <script type="module" src="/public/js/analytics.js"></script>
+  <!-- WICHTIG: korrekte Pfade ohne /public/ -->
+  <script type="module" src="/js/i18n.js"></script>
+  <script type="module" src="/js/settings.js"></script>
+  <script type="module" src="/js/ticker-items.js"></script>
+  <script type="module" src="/js/claude-stream.js"></script>
+  <script type="module" src="/js/answer-popup.js"></script>
+  <script type="module" src="/js/hero-shapes.js"></script>
+  <script type="module" src="/js/settings-panel.js"></script>
+  <script type="module" src="/js/nav-popups.js"></script>
+  <script type="module" src="/js/bg-video.js"></script>
+  <script type="module" src="/js/perf-adaptive.js"></script>
+  <script type="module" src="/js/analytics-consent.js"></script>
 </body>
 </html>
