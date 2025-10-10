@@ -1,4 +1,3 @@
-// File: server/index.js
 import 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
@@ -15,69 +14,47 @@ import contentRouter from './routes/content.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// Projektwurzel: /app  (nicht „/“)
 const projectRoot = join(__dirname, '..'); // /app
 
 const app = express();
 
-// Optional: Proxy-Vertrauen hinter Railway/Render
 if ((process.env.TRUST_PROXY || '').toLowerCase() === 'true') {
   app.set('trust proxy', true);
 }
 
-// Security: Helmet (+ optionale CSP für hohl.rocks/Railway/Anthropic/Tavily/Umami)
-app.disable('x-powered-by');
 const CSP_ENABLE = (process.env.CSP_ENABLE || 'true').toLowerCase() === 'true';
-app.use(
-  helmet({
-    contentSecurityPolicy: CSP_ENABLE
-      ? {
-          useDefaults: true,
-          directives: {
-            "default-src": ["'self'"],
-            "script-src": ["'self'", "https://us.umami.is"],
-            "style-src": ["'self'", "'unsafe-inline'"],
-            "img-src": ["'self'", "data:", "blob:"],
-            "connect-src": [
-              "'self'",
-              "https://api.anthropic.com",
-              "https://api.tavily.com",
-              "https://hohlrocks-production.up.railway.app",
-              "https://hohl.rocks"
-            ],
-            "media-src": ["'self'"],
-            "frame-ancestors": ["'self'"],
-            "object-src": ["'none'"],
-            "base-uri": ["'self'"],
-            "form-action": ["'self'"]
-          }
-        }
-      : false,
-    crossOriginEmbedderPolicy: false
-  })
-);
-
-// CORS: hohl.rocks + Railway (erweiterbar via ENV)
-const ALLOWED = (process.env.CORS_ORIGINS || process.env.ALLOWED_ORIGINS || 'https://hohl.rocks,https://hohlrocks-production.up.railway.app')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
-app.use(
-  cors({
-    origin(origin, cb) {
-      if (!origin) return cb(null, true); // same-origin / curl
-      if (!ALLOWED.length || ALLOWED.includes(origin)) return cb(null, true);
-      return cb(null, false);
+app.use(helmet({
+  contentSecurityPolicy: CSP_ENABLE ? {
+    useDefaults: true,
+    directives: {
+      "default-src": ["'self'"],
+      "script-src": ["'self'", "https://us.umami.is"],
+      "style-src": ["'self'", "'unsafe-inline'"],
+      "img-src": ["'self'", "data:", "blob:"],
+      "connect-src": ["'self'", "https://api.anthropic.com", "https://api.tavily.com", "https://hohlrocks-production.up.railway.app", "https://hohl.rocks"],
+      "media-src": ["'self'"],
+      "frame-ancestors": ["'self'"],
+      "object-src": ["'none'"],
+      "base-uri": ["'self'"],
+      "form-action": ["'self'"]
     }
-  })
-);
+  } : false,
+  crossOriginEmbedderPolicy: false
+}));
 
-// Kompression + JSON-Body
+const ALLOWED = (process.env.CORS_ORIGINS || process.env.ALLOWED_ORIGINS || "https://hohl.rocks,https://hohlrocks-production.up.railway.app")
+  .split(',').map(s => s.trim()).filter(Boolean);
+app.use(cors({
+  origin(origin, cb){
+    if (!origin) return cb(null, true);
+    if (!ALLOWED.length || ALLOWED.includes(origin)) return cb(null, true);
+    return cb(null, false);
+  }
+}));
+
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
 
-// Request-ID + Access-Log
 app.use((req, res, next) => {
   const id = req.headers['x-request-id'] || randomUUID();
   res.setHeader('x-request-id', id);
@@ -87,7 +64,6 @@ app.use((req, res, next) => {
 });
 app.use(morgan(':date[iso] :remote-addr :method :url :status :res[content-length] - :response-time ms rid=:req[id]'));
 
-// Einfaches Rate-Limit (pro IP, in-memory)
 const BUCKET_MS = 60_000;
 const BUCKET_MAX = Number(process.env.RATE_LIMIT_PER_MIN || 120);
 const buckets = new Map();
@@ -100,41 +76,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health + Version
-app.get('/healthz', (_req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'development' }));
-app.get('/version', async (_req, res) => {
-  try {
-    const pkg = JSON.parse(await fs.readFile(join(projectRoot, 'package.json'), 'utf8'));
-    res.json({ name: pkg.name, version: pkg.version || null });
-  } catch {
-    res.json({ name: 'unknown', version: null });
-  }
-});
+app.get('/healthz', (req, res) => res.json({ ok: true }));
 
-// Statische Auslieferung (mit leichtem Cache)
-app.use(
-  express.static(join(projectRoot, 'public'), {
-    index: false,
-    fallthrough: true,
-    etag: true,
-    maxAge: '7d',
-    setHeaders: (res, filePath) => {
-      // Für index.html kein langes Caching
-      if (filePath.endsWith('/index.html')) {
-        res.setHeader('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
-      }
-    }
-  })
-);
-// Auch Root statisch verfügbar (für /videos, /favicon.svg etc.)
+app.use(express.static(join(projectRoot, 'public'), { index: false, fallthrough: true }));
 app.use(express.static(projectRoot, { index: false, fallthrough: true }));
 
-// API-Router
 app.use(claudeRouter);
 app.use(contentRouter);
 
-// Root -> index.html (robust per sendFile)
-app.get('/', (_req, res) => {
+app.get('/', async (_req, res) => {
   const fp = join(projectRoot, 'public', 'index.html');
   res.sendFile(fp, err => {
     if (err) {
@@ -144,32 +94,23 @@ app.get('/', (_req, res) => {
   });
 });
 
-// 404 + Fehlerbehandlung
 app.use((req, res) => res.status(404).json({ error: 'Not found', path: req.originalUrl }));
 app.use((err, _req, res, _next) => {
   console.error('[error]', err);
   res.status(500).json({ error: 'Server error' });
 });
 
-// Start + graceful shutdown
 const PORT = Number(process.env.PORT || 8080);
 const server = app.listen(PORT, () => {
-  console.log(`[info] server up on ${PORT} (env=${process.env.NODE_ENV || 'development'})`);
+  console.log(`[info] server up on ${PORT}`);
 });
-function graceful(signal) {
+
+function graceful(signal){
   console.log(`[info] ${signal} received — closing http server…`);
-  server.close(e => {
-    if (e) {
-      console.error('[error] server.close', e);
-      process.exit(1);
-    }
+  server.close((err) => {
+    if (err) { console.error('[error] server.close', err); process.exit(1); }
     process.exit(0);
   });
-  setTimeout(() => {
-    console.warn('[warn] forced exit after 10s');
-    process.exit(0);
-  }, 10_000).unref();
+  setTimeout(() => { console.warn('[warn] forced exit after 10s'); process.exit(0); }, 10_000).unref();
 }
-['SIGTERM', 'SIGINT'].forEach(s => process.on(s, () => graceful(s)));
-process.on('unhandledRejection', r => console.error('[error] unhandledRejection', r));
-process.on('uncaughtException', e => console.error('[error] uncaughtException', e));
+['SIGTERM','SIGINT'].forEach(s => process.on(s, () => graceful(s)));
