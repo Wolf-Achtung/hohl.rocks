@@ -7,7 +7,6 @@ import morgan from 'morgan';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'node:path';
-import fs from 'node:fs/promises';
 
 import claudeRouter from './routes/claude.js';
 import contentRouter from './routes/content.js';
@@ -76,7 +75,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/healthz', (req, res) => res.json({ ok: true }));
+app.get('/healthz', (_req, res) => res.json({ ok: true }));
 
 app.use(express.static(join(projectRoot, 'public'), { index: false, fallthrough: true }));
 app.use(express.static(projectRoot, { index: false, fallthrough: true }));
@@ -84,7 +83,7 @@ app.use(express.static(projectRoot, { index: false, fallthrough: true }));
 app.use(claudeRouter);
 app.use(contentRouter);
 
-app.get('/', async (_req, res) => {
+app.get('/', (_req, res) => {
   const fp = join(projectRoot, 'public', 'index.html');
   res.sendFile(fp, err => {
     if (err) {
@@ -107,10 +106,7 @@ const server = app.listen(PORT, () => {
 
 function graceful(signal){
   console.log(`[info] ${signal} received — closing http server…`);
-  server.close((err) => {
-    if (err) { console.error('[error] server.close', err); process.exit(1); }
-    process.exit(0);
-  });
+  server.close((err) => { if (err) { console.error('[error] server.close', err); process.exit(1); } process.exit(0); });
   setTimeout(() => { console.warn('[warn] forced exit after 10s'); process.exit(0); }, 10_000).unref();
 }
 ['SIGTERM','SIGINT'].forEach(s => process.on(s, () => graceful(s)));
