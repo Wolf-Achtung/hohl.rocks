@@ -1,5 +1,5 @@
 // File: server/index.js
-// hohl.rocks Backend (Gold‑Standard+) — graceful shutdown, healthz, Tavily news, rate limit
+// hohl.rocks Backend (Gold-Standard+) — graceful shutdown, healthz, Tavily news, lightweight rate limit (no deps)
 
 import 'dotenv/config';
 import express from 'express';
@@ -7,7 +7,6 @@ import helmet from 'helmet';
 import compression from 'compression';
 import cors from 'cors';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -23,7 +22,7 @@ const ROOT = join(__dirname, '..');
 const ENV = process.env.NODE_ENV || 'production';
 const PORT = Number(process.env.PORT || 8080);
 
-// ---- Small in‑memory TTL cache -------------------------------------------------
+// ---- Small in-memory TTL cache -------------------------------------------------
 const TTL_MS = 12 * 60 * 60 * 1000; // 12h
 const CACHE = new Map(); // key -> {data, exp}
 
@@ -84,14 +83,30 @@ const compressionFilter = (req, res) => {
 };
 app.use(compression({ filter: compressionFilter }));
 
-// Rate limiting for model endpoints
-const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  limit: 60,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { type: 'error', error: { code: 429, message: 'Zu viele Anfragen – bitte kurz warten.' } }
-});
+// ---- Lightweight rate limit (token bucket, no dependency) ---------------------
+function tokenBucket({ windowMs = 60_000, capacity = 60 } = {}){
+  const buckets = new Map(); // key -> {tokens, ts}
+  return function limiter(req, res, next){
+    // key by IP + route family
+    const fam = req.path.startsWith('/api/claude') ? 'claude' : 'other';
+    const key = `${req.ip}|${fam}`;
+    const nowTs = Date.now();
+    const b = buckets.get(key) || { tokens: capacity, ts: nowTs };
+    const elapsed = nowTs - b.ts;
+    const refill = Math.floor(elapsed / windowMs) * capacity;
+    b.tokens = Math.min(capacity, b.tokens + (refill > 0 ? refill : 0));
+    b.ts = refill > 0 ? nowTs : b.ts;
+
+    if (b.tokens <= 0) {
+      res.status(429).json({ type:'error', error:{ code:429, message:'Zu viele Anfragen – bitte kurz warten.' }});
+      return;
+    }
+    b.tokens -= 1;
+    buckets.set(key, b);
+    next();
+  };
+}
+const limiter = tokenBucket({ windowMs: 60_000, capacity: 60 });
 app.use(['/api/claude', '/api/claude-sse'], limiter);
 
 // Static hosting
@@ -137,7 +152,7 @@ app.get('/__sse/ping', (req, res) => {
     'X-Accel-Buffering': 'no'
   });
   res.write(`event: hello\ndata: ok\n\n`);
-  const hb = setInterval(() => res.write(`:hb ${Date.now()}\n\n`), 15000);
+  const hb = setInterval(() => res.write(`:hb ${Date.now()}\n\n`), 15015);
   req.on('close', () => { clearInterval(hb); try { res.end(); } catch {} });
 });
 
@@ -218,7 +233,7 @@ app.get('/api/daily', async (_req, res) => {
     const j = await r.json();
     const first = (j?.results || [])[0] || {};
     const payload = {
-      title: first.title || 'KI‑Notiz',
+      title: first.title || 'KI-Notiz',
       body: `${first?.title || ''}\n${first?.url || ''}`.trim(),
       stand: hhmm()
     };
@@ -229,7 +244,7 @@ app.get('/api/daily', async (_req, res) => {
       const local = JSON.parse(await fs.readFile(join(ROOT, 'api', 'daily.json'), 'utf-8'));
       res.json(local);
     } catch {
-      res.json({ title: 'KI‑Notiz', body: '(Daily nicht verfügbar)', stand: hhmm() });
+      res.json({ title: 'KI-Notiz', body: '(Daily nicht verfügbar)', stand: hhmm() });
     }
   }
 });
