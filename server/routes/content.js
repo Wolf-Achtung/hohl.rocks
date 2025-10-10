@@ -1,4 +1,3 @@
-// File: server/routes/content.js
 import { Router } from 'express';
 import { readFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
@@ -16,7 +15,6 @@ async function readJson(relPath) {
 }
 
 const router = Router();
-
 router.get('/api/news', async (_req, res, next) => { try { res.json(await readJson('news.json')); } catch (e) { next(e); } });
 router.get('/api/daily', async (_req, res, next) => { try { res.json(await readJson('daily.json')); } catch (e) { next(e); } });
 router.get('/api/models', async (_req, res, next) => { try { res.json(await readJson('models.json')); } catch (e) { next(e); } });
