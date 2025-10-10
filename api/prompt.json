@@ -1,0 +1,17 @@
+{
+  "stand": "heute",
+  "items": [
+    { "title": "Executive-Summary-Destiller", "prompt": "Verdichte den Text in 5 Kernaussagen + 1 Handlungssatz. Klare, präzise Sprache, keine Superlative. Bulletpoints." },
+    { "title": "Stakeholder-Briefing", "prompt": "Erzeuge ein 1-seitiges Briefing im Stil: 1) Ziel 2) Stand 3) Risiken 4) Nächste Schritte. Kurze Sätze, max. 140 Wörter je Abschnitt." },
+    { "title": "Fehler-Radar (Code)", "prompt": "Finde 3 wahrscheinliche Fehlerursachen im Code, verweise auf Stellen/Pattern und liefere je ein Minimal-Fix-Snippet." },
+    { "title": "Meeting-Sparer", "prompt": "Baue eine 30-Minuten-Agenda mit Time-Boxing, Entscheidungsfragen und Ownern. Abschließend klare Next-Step-Zuweisung." },
+    { "title": "E-Mail-Schärfer", "prompt": "Formuliere höflich, knapp. Enthält: 1 klare Bitte, 2 Alternativtermine, Betreff in 6 Wörtern. Ton: professionell." },
+    { "title": "RAG-Diagnose in 90s", "prompt": "Analysiere ein RAG-Setup: Quelle, Chunking, Embedding, Retrieval, Re-Ranking, Antwort. Je 1 Messvorschlag (Eval)." },
+    { "title": "Agent-SOP", "prompt": "Skizziere eine SOP für eine Agenten-Pipeline (Planer, Tools, Memory, Guardrails). Gib prägnante Checklisten." },
+    { "title": "GIST→FACT→CITE (Meeting)", "prompt": "Destilliere Notizen in: 1 GIST (1 Satz), 5 FACTS (Belege), 3 CITEs (Links), 2 NEXT (Tasks)." },
+    { "title": "Eval-Set-Builder", "prompt": "Erzeuge 10 Testfälle inkl. Edge-Cases, Gold-Answers und Messkriterien (pass/fail) für die Aufgabe oben." },
+    { "title": "One-Minute-Plan", "prompt": "Skizziere 5 Mikro-Schritte (<60 s) für sofortigen Fortschritt. Keine Theorie, nur Aktionen." },
+    { "title": "UX-Microcopy", "prompt": "Schreibe klare, freundliche Microcopy für Buttons, Tooltips und Toasts. Max. 8 Wörter, aktiv, inklusiv." },
+    { "title": "KI-Use-Case-Scoring", "prompt": "Bewerte 5 Use Cases nach Impact, Aufwand, Risiko, Reifegrad. Ergebnis als Tabelle (0–5) + Top-3-Empfehlung." }
+  ]
+}

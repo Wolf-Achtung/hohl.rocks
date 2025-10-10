@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="hohl-chat-base" content="https://hohlrocks-production.up.railway.app">
+  <title>hohl.rocks — Neon Gold UX++</title>
+
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/public/css/styles.css" />
+</head>
+<body>
+  <noscript>Bitte JavaScript aktivieren, um die interaktive KI‑Experience zu nutzen.</noscript>
+
+  <div class="stage" id="stage" aria-live="polite" aria-busy="false">
+    <video id="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+      <source src="/videos/road.mp4" type="video/mp4" />
+    </video>
+
+    <div id="shape-layer" class="shape-layer" role="region" aria-label="Interaktive Ideen‑Bubbles"></div>
+
+    <nav id="nav" class="nav" aria-label="Sektionen">
+      <button class="nav-btn" data-action="about" data-i18n="nav.about">Über</button>
+      <button class="nav-btn" data-action="news" data-i18n="nav.news">News</button>
+      <button class="nav-btn" data-action="prompts" data-i18n="nav.prompts">Prompts</button>
+      <button class="nav-btn" data-action="projects" data-i18n="nav.projects">Projekte</button>
+      <button class="nav-btn" data-action="settings" data-i18n="nav.settings">Settings</button>
+      <button id="lang-toggle" class="nav-btn" data-action="lang">DE/EN</button>
+      <button id="sound-toggle" class="nav-btn" data-action="sound" aria-pressed="false">Klang</button>
+    </nav>
+  </div>
+
+  <div id="popup-root" class="popup-root" aria-live="polite"></div>
+
+  <script type="module" src="/public/js/i18n.js"></script>
+  <script type="module" src="/public/js/settings-store.js"></script>
+  <script type="module" src="/public/js/claude-stream.js"></script>
+  <script type="module" src="/public/js/answer-popup.js"></script>
+  <script type="module" src="/public/js/ticker-items.js"></script>
+  <script type="module" src="/public/js/hero-shapes.js"></script>
+  <script type="module" src="/public/js/nav-popups.js"></script>
+  <script type="module" src="/public/js/news-search.js"></script>
+  <script type="module" src="/public/js/bg-video.js"></script>
+  <script type="module" src="/public/js/consent.js"></script>
+  <script type="module" src="/public/js/analytics.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+/* File: public/css/styles.css — accessible, cross‑browser */
+:root{
+  --bg: #0b0e13;
+  --panel: rgba(16,18,24,0.78);
+  --text: #dde3ea;
+  --muted: #a6b1bb;
+  --accent: #7af1d8;
+  --bubble-font: ui-rounded, 'SF Pro Rounded', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ui-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--ui-font); -webkit-font-smoothing:antialiased; }
+
+.stage{ position:relative; width:100%; height:100vh; overflow:hidden; }
+#bg-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter: contrast(.9) brightness(.9) saturate(.98); }
+
+.shape-layer{ position:relative; width:100%; height:100%; }
+.shape{
+  position:absolute; display:flex; align-items:center; justify-content:center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.85), rgba(255,255,255,.65));
+  box-shadow: 0 22px 60px rgba(0,0,0,.35);
+  cursor:pointer;
+  transition: transform .2s ease;
+  transform: translateZ(0);
+}
+.shape:focus-visible{ outline: 3px solid var(--accent); outline-offset: 4px; }
+.shape:hover{ transform: scale(1.03); }
+
+.shape .label{
+  max-width:80%;
+  text-align:center;
+  color:#0b0e13;
+  text-shadow: 0 1px 0 rgba(255,255,255,.35);
+  font-family: var(--bubble-font);
+  user-select: none;
+}
+.shape .title{ font-weight:800; font-size:15px; line-height:1.1; margin-bottom:2px; }
+.shape .sub{ font-weight:600; font-size:13px; line-height:1.2; opacity:.95; }
+
+.nav{
+  position:absolute; left:16px; top:16px; display:flex; gap:8px; z-index:10;
+  backdrop-filter: blur(6px); background: rgba(10,12,18,.35); padding:8px; border-radius: 999px;
+}
+.nav-btn{
+  appearance:none; border:0; border-radius: 999px; padding:8px 12px; background: rgba(255,255,255,.15);
+  color:var(--text); font-weight:700; cursor:pointer;
+}
+.nav-btn:hover{ background: rgba(255,255,255,.25); }
+
+.popup-root{ position:fixed; inset:0; pointer-events:none; }
+.popup{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.42); z-index: 20; pointer-events:auto; }
+.popup-inner{ min-width: min(780px, 92vw); max-width: 92vw; background: var(--panel); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.45); overflow: hidden; }
+.popup-header{ padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid rgba(255,255,255,.08); }
+.popup-header h3{ margin:0; font-size:16px; }
+.popup-body{ padding:16px; display:grid; gap:10px; }
+.popup-body textarea{ width:100%; min-height: 90px; resize:vertical; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,.15); background:rgba(0,0,0,.2); color:var(--text); font-family: var(--ui-font); }
+.popup-body .help{ white-space:pre-wrap; color:var(--muted); font-size:13px; }
+.popup-body .out{ white-space:pre-wrap; background:rgba(0,0,0,.2); border-radius:10px; padding:12px; min-height: 120px; }
+.popup-actions{ display:flex; gap:10px; justify-content:flex-end; padding:0 16px 16px; }
+.btn{ appearance:none; border:0; border-radius: 10px; padding:10px 14px; font-weight:700; cursor:pointer; }
+.btn-primary{ background: var(--accent); color: #0b0e13; }
+.btn-secondary{ background: rgba(255,255,255,.15); color: var(--text); }
+
+@media (max-width: 768px){
+  .shape .title{ font-size:14px }
+  .shape .sub{ font-size:12px }
+}
