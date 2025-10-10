@@ -1,4 +1,3 @@
-// File: public/js/hero-shapes.js
 import { tickerItemsFor } from './ticker-items.js';
 import { openCustomPopup } from './answer-popup.js';
 import { lang } from './i18n.js';

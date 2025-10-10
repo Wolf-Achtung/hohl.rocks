@@ -1,11 +1,6 @@
-// File: public/js/nav-popups.js
 import { t } from './i18n.js';
 
-async function fetchJson(url){
-  const r = await fetch(url);
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  return r.json();
-}
+async function fetchJson(url){ const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }
 
 function panel(title, html){
   const root = document.getElementById('popup-root');
@@ -37,9 +32,7 @@ document.addEventListener('click', async (ev) => {
       const data = live?.items?.length ? live.items : ((await fetchJson('/api/news')).items || []);
       const html = '<ul>' + data.slice(0, 12).map(it => '<li><a href="'+ (it.url || '#') + '" target="_blank" rel="noopener">'+ (it.title || 'News') + '</a></li>').join('') + '</ul>';
       panel(t('news'), html);
-    }catch(e){
-      panel(t('news'), '<p>Keine News verfügbar.</p>');
-    }
+    }catch{ panel(t('news'), '<p>Keine News verfügbar.</p>'); }
   }
   else if (action === 'prompts'){
     panel(t('prompts'), '<p>Wähle eine Bubble – sie enthält bereits präzise Prompts mit Micro‑Guide.</p>');
