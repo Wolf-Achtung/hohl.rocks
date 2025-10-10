@@ -1,55 +1,137 @@
-// public/js/hero-shapes.js — Jellyfish Motion Bubbles (readability+, help piping)
+// File: public/js/hero-shapes.js
+// Bubble/Jellyfish motion with readable labels inside the shape (desktop 24, mobile 10)
+
 import { __TICKER_ITEMS } from './ticker-items.js';
-import { openInputBubble, openAnswerPopup } from './answer-popup.js';
-import { fetchDaily } from './claude-stream.js';
+import { openCustomPopup } from './answer-popup.js';
 
-const layer = document.getElementById('shape-layer');
+const layer = document.querySelector('.shape-layer');
 
-const CFG = { MAX_CONCURRENT: 7, SPAWN_EVERY_MS: 3400, LIFE_MIN: 22000, LIFE_MAX: 36000, CLICK_EXTEND_MS: 20000, FADE_MS: 1200 };
-const COLORS = ['rgba(255,240,0,.55)','rgba(255,80,160,.55)','rgba(0,210,140,.55)','rgba(90,160,255,.55)','rgba(250,120,70,.55)','rgba(180,120,255,.55)'];
+const BUBBLE_SIZE_MIN = 140;
+const BUBBLE_SIZE_MAX = 260;
 
-function mkThread(label){ const b=new TextEncoder().encode(label||'bubble'); let h=0; for(let i=0;i<b.length;i++) h=(h*131+b[i])>>>0; return `t_${h.toString(16)}`;}
-function rand(a,b){return a+Math.random()*(b-a)} function pick(a){return a[Math.floor(Math.random()*a.length)]}
-const entries=new Set(); let lastSpawn=0;
+function deviceCount() {
+  const isMobile = Math.max(window.innerWidth, window.innerHeight) < 768;
+  return isMobile ? 10 : 24; // per Wolf
+}
+const COLORS = [
+  'rgba(250, 255, 150, .55)',
+  'rgba(122, 241, 216, .55)',
+  'rgba(168, 199, 255, .55)',
+  'rgba(255, 179, 214, .55)',
+  'rgba(201, 255, 175, .55)'
+];
 
-(async()=>{ try{ const d=await fetchDaily(); const i=__TICKER_ITEMS.findIndex(x=>x.label?.toLowerCase?.().includes('heute neu')); if(i>=0&&d?.title){ __TICKER_ITEMS[i]={label:`Heute neu: ${d.title}`, explain:'Frisches Micro‑Topic (aus News destilliert).', placeholder:'—', action:'info', help:'Tages‑Notiz, automatisch kuratiert.', prompt:d.body||'Tagesinfo.'}; } }catch{} })();
+function clamp2Lines(el) {
+  el.style.display = '-webkit-box';
+  el.style.webkitBoxOrient = 'vertical';
+  el.style.webkitLineClamp = '2';
+  el.style.overflow = 'hidden';
+}
 
-function spawnOne(){
-  if(!layer || entries.size>=CFG.MAX_CONCURRENT) return;
-  const it=pick(__TICKER_ITEMS);
-  const el=document.createElement('div'); el.className='shape'; el.style.background=pick(COLORS); el.style.willChange='transform, opacity';
-  el.dataset.label=it.label||''; el.dataset.prompt=it.prompt||''; el.dataset.explain=it.explain||''; el.dataset.placeholder=it.placeholder||''; el.dataset.action=it.action||'input'; el.dataset.threadId=mkThread(it.label); el.dataset.help=it.help||'';
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)] }
 
-  const w=layer.clientWidth,h=layer.clientHeight; const x=rand(w*.15,w*.85), y=rand(h*.2,h*.85); const r=rand(120,230);
+function createBubble(item, i) {
+  const el = document.createElement('div');
+  el.className = 'shape';
+  const r = Math.round(BUBBLE_SIZE_MIN + Math.random()*(BUBBLE_SIZE_MAX - BUBBLE_SIZE_MIN));
+  el.style.width = `${r}px`;
+  el.style.height = `${r}px`;
+  el.style.setProperty('--bubble-color', pick(COLORS));
 
-  const label=document.createElement('div'); label.className='label'; label.textContent=it.label||''; el.appendChild(label);
-  if(it.explain){ const hint=document.createElement('div'); hint.className='hint'; hint.textContent=it.explain; el.appendChild(hint); }
+  const label = document.createElement('div');
+  label.className = 'label';
 
-  layer.appendChild(el);
-  const entry={el,born:performance.now(),x,y,r,vx:rand(-.05,.05),vy:rand(-.035,.035),sPhase:rand(0,Math.PI*2),sSpeed:rand(.001,.0021),life:rand(CFG.LIFE_MIN,CFG.LIFE_MAX),fadeOut:false,fadeStart:0,_clicks:0};
-  el.style.left=`${x}px`; el.style.top=`${y}px`; el.style.width=`${r*2}px`; el.style.height=`${r*2}px`; el.style.opacity='0'; requestAnimationFrame(()=>{el.style.opacity='0.98'});
+  const title = document.createElement('div');
+  title.style.fontWeight = '800';
+  title.style.marginBottom = '2px';
+  title.textContent = item.label;
 
-  el.addEventListener('click',()=>{
-    try{ window.Ambient && window.Ambient.ensureStart?.(true);}catch{}
-    document.querySelectorAll('.shape').forEach(s=>{ if(s!==el) s.style.opacity='0.33';}); setTimeout(()=>document.querySelectorAll('.shape').forEach(s=>{ if(s!==el) s.style.opacity='0.42';}),1200);
-    if(entry._clicks<2){ entry._clicks++; entry.life+=CFG.CLICK_EXTEND_MS; }
-    const action=el.dataset.action, label=el.dataset.label||'', prompt=el.dataset.prompt||'', explain=el.dataset.explain||'', placeholder=el.dataset.placeholder||'', threadId=el.dataset.threadId||'', help=el.dataset.help||'';
-    if(action==='input') openInputBubble({ title:label, explain, placeholder, prompt, threadId, help });
-    else openAnswerPopup({ title:label, explain, content:prompt });
+  const sub = document.createElement('div');
+  sub.style.fontWeight = '600';
+  sub.style.opacity = '.9';
+  sub.textContent = (item.explain || '').trim();
+  clamp2Lines(sub);
+
+  label.append(title, sub);
+  el.appendChild(label);
+
+  const w = layer.clientWidth, h = layer.clientHeight;
+  const x = Math.random() * (w - r) + r/2;
+  const y = Math.random() * (h - r) + r/2;
+
+  const entity = {
+    el, r: r/2,
+    x, y,
+    dx: (Math.random()*0.8 + 0.25) * (Math.random() < 0.5 ? -1 : 1),
+    dy: (Math.random()*0.6 + 0.25) * (Math.random() < 0.5 ? -1 : 1),
+    wob: Math.random()*Math.PI*2,
+    item
+  };
+
+  el.addEventListener('click', () => openItem(entity.item), { passive: true });
+  return entity;
+}
+
+function openItem(item) {
+  const box = openCustomPopup({
+    title: item.label,
+    explain: item.explain,
+    placeholder: item.placeholder || '',
+    help: item.help || ''
   });
-
-  entries.add(entry);
+  box.ok.addEventListener('click', () => {
+    box.send({
+      prompt: (item.prompt || '').replace('{{input}}', box.input.value || ''),
+      system: 'Bitte in gutem, präzisem Deutsch antworten. Klare Struktur, Überschriften und Bulletpoints, wenn sinnvoll.',
+      model: '',
+      thread: item.thread || ''
+    });
+  }, { once: true });
 }
 
-function update(){
-  const t=performance.now(); if(t-lastSpawn>CFG.SPAWN_EVERY_MS){ spawnOne(); lastSpawn=t; }
-  const w=layer?.clientWidth||0, h=layer?.clientHeight||0;
-  for(const e of [...entries]){
-    const age=t-e.born; if(age>e.life && !e.fadeOut){ e.fadeOut=true; e.fadeStart=t; }
-    e.x+=e.vx; e.y+=e.vy; if(e.x<60||e.x>w-60) e.vx*=-1; if(e.y<60||e.y>h-60) e.vy*=-1;
-    e.sPhase+=e.sSpeed; const s=.92+Math.sin(e.sPhase)*.06; e.el.style.transform=`translate(-50%,-50%) scale(${s})`; e.el.style.left=`${e.x}px`; e.el.style.top=`${e.y}px`;
-    if(e.fadeOut){ const k=Math.min(1,(t-e.fadeStart)/CFG.FADE_MS); e.el.style.opacity=String(.98*(1-k)); if(k>=1){ e.el.remove(); entries.delete(e);} }
+let entities = [];
+let COUNT = deviceCount();
+
+function init() {
+  if (!layer) return;
+  layer.innerHTML = '';
+  COUNT = deviceCount();
+  entities = [];
+  for (let i=0;i<COUNT;i++) {
+    const item = __TICKER_ITEMS[i % __TICKER_ITEMS.length];
+    const ent = createBubble(item, i);
+    layer.appendChild(ent.el);
+    ent.el.style.transform = `translate3d(${ent.x - ent.r}px, ${ent.y - ent.r}px, 0)`;
+    entities.push(ent);
   }
-  requestAnimationFrame(update);
 }
-requestAnimationFrame(update);
+
+function tick() {
+  const w = layer.clientWidth, h = layer.clientHeight;
+  for (const e of entities) {
+    const wobbleX = Math.sin(e.wob += 0.01) * 0.4;
+    const wobbleY = Math.cos(e.wob) * 0.3;
+
+    e.x += e.dx + wobbleX;
+    e.y += e.dy + wobbleY;
+
+    const margin = e.r + 6;
+    if (e.x < margin || e.x > w - margin) e.dx *= -1;
+    if (e.y < margin || e.y > h - margin) e.dy *= -1;
+
+    e.el.style.transform = `translate3d(${Math.round(e.x - e.r)}px, ${Math.round(e.y - e.r)}px, 0)`;
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+let rafId = 0;
+function start(){ cancelAnimationFrame(rafId); rafId = requestAnimationFrame(tick); }
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) cancelAnimationFrame(rafId);
+  else start();
+});
+
+window.addEventListener('resize', () => { init(); }, { passive:true });
+
+init();
+start();

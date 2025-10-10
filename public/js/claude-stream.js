@@ -1,9 +1,10 @@
-// File: public/js/claude-stream.js — SSE/JSON Client (resilient)
+// File: public/js/claude-stream.js
+// Browser client: resilient SSE with JSON fallback and concise errors (429-friendly)
 
 const BASE = (() => {
   const meta = document.querySelector('meta[name="hohl-chat-base"]');
   const raw = (meta?.content || '').trim();
-  return raw.endsWith('/') ? raw.slice(0,-1) : raw;
+  return raw ? (raw.endsWith('/') ? raw.slice(0, -1) : raw) : '';
 })();
 
 function abs(path) {
@@ -11,11 +12,31 @@ function abs(path) {
   return `${BASE}${path}`;
 }
 
+function conciseError(e) {
+  try {
+    if (typeof e === 'string') return e;
+    if (e?.error?.message) return e.error.message;
+    if (e?.message) return e.message;
+  } catch {}
+  return 'Unbekannter Fehler';
+}
+
+function friendlyErrorText(err) {
+  const msg = conciseError(err);
+  const code = err?.error?.code || err?.code;
+  const retry = err?.error?.retryAfter || err?.retryAfter || null;
+  if (String(code) === '429') {
+    const wait = retry ? ` Wartezeit: ${retry}s.` : '';
+    return `Zu viele Anfragen – bitte kurz warten.${wait}`;
+  }
+  return msg || 'Etwas ist schiefgegangen.';
+}
+
 export async function streamClaude(
-  { prompt, system = 'hohl.rocks', model = '', thread = '' },
+  { prompt, system = '', model = '', thread = '' },
   { onToken, onDone, onError } = {}
 ) {
-  const invokeJSONFallback = async () => {
+  const fallbackJSON = async () => {
     try {
       const r = await fetch(abs('/api/claude'), {
         method: 'POST',
@@ -23,16 +44,17 @@ export async function streamClaude(
         body: JSON.stringify({ prompt, system, model, thread })
       });
       const j = await r.json();
-      const t = j?.text || j?.answer || '';
-      if (t && typeof onToken === 'function') onToken(t);
-      if (typeof onDone === 'function') onDone();
+      if (!r.ok || j?.type === 'error') throw j;
+      const t = j?.text || '';
+      if (t && onToken) onToken(t);
+      onDone?.(j);
     } catch (e) {
-      if (typeof onError === 'function') onError(e);
+      onError?.(friendlyErrorText(e));
     }
   };
 
   const ctrl = new AbortController();
-  const handshakeTimer = setTimeout(() => ctrl.abort('SSE handshake timeout'), 12000);
+  const t = setTimeout(() => ctrl.abort('SSE handshake timeout'), 12_000);
 
   try {
     const res = await fetch(abs('/api/claude-sse'), {
@@ -41,33 +63,17 @@ export async function streamClaude(
       body: JSON.stringify({ prompt, system, model, thread }),
       signal: ctrl.signal
     });
-    clearTimeout(handshakeTimer);
-
-    if (!res.ok || !res.body) {
-      await invokeJSONFallback();
-      return;
-    }
+    clearTimeout(t);
+    if (!res.ok || !res.body) return fallbackJSON();
 
     const dec = new TextDecoder();
     const reader = res.body.getReader();
     let buf = '';
-    let idleTimer = null;
+    let queue = [];
+    let idle = setTimeout(() => { try { reader.cancel(); } catch{}; fallbackJSON(); }, 30_000);
+    const resetIdle = () => { clearTimeout(idle); idle = setTimeout(() => { try { reader.cancel(); } catch{}; fallbackJSON(); }, 30_000); };
 
-    const resetIdle = () => {
-      if (idleTimer) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => {
-        try { reader.cancel(); } catch {}
-        invokeJSONFallback();
-      }, 30000);
-    };
-    resetIdle();
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      resetIdle();
-      buf += dec.decode(value, { stream: true });
-
+    const flush = () => {
       let idx;
       while ((idx = buf.indexOf('\n\n')) >= 0) {
         const frame = buf.slice(0, idx); buf = buf.slice(idx + 2);
@@ -77,36 +83,30 @@ export async function streamClaude(
           if (line.startsWith('data:'))  data += line.slice(5).trim();
         }
         if (event === 'delta') {
-          try { const j = JSON.parse(data); const t = j?.text ?? ''; if (t && typeof onToken === 'function') onToken(t); } catch {}
+          try { const j = JSON.parse(data); if (j?.text) onToken?.(j.text); } catch {}
         }
         if (event === 'error') {
-          try { const j = JSON.parse(data); if (typeof onError === 'function') onError(new Error(j?.message || 'SSE error')); } catch {}
-          await invokeJSONFallback();
-          return;
+          try { 
+            const j = JSON.parse(data);
+            // Show friendly immediately
+            onError?.(friendlyErrorText(j));
+            queue.push(j);
+          } catch { onError?.('Stream‑Fehler'); }
         }
-        if (event === 'done') { if (typeof onDone === 'function') onDone(); return; }
+        if (event === 'done') { onDone?.(); }
       }
+    };
+
+    let done = false;
+    while (!done) {
+      const { value, done: d } = await reader.read();
+      if (d) break;
+      resetIdle();
+      buf += dec.decode(value, { stream: true });
+      flush();
     }
-    if (typeof onDone === 'function') onDone();
-  } catch (_e) {
-    await invokeJSONFallback();
+    flush();
+  } catch {
+    fallbackJSON();
   }
-}
-
-export async function fetchNews() {
-  const r = await fetch(abs('/api/news'));
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json(); // { items:[{title,url,source}], stand:'HH:MM' }
-}
-
-export async function fetchTopPrompts() {
-  const r = await fetch(abs('/api/prompts/top'));
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
-
-export async function fetchDaily() {
-  const r = await fetch(abs('/api/daily'));
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
 }
