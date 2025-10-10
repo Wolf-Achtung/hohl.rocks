@@ -1,0 +1,14 @@
+// File: public/js/perf-adaptive.js
+(function(){
+  let frames = 0; const start = performance.now();
+  function tick(){
+    frames++;
+    if (performance.now() - start > 1500) {
+      const fps = Math.round(frames / ((performance.now() - start)/1000));
+      localStorage.setItem('perf_bucket', String(fps));
+      return;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
