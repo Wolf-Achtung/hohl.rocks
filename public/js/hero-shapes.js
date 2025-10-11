@@ -1,6 +1,7 @@
 import { tickerItemsFor } from './ticker-items.js';
 import { openCustomPopup } from './answer-popup.js';
 import { lang } from './i18n.js';
+import { sfx } from './sfx.js';
 
 const layer = document.getElementById('shape-layer');
 
@@ -35,7 +36,7 @@ function makeBubble(item){
   el.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,.96), ${c})`;
 
   el.setAttribute('aria-label', item.label);
-  el.addEventListener('click', () => openCustomPopup(item));
+  el.addEventListener('click', () => { sfx.click(); openCustomPopup(item); });
 
   const label = document.createElement('div');
   label.className = 'label';
@@ -65,6 +66,7 @@ function spawnOne(){
   layer.append(el);
   requestAnimationFrame(() => el.classList.add('live'));
   live.add(el);
+  sfx.spawn();
   const lifetime = 10000 + Math.floor(Math.random()*5000);
   setTimeout(() => retire(el), lifetime);
 }
