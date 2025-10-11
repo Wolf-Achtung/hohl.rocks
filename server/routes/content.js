@@ -23,7 +23,6 @@ router.get('/api/models', async (_req, res, next) => { try { res.json(await read
 router.get('/api/rubrics', async (_req, res, next) => { try { res.json(await readJson('rubrics.json')); } catch (e) { next(e); } });
 router.get('/api/prompts/top', async (_req, res, next) => { try { res.json(await readJson('prompt.json')); } catch (e) { next(e); } });
 
-// Tavily daily news (AI general)
 router.get('/api/news/live', async (req, res) => {
   const key = process.env.TAVILY_API_KEY || '';
   if (!key) return res.status(503).json({ ok: false, error: 'TAVILY_API_KEY fehlt' });
@@ -34,11 +33,15 @@ router.get('/api/news/live', async (req, res) => {
   try{
     const body = { api_key: key, query, max_results: Math.min(Math.max(max, 1), 30), time_range, search_depth, include_answer: false, include_images: false, include_raw_content: false };
     const r = await fetch('https://api.tavily.com/search', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-    if (!r.ok) return res.status(500).json({ ok: false, error: 'Tavily HTTP '+r.status, detail: (await r.text()).slice(0, 280) });
+    if (!r.ok) {
+      const detail = await r.text();
+      console.error('[Tavily] HTTP', r.status, detail.slice(0,300));
+      return res.status(500).json({ ok: false, error: 'Tavily HTTP '+r.status, detail: detail.slice(0, 280) });
+    }
     const j = await r.json();
     const items = (j.results || []).map(it => ({ title: it.title || 'Untitled', url: it.url, snippet: it.content || '', score: it.score || 0, published_time: it.published_time || it.published || null }));
     res.json({ ok: true, query, items });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message || String(e) }); }
+  } catch (e) { console.error('[Tavily] error', e); res.status(500).json({ ok: false, error: e.message || String(e) }); }
 });
 
 // Perplexity weekly / daily AI & security digest
@@ -97,7 +100,11 @@ Return 8-16 items. Each item as: title, url, summary (1-2 sentences), severity (
         response_format: { type:'json_schema', json_schema: { schema } }
       })
     });
-    if (!r.ok) return res.status(500).json({ ok:false, error:'Perplexity HTTP '+r.status, detail: (await r.text()).slice(0,280) });
+    if (!r.ok) {
+      const detail = await r.text();
+      console.error('[Perplexity] HTTP', r.status, detail.slice(0,300));
+      return res.status(500).json({ ok:false, error:'Perplexity HTTP '+r.status, detail: detail.slice(0,280) });
+    }
     const j = await r.json();
     let parsed = null;
     try{ parsed = JSON.parse(j.choices?.[0]?.message?.content || '{}'); }catch{ parsed = {}; }
@@ -113,6 +120,7 @@ Return 8-16 items. Each item as: title, url, summary (1-2 sentences), severity (
     cacheSet(cacheKey, out);
     res.json(out);
   } catch(e){
+    console.error('[Perplexity] error', e);
     res.status(500).json({ ok:false, error: e.message || String(e) });
   }
 });
