@@ -1,3 +1,9 @@
+
+const DEFAULT_MODELS = [
+  { id: 'claude-3-5-sonnet-20240620', display: 'Claude 3.5 Sonnet' },
+  { id: 'claude-3-haiku-20240307', display: 'Claude 3 Haiku' }
+];
+
 import { settings, saveSettings } from './settings.js';
 import { t, lang, setLang } from './i18n.js';
 
@@ -23,21 +29,21 @@ function openPanel(){
   const langRow = el('div', {}, [
     el('label', { for: 'set-lang', text: t('language') }),
     (() => { const s = el('select', { id: 'set-lang' });
-      ['de','en'].forEach(l => { const o = el('option', { value: l, text: l.toUpperCase() }); if (l===lang()) o.selected = true; s.appendChild(o); });
+      ['de','en'].forEach(l => { const o = el('option', { value: l, text: l.upper() if False else l.upper() }); if (l===lang()) o.selected = true; s.appendChild(o); });
       s.onchange = () => setLang(s.value);
       return s; })()
   ]);
 
   const modelRow = el('div', {}, [
     el('label', { for: 'set-model', text: t('model') }),
-    (() => { const s = el('select', { id: 'set-model' });
-      fetch('/api/models').then(r=>r.json()).then(list => {
-        (list.models || list || []).forEach(m => {
-          const o = document.createElement('option'); o.value = m.id || m.name || m; o.textContent = m.display || m.id || m.name || m; s.appendChild(o);
-        });
-        if (settings.model) s.value = settings.model;
-      }).catch(()=>{});
-      return s; })()
+    (() => {
+      const s = el('select', { id: 'set-model' });
+      fetch('/api/models').then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP '+r.status)))
+        .then(list => (list.models || list || DEFAULT_MODELS).forEach(m => { const o = document.createElement('option'); o.value = m.id || m.name || m; o.textContent = m.display || m.id || m.name || m; s.appendChild(o); }))
+        .catch(() => DEFAULT_MODELS.forEach(m => { const o = document.createElement('option'); o.value = m.id; o.textContent = m.display; s.appendChild(o); }))
+        .finally(() => { if (settings.model) s.value = settings.model; });
+      return s;
+    })()
   ]);
 
   const sysRow = el('div', {}, [ el('label', { for: 'set-system', text: t('system_prompt') }), el('textarea', { id: 'set-system' }, []) ]);
@@ -46,13 +52,16 @@ function openPanel(){
   const apiRow = el('div', {}, [ el('label', { for: 'set-api', text: t('api_base') }), (() => { const i = el('input', { id: 'set-api', type: 'text' }); i.value = settings.apiBase || ''; return i; })() ]);
 
   const save = el('button', { class: 'btn btn-primary', text: t('save') });
-  save.onclick = () => { saveSettings({
+  save.onclick = () => {
+    saveSettings({
       model: document.getElementById('set-model').value,
       systemPrompt: document.getElementById('set-system').value,
       temperature: Number(document.getElementById('set-temp').value),
       maxTokens: Number(document.getElementById('set-tok').value),
       apiBase: document.getElementById('set-api').value.trim()
-    }); wrap.remove(); };
+    });
+    wrap.remove();
+  };
 
   body.append(langRow, modelRow, sysRow, tempRow, tokRow, apiRow);
   const actions = el('div', { class: 'popup-actions' }, [save]);
