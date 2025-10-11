@@ -20,7 +20,7 @@ body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--ui-fo
 @keyframes float { 0%{transform:translateY(0)} 50%{transform:translateY(-8px)} 100%{transform:translateY(0)} }
 
 .shape{
-  --r: 180; /* wird per JS gesetzt: Bubble-Durchmesser in px */
+  --r: 180;
   position:absolute !important;
   appearance:none; border:0;
   display:flex; align-items:center; justify-content:center;
@@ -31,7 +31,7 @@ body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--ui-fo
   filter: saturate(120%);
   opacity:0; transform: scale(.92);
   transition: opacity .9s ease, transform .9s ease, filter 1.2s ease, box-shadow 1.2s ease;
-  overflow: hidden; /* verhindert, dass Text/Shadow übersteht */
+  overflow: hidden;
 }
 .shape.live{ opacity:1; transform: scale(1); animation: float 6s ease-in-out infinite, neonPulse 12s ease-in-out infinite; }
 .shape.exit{ opacity:0; transform: scale(.9); filter: saturate(80%) brightness(85%); }
@@ -57,16 +57,8 @@ body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--ui-fo
   line-height: 1.18;
   padding: min(10px, calc(var(--r) * 0.07));
 }
-.shape .title{
-  font-weight: 950;
-  font-size: clamp(14px, calc(var(--r) / 10.3), 26px);
-  margin: 0 0 4px;
-}
-.shape .sub{
-  font-weight: 650;
-  font-size: clamp(12px, calc(var(--r) / 12.6), 18px);
-  opacity:.95;
-}
+.shape .title{ font-weight: 950; font-size: clamp(14px, calc(var(--r) / 10.3), 26px); margin: 0 0 4px; }
+.shape .sub{ font-weight: 650; font-size: clamp(12px, calc(var(--r) / 12.6), 18px); opacity:.95; }
 
 .nav{
   position:absolute; left:16px; top:16px; display:flex; flex-wrap:wrap; gap:8px; z-index:5;
@@ -101,7 +93,7 @@ body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--ui-fo
 .no-video #bg-video{ display:none; }
 .no-video .stage{ background: radial-gradient(1200px 500px at 30% 40%, rgba(255,255,255,.05), transparent 60%), #0a0c12; }
 
-/* News/Prompts panels */
+/* Panels */
 .list{ display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:10px; }
 @media (min-width: 700px){ .list{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
 .card{ padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.2); }
