@@ -1,4 +1,3 @@
-
 /* server/index.js — Express server with SSE, static hosting, healthz and content routes.
    "Gold-Standard" defaults: trust proxy, helmet-lite via headers, compression, rate limits. */
 import express from 'express';
