@@ -5,10 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-  <!-- API-Basis: Railway-API; leer lassen = gleiche Origin -->
   <meta name="hohl-chat-base" content="https://hohlrocks-production.up.railway.app">
-
-  <!-- Analytics (Umami) – wird erst nach Consent geladen -->
   <meta name="umami-src" content="">
   <meta name="umami-website-id" content="">
 
@@ -23,7 +20,7 @@
 
   <div class="stage" id="stage" aria-live="polite" aria-busy="false">
     <video id="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
-      <source src="/videos/road.mp4" type="video/mp4" />
+      <source id="bg-src" src="/videos/road.mp4" type="video/mp4" />
     </video>
 
     <div id="shape-layer" class="shape-layer" role="region" aria-label="Interaktive Ideen‑Bubbles"></div>
