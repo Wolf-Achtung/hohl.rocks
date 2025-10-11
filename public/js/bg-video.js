@@ -11,6 +11,5 @@ if (v) {
     console.warn('[bg-video] failed to load', v.error);
     document.body.classList.add('no-video');
   });
-  // Fallback: falls Events ausbleiben
   setTimeout(tryPlay, 500);
 }

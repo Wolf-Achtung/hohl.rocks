@@ -24,8 +24,9 @@ function makeBubble(item){
   el.className = 'shape';
   const size = Math.round(SIZE_MIN + Math.random()*(SIZE_MAX-SIZE_MIN));
   el.style.width = el.style.height = size + 'px';
-  // position (px) within layer bounds
-  const W = layer.clientWidth, H = layer.clientHeight;
+
+  const rect = layer.getBoundingClientRect();
+  const W = rect.width, H = rect.height;
   const x = Math.max(8, Math.floor(Math.random() * Math.max(8, W - size - 8)));
   const y = Math.max(8, Math.floor(Math.random() * Math.max(8, H - size - 8)));
   el.style.left = x + 'px'; el.style.top = y + 'px';
@@ -62,11 +63,9 @@ function spawnOne(){
   const item = nextItem();
   const el = makeBubble(item);
   layer.append(el);
-  // enter → live
   requestAnimationFrame(() => el.classList.add('live'));
   live.add(el);
-
-  const lifetime = 10000 + Math.floor(Math.random()*5000); // 10–15s
+  const lifetime = 10000 + Math.floor(Math.random()*5000);
   setTimeout(() => retire(el), lifetime);
 }
 
@@ -79,13 +78,12 @@ function retire(el){
 
 function tick(){
   spawnOne();
-  setTimeout(tick, 1400 + Math.floor(Math.random()*1000)); // alle ~1.4–2.4s
+  setTimeout(tick, 1400 + Math.floor(Math.random()*1000));
 }
 
 function start(){
   if (running) return;
   running = true;
-  // bootstrap 1–2 bubbles sofort
   spawnOne(); setTimeout(spawnOne, 800);
   tick();
 }
@@ -93,9 +91,8 @@ function start(){
 function resetForLang(){
   queue = tickerItemsFor(lang());
   idx = 0;
-  // existierende bleiben und laufen aus; neue entstehen in neuer Sprache
 }
 
 start();
-window.addEventListener('resize', () => { /* Positionen bleiben; neue Bubbles berücksichtigen Größe automatisch */ });
+window.addEventListener('resize', () => {});
 document.addEventListener('lang-changed', resetForLang);
