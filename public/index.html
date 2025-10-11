@@ -13,6 +13,21 @@
 
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+  <!-- Critical CSS: garantiert Overlay/Shapes auch wenn externes CSS nicht lädt/cached ist -->
+  <style>
+    :root{ --bg:#0a0c12; --text:#e8edf4; --ui-font:system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--ui-font); -webkit-font-smoothing:antialiased; }
+    .stage{ position:relative; width:100%; height:100vh; overflow:hidden; }
+    #bg-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .shape-layer{ position:absolute; inset:0; z-index:2; }
+    .nav{ position:absolute; left:16px; top:16px; z-index:5; }
+    .shape{ position:absolute !important; appearance:none; border:0; border-radius:50% !important; display:flex; align-items:center; justify-content:center; }
+    .shape .label{ max-width:80%; text-align:center; color:#0b0e13; }
+  </style>
+
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
