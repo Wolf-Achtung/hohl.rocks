@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import { readFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
@@ -23,6 +22,7 @@ router.get('/api/models', async (_req, res, next) => { try { res.json(await read
 router.get('/api/rubrics', async (_req, res, next) => { try { res.json(await readJson('rubrics.json')); } catch (e) { next(e); } });
 router.get('/api/prompts/top', async (_req, res, next) => { try { res.json(await readJson('prompt.json')); } catch (e) { next(e); } });
 
+// Tavily (tagesaktuell)
 router.get('/api/news/live', async (req, res) => {
   const key = process.env.TAVILY_API_KEY || '';
   if (!key) return res.status(503).json({ ok: false, error: 'TAVILY_API_KEY fehlt' });
@@ -44,7 +44,7 @@ router.get('/api/news/live', async (req, res) => {
   } catch (e) { console.error('[Tavily] error', e); res.status(500).json({ ok: false, error: e.message || String(e) }); }
 });
 
-// Perplexity weekly / daily AI & security digest
+// Perplexity weekly / daily AI & security digest (korrekte Messages/Headers)
 const cache = new Map(); // key -> {ts,data}
 function cacheGet(key, maxAgeMs){ const hit = cache.get(key); if (hit && (Date.now()-hit.ts) < maxAgeMs) return hit.data; return null; }
 function cacheSet(key, data){ cache.set(key, { ts: Date.now(), data }); }
