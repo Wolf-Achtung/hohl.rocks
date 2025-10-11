@@ -16,14 +16,14 @@ function panel(title, html){
   const body = document.createElement('div'); body.className = 'popup-body';
   const container = document.createElement('div'); container.innerHTML = html;
   body.append(container);
-  inner.append(head, body); wrap.append(inner);
+  inner.append(head, body, (()=>{const f=document.createElement('div'); f.className='popup-actions'; const b=document.createElement('button'); b.className='btn btn-secondary'; b.textContent=t('close'); b.onclick=()=>wrap.remove(); f.append(b); return f;})());
+  wrap.append(inner);
   root.append(wrap);
   return { wrap, body, container };
 }
 
 function timeAgo(d){ const diff=(Date.now()-new Date(d||Date.now()).getTime())/1000; const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60); if (h>0) return h+'h'; if (m>0) return m+'m'; return Math.floor(diff)+'s'; }
 function newsItem(it){ const title=it.title||'Untitled', url=it.url||'#', snippet=it.snippet||it.summary||it.content||'', age=it.published_time||it.published||''; return `<article class="card"><h4><a class="link" href="${url}" target="_blank" rel="noopener">${title}</a></h4><p>${snippet}</p><div class="small">${age?('vor '+timeAgo(age)):''} ${it.severity?('• '+it.severity):''}</div></article>`; }
-
 function copy(text, target){ navigator.clipboard?.writeText(text).then(()=>{ if (target){ target.textContent=t('copied'); target.classList.add('copy-ok'); setTimeout(()=>{ target.textContent=t('copy'); target.classList.remove('copy-ok'); }, 1600); } }); }
 function weeklyPick(seed, arr, count){ const out=[]; let idx=seed%arr.length; for(let i=0;i<count;i++){ out.push(arr[idx%arr.length]); idx+=7; } return out; }
 
@@ -69,22 +69,31 @@ document.addEventListener('click', async (ev) => {
   else if (action === 'news'){
     const p = panel(t('news'), '<p class="small">Lade tagesaktuelle KI‑News & Sicherheitsmeldungen …</p>');
     try{
-      const tav = await fetchJson(absApi('/api/news/live')).catch(()=>null);
-      const perDay = await fetchJson(absApi('/api/ai-weekly?time_range=day')).catch(()=>null);
-      const perSec = await fetchJson(absApi('/api/ai-weekly?topic=security&time_range=week')).catch(()=>null);
+      const results = await Promise.allSettled([
+        fetchJson(absApi('/api/news/live')), // Tavily
+        fetchJson(absApi('/api/ai-weekly?time_range=day')), // Perplexity daily
+        fetchJson(absApi('/api/ai-weekly?topic=security&time_range=week')) // Perplexity weekly security
+      ]);
+      const tav = results[0].status==='fulfilled' ? results[0].value : null;
+      const day = results[1].status==='fulfilled' ? results[1].value : null;
+      const sec = results[2].status==='fulfilled' ? results[2].value : null;
       const items = [];
       if (tav?.items?.length) items.push(...tav.items);
-      if (perDay?.items?.length) items.push(...perDay.items);
+      if (day?.items?.length) items.push(...day.items);
       let html = '';
       if (items.length){
         html += '<h4>Aktuell</h4><div class="list">' + items.slice(0, 18).map(newsItem).join('') + '</div>';
       }
-      if (perSec?.items?.length){
-        html += '<h4>Warnungen & Sicherheit (Woche)</h4><div class="list">' + perSec.items.slice(0, 12).map(newsItem).join('') + '</div>';
+      if (sec?.items?.length){
+        html += '<h4>Warnungen & Sicherheit (Woche)</h4><div class="list">' + sec.items.slice(0, 12).map(newsItem).join('') + '</div>';
       }
-      if (!html) html = '<p>Keine News verfügbar.</p>';
-      p.container.innerHTML = html;
-    }catch{ p.container.innerHTML = '<p>Keine News verfügbar.</p>'; }
+      if (!html){
+        const why = results.map((r,i)=> r.status==='rejected' ? `Quelle ${i+1}: ${r.reason}` : null).filter(Boolean).join(' • ');
+        p.container.innerHTML = '<p>Keine News verfügbar.</p>' + (why?`<p class="small">${why}</p>`:'');
+      } else {
+        p.container.innerHTML = html;
+      }
+    }catch(e){ p.container.innerHTML = '<p>Keine News verfügbar.</p>'; }
   }
   else if (action === 'prompts'){
     const p = panel(t('prompts'), '<p class="small">Wöchentliche Auswahl für Büro‑Workflows. Direkt kopierbar.</p>');
