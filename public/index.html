@@ -4,16 +4,12 @@
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
   <meta name="hohl-chat-base" content="https://hohlrocks-production.up.railway.app">
   <meta name="umami-src" content="">
   <meta name="umami-website-id" content="">
-
   <title>hohl.rocks — Neon Gold UX++</title>
-
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-
   <style>
     :root{ --bg:#0a0c12; --text:#e8edf4; --ui-font:system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
     *{ box-sizing:border-box }
@@ -26,19 +22,15 @@
     .shape{ position:absolute !important; appearance:none; border:0; border-radius:50% !important; display:flex; align-items:center; justify-content:center; }
     .shape .label{ max-width:80%; text-align:center; color:#0b0e13; }
   </style>
-
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
   <noscript>Bitte JavaScript aktivieren.</noscript>
-
   <div class="stage" id="stage" aria-live="polite" aria-busy="false">
     <video id="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
       <source id="bg-src" src="/videos/road.mp4" type="video/mp4" />
     </video>
-
     <div id="shape-layer" class="shape-layer" role="region" aria-label="Interaktive Ideen‑Bubbles"></div>
-
     <nav id="nav" class="nav" aria-label="Sektionen">
       <button class="nav-btn" data-action="about">Über</button>
       <button class="nav-btn" data-action="news">News</button>
@@ -49,9 +41,7 @@
       <button id="sound-toggle" class="nav-btn" data-action="sound" aria-pressed="false" title="Klang an/aus">Klang</button>
     </nav>
   </div>
-
   <div id="popup-root" class="popup-root" aria-live="polite"></div>
-
   <script type="module" src="/js/sfx.js"></script>
   <script type="module" src="/js/i18n.js"></script>
   <script type="module" src="/js/settings.js"></script>
