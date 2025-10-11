@@ -1,3 +1,4 @@
+
 import { tickerItemsFor } from './ticker-items.js';
 import { openCustomPopup } from './answer-popup.js';
 import { lang } from './i18n.js';
@@ -6,10 +7,11 @@ import { sfx } from './sfx.js';
 const layer = document.getElementById('shape-layer');
 
 const SIZE_MIN = 150;
-const SIZE_MAX = 280;
-const NEON = ['#d7ffe1', '#e2e7ff', '#ffd7f7', '#98fbff', '#fff2cc', '#ffe4e1', '#e0ffe9'];
+const SIZE_MAX = 300;
+const NEON = ['#7ef9ff','#64ffda','#ffb3ff','#ffd166','#a7f432','#ff9bd3','#9bffd6','#b388ff','#e3ff7d'];
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function hexToRgba(hex, a){ const h = hex.replace('#',''); const bigint=parseInt(h,16); const r=(bigint>>16)&255, g=(bigint>>8)&255, b=bigint&255; return `rgba(${r},${g},${b},${a})`; }
 
 function maxActive() {
   const isMobile = Math.max(window.innerWidth, window.innerHeight) < 768;
@@ -25,6 +27,7 @@ function makeBubble(item){
   el.className = 'shape';
   const size = Math.round(SIZE_MIN + Math.random()*(SIZE_MAX-SIZE_MIN));
   el.style.width = el.style.height = size + 'px';
+  el.style.setProperty('--r', String(size));
 
   const rect = layer.getBoundingClientRect();
   const W = rect.width, H = rect.height;
@@ -33,7 +36,8 @@ function makeBubble(item){
   el.style.left = x + 'px'; el.style.top = y + 'px';
 
   const c = pick(NEON);
-  el.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,.96), ${c})`;
+  el.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,.98), ${hexToRgba(c,0.9)})`;
+  el.style.boxShadow = `0 0 28px ${hexToRgba(c,0.60)}, 0 0 88px ${hexToRgba(c,0.32)}, 0 10px 44px rgba(0,0,0,.46)`;
 
   el.setAttribute('aria-label', item.label);
   el.addEventListener('click', () => { sfx.click(); openCustomPopup(item); });

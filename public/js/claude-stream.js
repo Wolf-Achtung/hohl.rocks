@@ -1,3 +1,4 @@
+
 import { settings } from './settings.js';
 const META_BASE = (() => { const meta = document.querySelector('meta[name="hohl-chat-base"]'); const raw = (meta && meta.content ? meta.content : '').trim(); return raw ? (raw.endsWith('/') ? raw.slice(0, -1) : raw) : ''; })();
 function abs(path){ const base = (settings.apiBase || META_BASE || ''); return path.startsWith('/') ? `${base}${path}` : path; }

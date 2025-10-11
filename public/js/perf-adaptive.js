@@ -1,1 +1,1 @@
-(function(){ let frames = 0; const start = performance.now(); function tick(){ frames++; if (performance.now() - start > 1500) { const fps = Math.round(frames / ((performance.now() - start)/1000)); localStorage.setItem('perf_bucket', String(fps)); return; } requestAnimationFrame(tick);} requestAnimationFrame(tick); })();
+(function(){let f=0,s=performance.now();function t(){f++;if(performance.now()-s>1500){localStorage.setItem('perf_bucket',String(Math.round(f/((performance.now()-s)/1000))));return;}requestAnimationFrame(t);}requestAnimationFrame(t);})();

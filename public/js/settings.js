@@ -1,3 +1,4 @@
+
 const KEY = 'hohl_settings';
 function defaults(){
   return {
@@ -12,4 +13,3 @@ export const settings = new Proxy({ ...defaults(), ...JSON.parse(localStorage.ge
   set(target, prop, value){ target[prop] = value; localStorage.setItem(KEY, JSON.stringify(target)); return true; }
 });
 export function saveSettings(obj){ Object.assign(settings, obj || {}); }
-export function getSettings(){ return { ...settings }; }
