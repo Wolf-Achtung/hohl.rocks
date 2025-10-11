@@ -1,4 +1,4 @@
-/* Styles inkl. Overlay- und Bubble-Lifecycle-Fix */
+/* Neon + Bewegung + Barrierefreiheit + Overlay-Fix */
 :root{
   --bg: #0a0c12;
   --panel: rgba(12,14,20,0.86);
@@ -15,14 +15,12 @@ body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--ui-fo
 
 .stage{ position:relative; width:100%; height:100vh; overflow:hidden; }
 #bg-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter: contrast(.95) brightness(.95) saturate(.98); }
-/* WICHTIG: Layer über Video legen */
 .shape-layer{ position:absolute; inset:0; z-index:2; }
 
 @keyframes float { 0%{transform:translateY(0)} 50%{transform:translateY(-8px)} 100%{transform:translateY(0)} }
 
 .shape{
-  position:absolute !important;
-  appearance:none; border:0;
+  position:absolute !important; appearance:none; border:0;
   display:flex; align-items:center; justify-content:center;
   border-radius: 50% !important;
   background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.95), rgba(255,255,255,.7));
@@ -85,7 +83,6 @@ body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--ui-fo
   padding: 12px; border-radius: 12px; display:flex; gap:10px; align-items:center; z-index: 40;
 }
 
-/* Video-Fallback */
 .no-video #bg-video{ display:none; }
 .no-video .stage{ background: radial-gradient(1200px 500px at 30% 40%, rgba(255,255,255,.05), transparent 60%), #0a0c12; }
 
